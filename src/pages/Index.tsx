@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import LoginForm from "@/components/auth/LoginForm";
 import BusinessSearchForm from "@/components/business/BusinessSearchForm";
@@ -34,9 +34,21 @@ const Index = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [showSavedSearches, setShowSavedSearches] = useState(false);
   const [savedSearches, setSavedSearches] = useState<SavedSearch[]>([]);
+  const [currentLocation, setCurrentLocation] = useState("");
+  const [currentKeyword, setCurrentKeyword] = useState("");
+
+  // Load saved searches from localStorage when component mounts
+  useEffect(() => {
+    const loadedSearches = localStorage.getItem('savedSearches');
+    if (loadedSearches) {
+      setSavedSearches(JSON.parse(loadedSearches));
+    }
+  }, []);
 
   const handleSearch = async (location: string, keyword: string) => {
     setIsLoading(true);
+    setCurrentLocation(location);
+    setCurrentKeyword(keyword);
     try {
       const businesses = await searchBusinesses(location, keyword);
       setResults(businesses);
@@ -67,6 +79,8 @@ const Index = () => {
   const handleLogout = () => {
     setIsLoggedIn(false);
     setIsAdmin(false);
+    setResults([]);
+    setShowSavedSearches(false);
     toast({
       title: "Success",
       description: "Logged out successfully",
@@ -77,12 +91,17 @@ const Index = () => {
     const newSavedSearch: SavedSearch = {
       id: Date.now().toString(),
       date: new Date().toLocaleDateString(),
-      location: "Current Location", // In real implementation, get from form
-      keyword: "Current Keyword", // In real implementation, get from form
+      location: currentLocation,
+      keyword: currentKeyword,
       results: results,
     };
 
-    setSavedSearches([...savedSearches, newSavedSearch]);
+    const updatedSearches = [...savedSearches, newSavedSearch];
+    setSavedSearches(updatedSearches);
+    
+    // Save to localStorage
+    localStorage.setItem('savedSearches', JSON.stringify(updatedSearches));
+    
     toast({
       title: "Success",
       description: "Search saved successfully",
@@ -101,6 +120,11 @@ const Index = () => {
       title: "Success",
       description: "Saved search loaded successfully",
     });
+  };
+
+  const handleBackToSearch = () => {
+    setShowSavedSearches(false);
+    setResults([]);
   };
 
   const handleLogin = (isLoggedIn: boolean, userType: 'admin' | 'user') => {
@@ -132,23 +156,14 @@ const Index = () => {
               </div>
             </div>
 
-            {!showSavedSearches ? (
-              <>
-                <BusinessSearchForm onSearch={handleSearch} isLoading={isLoading} />
-                {results.length > 0 && (
-                  <>
-                    <div className="flex justify-end space-x-4">
-                      <Button variant="outline" onClick={handleSaveSearch}>
-                        Save Search
-                      </Button>
-                    </div>
-                    <BusinessResultsTable results={results} onExport={handleExport} />
-                  </>
-                )}
-              </>
-            ) : (
+            {showSavedSearches ? (
               <div className="space-y-4">
-                <h3 className="text-xl font-semibold">Saved Searches</h3>
+                <div className="flex justify-between items-center">
+                  <h3 className="text-xl font-semibold">Saved Searches</h3>
+                  <Button variant="outline" onClick={handleBackToSearch}>
+                    Back to Search
+                  </Button>
+                </div>
                 {savedSearches.length === 0 ? (
                   <p className="text-gray-500">No saved searches found.</p>
                 ) : (
@@ -187,6 +202,20 @@ const Index = () => {
                   </div>
                 )}
               </div>
+            ) : (
+              <>
+                <BusinessSearchForm onSearch={handleSearch} isLoading={isLoading} />
+                {results.length > 0 && (
+                  <>
+                    <div className="flex justify-end space-x-4">
+                      <Button variant="outline" onClick={handleSaveSearch}>
+                        Save Search
+                      </Button>
+                    </div>
+                    <BusinessResultsTable results={results} onExport={handleExport} />
+                  </>
+                )}
+              </>
             )}
           </div>
         )}
