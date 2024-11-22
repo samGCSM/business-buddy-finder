@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
+import * as XLSX from 'xlsx';
 
 interface Business {
   id: string;
@@ -17,11 +18,48 @@ interface BusinessResultsTableProps {
   onExport: () => void;
 }
 
-const BusinessResultsTable = ({ results, onExport }: BusinessResultsTableProps) => {
+const BusinessResultsTable = ({ results }: BusinessResultsTableProps) => {
+  const handleExport = () => {
+    try {
+      // Transform data for Excel
+      const exportData = results.map(business => ({
+        'Business Name': business.name,
+        'Phone': business.phone,
+        'Email': business.email,
+        'Website': business.website,
+        'Rating': business.rating,
+        'Review Count': business.reviewCount,
+        'Address': business.address
+      }));
+
+      // Create worksheet
+      const ws = XLSX.utils.json_to_sheet(exportData);
+      
+      // Create workbook
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Businesses");
+      
+      // Generate Excel file
+      XLSX.writeFile(wb, "business_search_results.xlsx");
+
+      toast({
+        title: "Success",
+        description: "Data exported successfully",
+      });
+    } catch (error) {
+      console.error('Export error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to export data",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
-        <Button type="button" variant="outline" onClick={onExport}>
+        <Button type="button" variant="outline" onClick={handleExport}>
           Export to Excel
         </Button>
       </div>
