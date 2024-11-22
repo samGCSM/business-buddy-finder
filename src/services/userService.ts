@@ -1,90 +1,34 @@
 import { User } from '@/types/user';
+import * as supabaseService from './supabaseService';
 
-const USER_STORAGE_KEY = 'users';
-const CURRENT_USER_KEY = 'currentUser';
-
-export const getUsers = (): User[] => {
-  const users = localStorage.getItem(USER_STORAGE_KEY);
-  return users ? JSON.parse(users) : [
-    { 
-      id: '1', 
-      email: 'admin@example.com', 
-      password: 'admin', 
-      type: 'admin',
-      lastLogin: new Date().toISOString(),
-      totalSearches: 0,
-      savedSearches: 0
-    },
-    { 
-      id: '2', 
-      email: 'user@example.com', 
-      password: 'user', 
-      type: 'user',
-      lastLogin: new Date().toISOString(),
-      totalSearches: 0,
-      savedSearches: 0
-    }
-  ];
+export const getUsers = async (): Promise<User[]> => {
+  return await supabaseService.getUsers();
 };
 
-export const saveUsers = (users: User[]) => {
-  localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(users));
+export const saveUsers = async (users: User[]) => {
+  for (const user of users) {
+    await supabaseService.saveUser(user);
+  }
 };
 
-export const getCurrentUser = (): User | null => {
-  const user = localStorage.getItem(CURRENT_USER_KEY);
-  return user ? JSON.parse(user) : null;
+export const getCurrentUser = async (): Promise<User | null> => {
+  return await supabaseService.getCurrentUser();
 };
 
-export const setCurrentUser = (user: User | null) => {
+export const setCurrentUser = async (user: User | null) => {
   if (user) {
-    localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
-  } else {
-    localStorage.removeItem(CURRENT_USER_KEY);
+    await supabaseService.saveUser(user);
   }
 };
 
-export const updateUserStats = (userId: string, type: 'search' | 'savedSearch') => {
-  console.log('Updating stats for user:', userId, 'type:', type);
-  const users = getUsers();
-  const userIndex = users.findIndex(u => u.id === userId);
-  
-  if (userIndex !== -1) {
-    if (type === 'search') {
-      users[userIndex].totalSearches += 1;
-      console.log('Updated total searches:', users[userIndex].totalSearches);
-    } else {
-      users[userIndex].savedSearches += 1;
-      console.log('Updated saved searches:', users[userIndex].savedSearches);
-    }
-    saveUsers(users);
-    
-    // Update current user if it's the same user
-    const currentUser = getCurrentUser();
-    if (currentUser && currentUser.id === userId) {
-      setCurrentUser(users[userIndex]);
-    }
-  }
+export const updateUserStats = async (userId: string, type: 'search' | 'savedSearch') => {
+  await supabaseService.updateUserStats(userId, type);
 };
 
-export const updateUserLastLogin = (userId: string) => {
-  const users = getUsers();
-  const userIndex = users.findIndex(u => u.id === userId);
-  
-  if (userIndex !== -1) {
-    users[userIndex].lastLogin = new Date().toISOString();
-    saveUsers(users);
-  }
+export const updateUserLastLogin = async (userId: string) => {
+  await supabaseService.updateUserLastLogin(userId);
 };
 
-export const changeUserPassword = (userId: string, newPassword: string) => {
-  const users = getUsers();
-  const userIndex = users.findIndex(u => u.id === userId);
-  
-  if (userIndex !== -1) {
-    users[userIndex].password = newPassword;
-    saveUsers(users);
-    return true;
-  }
-  return false;
+export const changeUserPassword = async (userId: string, newPassword: string) => {
+  await supabaseService.changeUserPassword(userId, newPassword);
 };
