@@ -8,17 +8,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { searchBusinesses } from "@/utils/googleApi";
 import { getCurrentUser, updateUserStats } from "@/services/userService";
-
-interface Business {
-  id: string;
-  name: string;
-  phone: string;
-  email: string;
-  website: string;
-  reviewCount: number;
-  rating: number;
-  address: string;
-}
+import type { Business } from "@/types/business";
 
 interface SavedSearch {
   id: string;

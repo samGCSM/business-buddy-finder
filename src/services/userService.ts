@@ -45,14 +45,17 @@ export const setCurrentUser = (user: User | null) => {
 };
 
 export const updateUserStats = (userId: string, type: 'search' | 'savedSearch') => {
+  console.log('Updating stats for user:', userId, 'type:', type);
   const users = getUsers();
   const userIndex = users.findIndex(u => u.id === userId);
   
   if (userIndex !== -1) {
     if (type === 'search') {
       users[userIndex].totalSearches += 1;
+      console.log('Updated total searches:', users[userIndex].totalSearches);
     } else {
       users[userIndex].savedSearches += 1;
+      console.log('Updated saved searches:', users[userIndex].savedSearches);
     }
     saveUsers(users);
     
