@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
+import { getUsers, updateUserLastLogin, setCurrentUser } from "@/services/userService";
 
 const LoginForm = ({ onLogin }: { onLogin: (isLoggedIn: boolean, userType: 'admin' | 'user') => void }) => {
   const [email, setEmail] = useState("");
@@ -9,17 +10,16 @@ const LoginForm = ({ onLogin }: { onLogin: (isLoggedIn: boolean, userType: 'admi
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (email === "admin@example.com" && password === "admin") {
-      onLogin(true, 'admin');
+    const users = getUsers();
+    const user = users.find(u => u.email === email && u.password === password);
+    
+    if (user) {
+      updateUserLastLogin(user.id);
+      setCurrentUser(user);
+      onLogin(true, user.type);
       toast({
         title: "Success",
-        description: "Logged in successfully as admin",
-      });
-    } else if (email === "user@example.com" && password === "user") {
-      onLogin(true, 'user');
-      toast({
-        title: "Success",
-        description: "Logged in successfully",
+        description: `Logged in successfully${user.type === 'admin' ? ' as admin' : ''}`,
       });
     } else {
       toast({

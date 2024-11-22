@@ -3,30 +3,33 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
-
-interface User {
-  id: string;
-  email: string;
-  type: 'admin' | 'user';
-}
+import { getUsers, saveUsers } from "@/services/userService";
+import type { User } from "@/types/user";
+import PasswordChangeForm from "@/components/auth/PasswordChangeForm";
 
 const Users = () => {
   const navigate = useNavigate();
-  const [users, setUsers] = useState<User[]>([
-    { id: '1', email: 'admin@example.com', type: 'admin' },
-    { id: '2', email: 'user@example.com', type: 'user' },
-  ]);
-  const [newUserEmail, setNewUserEmail] = useState('');
+  const [users, setUsers] = useState<User[]>(getUsers());
+  const [newUserEmail, setNewUserEmail] = useState("");
+  const [newUserPassword, setNewUserPassword] = useState("");
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
   const handleAddUser = (e: React.FormEvent) => {
     e.preventDefault();
     const newUser: User = {
       id: (users.length + 1).toString(),
       email: newUserEmail,
-      type: 'user',
+      password: newUserPassword,
+      type: "user",
+      lastLogin: "-",
+      totalSearches: 0,
+      savedSearches: 0,
     };
-    setUsers([...users, newUser]);
-    setNewUserEmail('');
+    const updatedUsers = [...users, newUser];
+    setUsers(updatedUsers);
+    saveUsers(updatedUsers);
+    setNewUserEmail("");
+    setNewUserPassword("");
     toast({
       title: "Success",
       description: "User added successfully",
@@ -34,7 +37,9 @@ const Users = () => {
   };
 
   const handleDeleteUser = (id: string) => {
-    setUsers(users.filter(user => user.id !== id));
+    const updatedUsers = users.filter((user) => user.id !== id);
+    setUsers(updatedUsers);
+    saveUsers(updatedUsers);
     toast({
       title: "Success",
       description: "User deleted successfully",
@@ -47,13 +52,13 @@ const Users = () => {
         <div className="max-w-4xl mx-auto space-y-6">
           <div className="flex justify-between items-center">
             <h2 className="text-2xl font-bold">Manage Users</h2>
-            <Button variant="outline" onClick={() => navigate('/')}>
+            <Button variant="outline" onClick={() => navigate("/")}>
               Back to Search
             </Button>
           </div>
 
           <form onSubmit={handleAddUser} className="space-y-4">
-            <div className="flex gap-4">
+            <div className="grid grid-cols-2 gap-4">
               <Input
                 type="email"
                 value={newUserEmail}
@@ -61,8 +66,15 @@ const Users = () => {
                 placeholder="Enter user email"
                 required
               />
-              <Button type="submit">Add User</Button>
+              <Input
+                type="password"
+                value={newUserPassword}
+                onChange={(e) => setNewUserPassword(e.target.value)}
+                placeholder="Enter user password"
+                required
+              />
             </div>
+            <Button type="submit">Add User</Button>
           </form>
 
           <div className="bg-white rounded-lg shadow overflow-hidden">
@@ -74,6 +86,15 @@ const Users = () => {
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Type
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Last Login
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Total Searches
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Saved Searches
                   </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Actions
@@ -89,14 +110,31 @@ const Users = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {user.type}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      {user.type !== 'admin' && (
-                        <Button
-                          variant="destructive"
-                          onClick={() => handleDeleteUser(user.id)}
-                        >
-                          Delete
-                        </Button>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {new Date(user.lastLogin).toLocaleString()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {user.totalSearches}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {user.savedSearches}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                      {user.type !== "admin" && (
+                        <>
+                          <Button
+                            variant="outline"
+                            onClick={() => setSelectedUserId(user.id)}
+                          >
+                            Change Password
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            onClick={() => handleDeleteUser(user.id)}
+                          >
+                            Delete
+                          </Button>
+                        </>
                       )}
                     </td>
                   </tr>
@@ -104,6 +142,18 @@ const Users = () => {
               </tbody>
             </table>
           </div>
+
+          {selectedUserId && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+              <div className="bg-white rounded-lg p-6 max-w-md w-full">
+                <h3 className="text-lg font-semibold mb-4">Change Password</h3>
+                <PasswordChangeForm
+                  userId={selectedUserId}
+                  onClose={() => setSelectedUserId(null)}
+                />
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
