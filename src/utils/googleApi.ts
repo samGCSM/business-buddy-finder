@@ -1,47 +1,95 @@
 import axios from 'axios';
 
-const PLACES_API_BASE_URL = 'https://maps.googleapis.com/maps/api/place';
-const API_KEY = import.meta.env.VITE_GOOGLE_PLACES_API_KEY;
+declare global {
+  interface Window {
+    google: any;
+  }
+}
+
+const loadGoogleMapsScript = () => {
+  const API_KEY = import.meta.env.VITE_GOOGLE_PLACES_API_KEY;
+  
+  return new Promise<void>((resolve, reject) => {
+    if (window.google) {
+      resolve();
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${API_KEY}&libraries=places`;
+    script.async = true;
+    script.defer = true;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error('Failed to load Google Maps script'));
+    document.head.appendChild(script);
+  });
+};
 
 export const searchBusinesses = async (location: string, keyword: string) => {
   console.log('Fetching businesses for:', { location, keyword });
   
   try {
-    // First, get location coordinates
-    const geocodeResponse = await axios.get(
-      `${PLACES_API_BASE_URL}/geocode/json?address=${encodeURIComponent(location)}&key=${API_KEY}`
-    );
+    await loadGoogleMapsScript();
     
-    if (!geocodeResponse.data.results[0]) {
-      throw new Error('Location not found');
-    }
-
-    const { lat, lng } = geocodeResponse.data.results[0].geometry.location;
+    // Create a Geocoder to convert location to coordinates
+    const geocoder = new window.google.maps.Geocoder();
     
-    // Then, search for businesses
-    const searchResponse = await axios.get(
-      `${PLACES_API_BASE_URL}/textsearch/json?query=${encodeURIComponent(keyword)}&location=${lat},${lng}&radius=50000&key=${API_KEY}`
-    );
+    // Get coordinates for the location
+    const geocodeResult = await new Promise((resolve, reject) => {
+      geocoder.geocode({ address: location }, (results: any, status: any) => {
+        if (status === 'OK') {
+          resolve(results[0].geometry.location);
+        } else {
+          reject(new Error('Geocoding failed'));
+        }
+      });
+    });
 
-    // Transform the data to match our interface
+    // Create Places Service
+    const map = new window.google.maps.Map(document.createElement('div'));
+    const service = new window.google.maps.places.PlacesService(map);
+
+    // Search for businesses
+    const searchResults = await new Promise((resolve, reject) => {
+      service.textSearch({
+        query: keyword,
+        location: geocodeResult,
+        radius: 50000,
+      }, (results: any, status: any) => {
+        if (status === 'OK') {
+          resolve(results);
+        } else {
+          reject(new Error('Places search failed'));
+        }
+      });
+    });
+
+    // Transform the results to match our interface
     const businesses = await Promise.all(
-      searchResponse.data.results.map(async (place: any) => {
+      (searchResults as any[]).map(async (place) => {
         // Get additional details for each place
-        const detailsResponse = await axios.get(
-          `${PLACES_API_BASE_URL}/details/json?place_id=${place.place_id}&fields=name,formatted_phone_number,formatted_address,website,rating,user_ratings_total&key=${API_KEY}`
-        );
+        const details = await new Promise((resolve, reject) => {
+          service.getDetails({
+            placeId: place.place_id,
+            fields: ['name', 'formatted_phone_number', 'website', 'rating', 'user_ratings_total', 'formatted_address'],
+          }, (result: any, status: any) => {
+            if (status === 'OK') {
+              resolve(result);
+            } else {
+              reject(new Error('Failed to get place details'));
+            }
+          });
+        });
 
-        const details = detailsResponse.data.result;
-        
         return {
           id: place.place_id,
-          name: details.name,
+          name: details.name || place.name,
           phone: details.formatted_phone_number || 'N/A',
-          email: 'N/A', // Note: Email is not available through Places API
+          email: 'N/A', // Email is not available through Places API
           website: details.website || 'N/A',
           reviewCount: details.user_ratings_total || 0,
           rating: details.rating || 0,
-          address: details.formatted_address
+          address: details.formatted_address || place.formatted_address,
         };
       })
     );
