@@ -55,6 +55,12 @@ export const updateUserStats = (userId: string, type: 'search' | 'savedSearch') 
       users[userIndex].savedSearches += 1;
     }
     saveUsers(users);
+    
+    // Update current user if it's the same user
+    const currentUser = getCurrentUser();
+    if (currentUser && currentUser.id === userId) {
+      setCurrentUser(users[userIndex]);
+    }
   }
 };
 

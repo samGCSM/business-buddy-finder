@@ -3,9 +3,11 @@ import { useNavigate } from "react-router-dom";
 import LoginForm from "@/components/auth/LoginForm";
 import BusinessSearchForm from "@/components/business/BusinessSearchForm";
 import BusinessResultsTable from "@/components/business/BusinessResultsTable";
+import SavedSearchesList from "@/components/business/SavedSearchesList";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { searchBusinesses } from "@/utils/googleApi";
+import { getCurrentUser, updateUserStats } from "@/services/userService";
 
 interface Business {
   id: string;
@@ -26,6 +28,8 @@ interface SavedSearch {
   results: Business[];
 }
 
+const SAVED_SEARCHES_KEY = 'savedSearches';
+
 const Index = () => {
   const navigate = useNavigate();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -37,12 +41,18 @@ const Index = () => {
   const [currentLocation, setCurrentLocation] = useState("");
   const [currentKeyword, setCurrentKeyword] = useState("");
 
-  // Load saved searches from localStorage when component mounts
   useEffect(() => {
-    const loadedSearches = localStorage.getItem('savedSearches');
-    if (loadedSearches) {
-      setSavedSearches(JSON.parse(loadedSearches));
-    }
+    const loadSavedSearches = () => {
+      const currentUser = getCurrentUser();
+      if (currentUser) {
+        const userSearchesKey = `${SAVED_SEARCHES_KEY}_${currentUser.id}`;
+        const loadedSearches = localStorage.getItem(userSearchesKey);
+        if (loadedSearches) {
+          setSavedSearches(JSON.parse(loadedSearches));
+        }
+      }
+    };
+    loadSavedSearches();
   }, []);
 
   const handleSearch = async (location: string, keyword: string) => {
@@ -53,6 +63,14 @@ const Index = () => {
       const businesses = await searchBusinesses(location, keyword);
       setResults(businesses);
       setShowSavedSearches(false);
+      
+      // Update user's total searches count
+      const currentUser = getCurrentUser();
+      if (currentUser) {
+        updateUserStats(currentUser.id, 'search');
+        console.log('Updated search count for user:', currentUser.id);
+      }
+      
       toast({
         title: "Success",
         description: "Search completed successfully",
@@ -67,6 +85,51 @@ const Index = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleSaveSearch = () => {
+    const currentUser = getCurrentUser();
+    if (!currentUser) {
+      toast({
+        title: "Error",
+        description: "User not found",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const newSavedSearch: SavedSearch = {
+      id: Date.now().toString(),
+      date: new Date().toLocaleDateString(),
+      location: currentLocation,
+      keyword: currentKeyword,
+      results: results,
+    };
+
+    const updatedSearches = [...savedSearches, newSavedSearch];
+    setSavedSearches(updatedSearches);
+    
+    // Save to localStorage with user-specific key
+    const userSearchesKey = `${SAVED_SEARCHES_KEY}_${currentUser.id}`;
+    localStorage.setItem(userSearchesKey, JSON.stringify(updatedSearches));
+    
+    // Update user's saved searches count
+    updateUserStats(currentUser.id, 'savedSearch');
+    console.log('Updated saved searches count for user:', currentUser.id);
+    
+    toast({
+      title: "Success",
+      description: "Search saved successfully",
+    });
+  };
+
+  const handleLoadSavedSearch = (search: SavedSearch) => {
+    setResults(search.results);
+    setShowSavedSearches(false);
+    toast({
+      title: "Success",
+      description: "Saved search loaded successfully",
+    });
   };
 
   const handleExport = () => {
@@ -85,46 +148,6 @@ const Index = () => {
       title: "Success",
       description: "Logged out successfully",
     });
-  };
-
-  const handleSaveSearch = () => {
-    const newSavedSearch: SavedSearch = {
-      id: Date.now().toString(),
-      date: new Date().toLocaleDateString(),
-      location: currentLocation,
-      keyword: currentKeyword,
-      results: results,
-    };
-
-    const updatedSearches = [...savedSearches, newSavedSearch];
-    setSavedSearches(updatedSearches);
-    
-    // Save to localStorage
-    localStorage.setItem('savedSearches', JSON.stringify(updatedSearches));
-    
-    toast({
-      title: "Success",
-      description: "Search saved successfully",
-    });
-  };
-
-  const handleViewSavedSearches = () => {
-    setShowSavedSearches(true);
-    setResults([]);
-  };
-
-  const handleLoadSavedSearch = (search: SavedSearch) => {
-    setResults(search.results);
-    setShowSavedSearches(false);
-    toast({
-      title: "Success",
-      description: "Saved search loaded successfully",
-    });
-  };
-
-  const handleBackToSearch = () => {
-    setShowSavedSearches(false);
-    setResults([]);
   };
 
   const handleLogin = (isLoggedIn: boolean, userType: 'admin' | 'user') => {
@@ -147,7 +170,7 @@ const Index = () => {
                     Manage Users
                   </Button>
                 )}
-                <Button variant="outline" onClick={handleViewSavedSearches}>
+                <Button variant="outline" onClick={() => setShowSavedSearches(true)}>
                   Past Searches
                 </Button>
                 <Button variant="destructive" onClick={handleLogout}>
@@ -157,51 +180,12 @@ const Index = () => {
             </div>
 
             {showSavedSearches ? (
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-xl font-semibold">Saved Searches</h3>
-                  <Button variant="outline" onClick={handleBackToSearch}>
-                    Back to Search
-                  </Button>
-                </div>
-                {savedSearches.length === 0 ? (
-                  <p className="text-gray-500">No saved searches found.</p>
-                ) : (
-                  <div className="grid gap-4">
-                    {savedSearches.map((search) => (
-                      <div
-                        key={search.id}
-                        className="bg-white p-4 rounded-lg shadow space-y-2"
-                      >
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <p className="font-medium">
-                              {search.location} - {search.keyword}
-                            </p>
-                            <p className="text-sm text-gray-500">
-                              Saved on: {search.date}
-                            </p>
-                          </div>
-                          <div className="space-x-2">
-                            <Button
-                              variant="outline"
-                              onClick={() => handleLoadSavedSearch(search)}
-                            >
-                              View Results
-                            </Button>
-                            <Button
-                              variant="outline"
-                              onClick={handleExport}
-                            >
-                              Export
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+              <SavedSearchesList
+                savedSearches={savedSearches}
+                onLoadSearch={handleLoadSavedSearch}
+                onBackToSearch={() => setShowSavedSearches(false)}
+                onExport={handleExport}
+              />
             ) : (
               <>
                 <BusinessSearchForm onSearch={handleSearch} isLoading={isLoading} />
