@@ -17,12 +17,22 @@ interface Business {
   address: string;
 }
 
+interface SavedSearch {
+  id: string;
+  date: string;
+  location: string;
+  keyword: string;
+  results: Business[];
+}
+
 const Index = () => {
   const navigate = useNavigate();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [results, setResults] = useState<Business[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [showSavedSearches, setShowSavedSearches] = useState(false);
+  const [savedSearches, setSavedSearches] = useState<SavedSearch[]>([]);
 
   const handleSearch = async (location: string, keyword: string) => {
     setIsLoading(true);
@@ -43,6 +53,7 @@ const Index = () => {
       }));
 
       setResults(mockResults);
+      setShowSavedSearches(false);
       toast({
         title: "Success",
         description: "Search completed successfully",
@@ -76,9 +87,32 @@ const Index = () => {
 
   const handleSaveSearch = () => {
     // Mock save functionality
+    const newSavedSearch: SavedSearch = {
+      id: Date.now().toString(),
+      date: new Date().toLocaleDateString(),
+      location: "Current Location", // In real implementation, get from form
+      keyword: "Current Keyword", // In real implementation, get from form
+      results: results,
+    };
+    
+    setSavedSearches([...savedSearches, newSavedSearch]);
     toast({
       title: "Success",
       description: "Search saved successfully",
+    });
+  };
+
+  const handleViewSavedSearches = () => {
+    setShowSavedSearches(true);
+    setResults([]);
+  };
+
+  const handleLoadSavedSearch = (search: SavedSearch) => {
+    setResults(search.results);
+    setShowSavedSearches(false);
+    toast({
+      title: "Success",
+      description: "Saved search loaded successfully",
     });
   };
 
@@ -102,21 +136,70 @@ const Index = () => {
                     Manage Users
                   </Button>
                 )}
+                <Button variant="outline" onClick={handleViewSavedSearches}>
+                  Past Searches
+                </Button>
                 <Button variant="destructive" onClick={handleLogout}>
                   Logout
                 </Button>
               </div>
             </div>
-            <BusinessSearchForm onSearch={handleSearch} isLoading={isLoading} />
-            {results.length > 0 && (
+
+            {!showSavedSearches ? (
               <>
-                <div className="flex justify-end space-x-4">
-                  <Button variant="outline" onClick={handleSaveSearch}>
-                    Save Search
-                  </Button>
-                </div>
-                <BusinessResultsTable results={results} onExport={handleExport} />
+                <BusinessSearchForm onSearch={handleSearch} isLoading={isLoading} />
+                {results.length > 0 && (
+                  <>
+                    <div className="flex justify-end space-x-4">
+                      <Button variant="outline" onClick={handleSaveSearch}>
+                        Save Search
+                      </Button>
+                    </div>
+                    <BusinessResultsTable results={results} onExport={handleExport} />
+                  </>
+                )}
               </>
+            ) : (
+              <div className="space-y-4">
+                <h3 className="text-xl font-semibold">Saved Searches</h3>
+                {savedSearches.length === 0 ? (
+                  <p className="text-gray-500">No saved searches found.</p>
+                ) : (
+                  <div className="grid gap-4">
+                    {savedSearches.map((search) => (
+                      <div
+                        key={search.id}
+                        className="bg-white p-4 rounded-lg shadow space-y-2"
+                      >
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <p className="font-medium">
+                              {search.location} - {search.keyword}
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              Saved on: {search.date}
+                            </p>
+                          </div>
+                          <div className="space-x-2">
+                            <Button
+                              variant="outline"
+                              onClick={() => handleLoadSavedSearch(search)}
+                            >
+                              View Results
+                            </Button>
+                            <Button
+                              variant="outline"
+                              onClick={handleExport}
+                            >
+                              Export
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             )}
           </div>
         )}
