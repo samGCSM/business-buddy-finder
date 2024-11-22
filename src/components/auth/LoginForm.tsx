@@ -7,26 +7,39 @@ import { getUsers, updateUserLastLogin, setCurrentUser } from "@/services/userSe
 const LoginForm = ({ onLogin }: { onLogin: (isLoggedIn: boolean, userType: 'admin' | 'user') => void }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const users = getUsers();
-    const user = users.find(u => u.email === email && u.password === password);
-    
-    if (user) {
-      updateUserLastLogin(user.id);
-      setCurrentUser(user);
-      onLogin(true, user.type);
-      toast({
-        title: "Success",
-        description: `Logged in successfully${user.type === 'admin' ? ' as admin' : ''}`,
-      });
-    } else {
+    setIsLoading(true);
+    try {
+      const users = await getUsers();
+      const user = users.find(u => u.email === email && u.password === password);
+      
+      if (user) {
+        await updateUserLastLogin(user.id);
+        await setCurrentUser(user);
+        onLogin(true, user.type);
+        toast({
+          title: "Success",
+          description: `Logged in successfully${user.type === 'admin' ? ' as admin' : ''}`,
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: "Invalid credentials",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Login error:', error);
       toast({
         title: "Error",
-        description: "Invalid credentials",
+        description: "An error occurred during login",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -60,8 +73,8 @@ const LoginForm = ({ onLogin }: { onLogin: (isLoggedIn: boolean, userType: 'admi
             required
           />
         </div>
-        <Button type="submit" className="w-full">
-          Login
+        <Button type="submit" className="w-full" disabled={isLoading}>
+          {isLoading ? "Logging in..." : "Login"}
         </Button>
       </form>
       <p className="mt-4 text-sm text-gray-600 text-center">

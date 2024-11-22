@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,12 +9,32 @@ import PasswordChangeForm from "@/components/auth/PasswordChangeForm";
 
 const Users = () => {
   const navigate = useNavigate();
-  const [users, setUsers] = useState<User[]>(getUsers());
+  const [users, setUsers] = useState<User[]>([]);
   const [newUserEmail, setNewUserEmail] = useState("");
   const [newUserPassword, setNewUserPassword] = useState("");
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const handleAddUser = (e: React.FormEvent) => {
+  useEffect(() => {
+    const loadUsers = async () => {
+      try {
+        const loadedUsers = await getUsers();
+        setUsers(loadedUsers);
+      } catch (error) {
+        console.error('Error loading users:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load users",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadUsers();
+  }, []);
+
+  const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
     const newUser: User = {
       id: (users.length + 1).toString(),
@@ -25,35 +45,66 @@ const Users = () => {
       totalSearches: 0,
       savedSearches: 0,
     };
-    const updatedUsers = [...users, newUser];
-    setUsers(updatedUsers);
-    saveUsers(updatedUsers);
-    setNewUserEmail("");
-    setNewUserPassword("");
-    toast({
-      title: "Success",
-      description: "User added successfully",
-    });
+    try {
+      const updatedUsers = [...users, newUser];
+      await saveUsers(updatedUsers);
+      setUsers(updatedUsers);
+      setNewUserEmail("");
+      setNewUserPassword("");
+      toast({
+        title: "Success",
+        description: "User added successfully",
+      });
+    } catch (error) {
+      console.error('Error adding user:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add user",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleDeleteUser = (id: string) => {
-    const updatedUsers = users.filter((user) => user.id !== id);
-    setUsers(updatedUsers);
-    saveUsers(updatedUsers);
-    toast({
-      title: "Success",
-      description: "User deleted successfully",
-    });
+  const handleDeleteUser = async (id: string) => {
+    try {
+      const updatedUsers = users.filter((user) => user.id !== id);
+      await saveUsers(updatedUsers);
+      setUsers(updatedUsers);
+      toast({
+        title: "Success",
+        description: "User deleted successfully",
+      });
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete user",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleLogout = () => {
-    setCurrentUser(null);
-    navigate("/");
-    toast({
-      title: "Success",
-      description: "Logged out successfully",
-    });
+  const handleLogout = async () => {
+    try {
+      await setCurrentUser(null);
+      navigate("/");
+      toast({
+        title: "Success",
+        description: "Logged out successfully",
+      });
+    } catch (error) {
+      console.error('Error logging out:', error);
+      toast({
+        title: "Error",
+        description: "Failed to logout",
+        variant: "destructive",
+      });
+    }
   };
+
+  if (isLoading) {
+    return <div className="flex justify-center items-center min-h-screen">Loading...</div>;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -125,7 +176,7 @@ const Users = () => {
                       {user.type}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {new Date(user.lastLogin).toLocaleString()}
+                      {user.lastLogin}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {user.totalSearches}

@@ -32,14 +32,18 @@ const Index = () => {
   const [currentKeyword, setCurrentKeyword] = useState("");
 
   useEffect(() => {
-    const loadSavedSearches = () => {
-      const currentUser = getCurrentUser();
-      if (currentUser) {
-        const userSearchesKey = `${SAVED_SEARCHES_KEY}_${currentUser.id}`;
-        const loadedSearches = localStorage.getItem(userSearchesKey);
-        if (loadedSearches) {
-          setSavedSearches(JSON.parse(loadedSearches));
+    const loadSavedSearches = async () => {
+      try {
+        const currentUser = await getCurrentUser();
+        if (currentUser) {
+          const userSearchesKey = `${SAVED_SEARCHES_KEY}_${currentUser.id}`;
+          const loadedSearches = localStorage.getItem(userSearchesKey);
+          if (loadedSearches) {
+            setSavedSearches(JSON.parse(loadedSearches));
+          }
         }
+      } catch (error) {
+        console.error('Error loading saved searches:', error);
       }
     };
     loadSavedSearches();
@@ -54,10 +58,9 @@ const Index = () => {
       setResults(businesses);
       setShowSavedSearches(false);
       
-      // Update user's total searches count
-      const currentUser = getCurrentUser();
+      const currentUser = await getCurrentUser();
       if (currentUser) {
-        updateUserStats(currentUser.id, 'search');
+        await updateUserStats(currentUser.id, 'search');
         console.log('Updated search count for user:', currentUser.id);
       }
       
@@ -77,40 +80,47 @@ const Index = () => {
     }
   };
 
-  const handleSaveSearch = () => {
-    const currentUser = getCurrentUser();
-    if (!currentUser) {
+  const handleSaveSearch = async () => {
+    try {
+      const currentUser = await getCurrentUser();
+      if (!currentUser) {
+        toast({
+          title: "Error",
+          description: "User not found",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const newSavedSearch: SavedSearch = {
+        id: Date.now().toString(),
+        date: new Date().toLocaleDateString(),
+        location: currentLocation,
+        keyword: currentKeyword,
+        results: results,
+      };
+
+      const updatedSearches = [...savedSearches, newSavedSearch];
+      setSavedSearches(updatedSearches);
+      
+      const userSearchesKey = `${SAVED_SEARCHES_KEY}_${currentUser.id}`;
+      localStorage.setItem(userSearchesKey, JSON.stringify(updatedSearches));
+      
+      await updateUserStats(currentUser.id, 'savedSearch');
+      console.log('Updated saved searches count for user:', currentUser.id);
+      
+      toast({
+        title: "Success",
+        description: "Search saved successfully",
+      });
+    } catch (error) {
+      console.error('Error saving search:', error);
       toast({
         title: "Error",
-        description: "User not found",
+        description: "Failed to save search",
         variant: "destructive",
       });
-      return;
     }
-
-    const newSavedSearch: SavedSearch = {
-      id: Date.now().toString(),
-      date: new Date().toLocaleDateString(),
-      location: currentLocation,
-      keyword: currentKeyword,
-      results: results,
-    };
-
-    const updatedSearches = [...savedSearches, newSavedSearch];
-    setSavedSearches(updatedSearches);
-    
-    // Save to localStorage with user-specific key
-    const userSearchesKey = `${SAVED_SEARCHES_KEY}_${currentUser.id}`;
-    localStorage.setItem(userSearchesKey, JSON.stringify(updatedSearches));
-    
-    // Update user's saved searches count
-    updateUserStats(currentUser.id, 'savedSearch');
-    console.log('Updated saved searches count for user:', currentUser.id);
-    
-    toast({
-      title: "Success",
-      description: "Search saved successfully",
-    });
   };
 
   const handleLoadSavedSearch = (search: SavedSearch) => {
@@ -129,7 +139,7 @@ const Index = () => {
     });
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     setIsLoggedIn(false);
     setIsAdmin(false);
     setResults([]);
