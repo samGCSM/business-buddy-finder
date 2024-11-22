@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
-import { getUsers, saveUsers } from "@/services/userService";
+import { getUsers, saveUsers, setCurrentUser } from "@/services/userService";
 import type { User } from "@/types/user";
 import PasswordChangeForm from "@/components/auth/PasswordChangeForm";
 
@@ -46,15 +46,29 @@ const Users = () => {
     });
   };
 
+  const handleLogout = () => {
+    setCurrentUser(null);
+    navigate("/");
+    toast({
+      title: "Success",
+      description: "Logged out successfully",
+    });
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto space-y-6">
           <div className="flex justify-between items-center">
             <h2 className="text-2xl font-bold">Manage Users</h2>
-            <Button variant="outline" onClick={() => navigate("/")}>
-              Back to Search
-            </Button>
+            <div className="space-x-4">
+              <Button variant="outline" onClick={() => navigate("/")}>
+                Back to Search
+              </Button>
+              <Button variant="destructive" onClick={handleLogout}>
+                Logout
+              </Button>
+            </div>
           </div>
 
           <form onSubmit={handleAddUser} className="space-y-4">
