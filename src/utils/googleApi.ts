@@ -6,6 +6,15 @@ declare global {
   }
 }
 
+interface PlaceDetails {
+  name: string;
+  formatted_phone_number: string;
+  website: string;
+  rating: number;
+  user_ratings_total: number;
+  formatted_address: string;
+}
+
 const loadGoogleMapsScript = () => {
   const API_KEY = import.meta.env.VITE_GOOGLE_PLACES_API_KEY;
   
@@ -68,11 +77,11 @@ export const searchBusinesses = async (location: string, keyword: string) => {
     const businesses = await Promise.all(
       (searchResults as any[]).map(async (place) => {
         // Get additional details for each place
-        const details = await new Promise((resolve, reject) => {
+        const details = await new Promise<PlaceDetails>((resolve, reject) => {
           service.getDetails({
             placeId: place.place_id,
             fields: ['name', 'formatted_phone_number', 'website', 'rating', 'user_ratings_total', 'formatted_address'],
-          }, (result: any, status: any) => {
+          }, (result: PlaceDetails, status: any) => {
             if (status === 'OK') {
               resolve(result);
             } else {
