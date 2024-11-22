@@ -5,6 +5,7 @@ import BusinessSearchForm from "@/components/business/BusinessSearchForm";
 import BusinessResultsTable from "@/components/business/BusinessResultsTable";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
+import { searchBusinesses } from "@/utils/googleApi";
 
 interface Business {
   id: string;
@@ -37,31 +38,18 @@ const Index = () => {
   const handleSearch = async (location: string, keyword: string) => {
     setIsLoading(true);
     try {
-      // Mock API call - replace with real API integration later
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Mock data
-      const mockResults: Business[] = Array.from({ length: 10 }, (_, i) => ({
-        id: `${i + 1}`,
-        name: `Business ${i + 1}`,
-        phone: `(555) 555-${String(1000 + i).padStart(4, '0')}`,
-        email: `business${i + 1}@example.com`,
-        website: `https://business${i + 1}.com`,
-        reviewCount: Math.floor(Math.random() * 500),
-        rating: 3 + Math.random() * 2,
-        address: `${Math.floor(Math.random() * 1000)} Main St, ${location}`,
-      }));
-
-      setResults(mockResults);
+      const businesses = await searchBusinesses(location, keyword);
+      setResults(businesses);
       setShowSavedSearches(false);
       toast({
         title: "Success",
         description: "Search completed successfully",
       });
     } catch (error) {
+      console.error('Search error:', error);
       toast({
         title: "Error",
-        description: "Failed to fetch results",
+        description: "Failed to fetch results. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -86,7 +74,6 @@ const Index = () => {
   };
 
   const handleSaveSearch = () => {
-    // Mock save functionality
     const newSavedSearch: SavedSearch = {
       id: Date.now().toString(),
       date: new Date().toLocaleDateString(),
@@ -94,7 +81,7 @@ const Index = () => {
       keyword: "Current Keyword", // In real implementation, get from form
       results: results,
     };
-    
+
     setSavedSearches([...savedSearches, newSavedSearch]);
     toast({
       title: "Success",
