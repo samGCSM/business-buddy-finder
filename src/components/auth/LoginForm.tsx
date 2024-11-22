@@ -3,20 +3,20 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
 
-const LoginForm = ({ onLogin }: { onLogin: (isLoggedIn: boolean) => void }) => {
+const LoginForm = ({ onLogin }: { onLogin: (isLoggedIn: boolean, userType: 'admin' | 'user') => void }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     if (email === "admin@example.com" && password === "admin") {
-      onLogin(true);
+      onLogin(true, 'admin');
       toast({
         title: "Success",
-        description: "Logged in successfully",
+        description: "Logged in successfully as admin",
       });
     } else if (email === "user@example.com" && password === "user") {
-      onLogin(true);
+      onLogin(true, 'user');
       toast({
         title: "Success",
         description: "Logged in successfully",

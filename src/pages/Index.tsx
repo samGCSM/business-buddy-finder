@@ -1,7 +1,9 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import LoginForm from "@/components/auth/LoginForm";
 import BusinessSearchForm from "@/components/business/BusinessSearchForm";
 import BusinessResultsTable from "@/components/business/BusinessResultsTable";
+import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 
 interface Business {
@@ -16,9 +18,11 @@ interface Business {
 }
 
 const Index = () => {
+  const navigate = useNavigate();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [results, setResults] = useState<Business[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   const handleSearch = async (location: string, keyword: string) => {
     setIsLoading(true);
@@ -61,17 +65,58 @@ const Index = () => {
     });
   };
 
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    setIsAdmin(false);
+    toast({
+      title: "Success",
+      description: "Logged out successfully",
+    });
+  };
+
+  const handleSaveSearch = () => {
+    // Mock save functionality
+    toast({
+      title: "Success",
+      description: "Search saved successfully",
+    });
+  };
+
+  const handleLogin = (isLoggedIn: boolean, userType: 'admin' | 'user') => {
+    setIsLoggedIn(isLoggedIn);
+    setIsAdmin(userType === 'admin');
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8">
         {!isLoggedIn ? (
-          <LoginForm onLogin={setIsLoggedIn} />
+          <LoginForm onLogin={handleLogin} />
         ) : (
           <div className="max-w-4xl mx-auto space-y-6">
-            <h2 className="text-2xl font-bold text-center">Business Search</h2>
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold">Business Search</h2>
+              <div className="space-x-4">
+                {isAdmin && (
+                  <Button variant="outline" onClick={() => navigate('/users')}>
+                    Manage Users
+                  </Button>
+                )}
+                <Button variant="destructive" onClick={handleLogout}>
+                  Logout
+                </Button>
+              </div>
+            </div>
             <BusinessSearchForm onSearch={handleSearch} isLoading={isLoading} />
             {results.length > 0 && (
-              <BusinessResultsTable results={results} onExport={handleExport} />
+              <>
+                <div className="flex justify-end space-x-4">
+                  <Button variant="outline" onClick={handleSaveSearch}>
+                    Save Search
+                  </Button>
+                </div>
+                <BusinessResultsTable results={results} onExport={handleExport} />
+              </>
             )}
           </div>
         )}
