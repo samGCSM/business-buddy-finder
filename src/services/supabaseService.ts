@@ -48,29 +48,38 @@ export const updateUserStats = async (userId: string, type: 'search' | 'savedSea
     return;
   }
 
-  const { data: user, error: fetchError } = await supabase
-    .from('users')
-    .select('*')
-    .eq('id', userId)
-    .single();
+  try {
+    const { data: user, error: fetchError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', userId)
+      .single();
 
-  if (fetchError || !user) {
-    console.error('Error fetching user for stats update:', fetchError);
-    return;
-  }
+    if (fetchError) {
+      console.error('Error fetching user for stats update:', fetchError);
+      return;
+    }
 
-  const updates = type === 'search' 
-    ? { totalSearches: (user.totalSearches || 0) + 1 }
-    : { savedSearches: (user.savedSearches || 0) + 1 };
+    if (!user) {
+      console.error('User not found for stats update:', userId);
+      return;
+    }
 
-  const { error: updateError } = await supabase
-    .from('users')
-    .update(updates)
-    .eq('id', userId);
+    const updates = type === 'search' 
+      ? { totalSearches: (user.totalSearches || 0) + 1 }
+      : { savedSearches: (user.savedSearches || 0) + 1 };
 
-  if (updateError) {
-    console.error('Error updating user stats:', updateError);
-    throw updateError;
+    const { error: updateError } = await supabase
+      .from('users')
+      .update(updates)
+      .eq('id', userId);
+
+    if (updateError) {
+      console.error('Error updating user stats:', updateError);
+      throw updateError;
+    }
+  } catch (error) {
+    console.error('Error in updateUserStats:', error);
   }
 };
 
@@ -81,14 +90,18 @@ export const updateUserLastLogin = async (userId: string): Promise<void> => {
     return;
   }
 
-  const { error } = await supabase
-    .from('users')
-    .update({ lastLogin: new Date().toISOString() })
-    .eq('id', userId);
+  try {
+    const { error } = await supabase
+      .from('users')
+      .update({ lastLogin: new Date().toISOString() })
+      .eq('id', userId);
 
-  if (error) {
-    console.error('Error updating last login:', error);
-    throw error;
+    if (error) {
+      console.error('Error updating last login:', error);
+      throw error;
+    }
+  } catch (error) {
+    console.error('Error in updateUserLastLogin:', error);
   }
 };
 
@@ -99,37 +112,56 @@ export const changeUserPassword = async (userId: string, newPassword: string): P
     return;
   }
 
-  const { error } = await supabase
-    .from('users')
-    .update({ password: newPassword })
-    .eq('id', userId);
+  try {
+    const { error } = await supabase
+      .from('users')
+      .update({ password: newPassword })
+      .eq('id', userId);
 
-  if (error) {
-    console.error('Error changing password:', error);
-    throw error;
+    if (error) {
+      console.error('Error changing password:', error);
+      throw error;
+    }
+  } catch (error) {
+    console.error('Error in changeUserPassword:', error);
   }
 };
 
 export const getCurrentUser = async (): Promise<User | null> => {
   console.log('Getting current user');
-  const storedUser = localStorage.getItem('currentUser');
-  if (storedUser) {
-    const user = JSON.parse(storedUser);
-    if (user && user.id) {
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-
-      if (error) {
-        console.error('Error fetching current user:', error);
-        return null;
-      }
-
-      return data;
+  try {
+    const storedUser = localStorage.getItem('currentUser');
+    if (!storedUser) {
+      console.log('No stored user found');
+      return null;
     }
+
+    const user = JSON.parse(storedUser);
+    if (!user || !user.id) {
+      console.log('Invalid stored user data');
+      return null;
+    }
+
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    if (error) {
+      console.error('Error fetching current user:', error);
+      return null;
+    }
+
+    if (!data) {
+      console.log('User not found in database');
+      localStorage.removeItem('currentUser');
+      return null;
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Error in getCurrentUser:', error);
+    return null;
   }
-  console.log('No stored user found');
-  return null;
 };
