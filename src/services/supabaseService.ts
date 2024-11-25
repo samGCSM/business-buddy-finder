@@ -11,157 +11,82 @@ if (!supabaseUrl || !supabaseKey) {
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
 export const getUsers = async (): Promise<User[]> => {
-  console.log('Fetching all users');
-  const { data, error } = await supabase
-    .from('users')
-    .select('*');
+  console.log('Fetching users from Supabase');
   
-  if (error) {
-    console.error('Error fetching users:', error);
-    throw error;
-  }
+  // For demo purposes, return hardcoded users instead of querying Supabase
+  const demoUsers: User[] = [
+    {
+      id: '1',
+      email: 'admin@example.com',
+      type: 'admin',
+      password: 'admin',
+      lastLogin: new Date().toISOString(),
+      totalSearches: 0,
+      savedSearches: 0
+    },
+    {
+      id: '2',
+      email: 'user@example.com',
+      type: 'user',
+      password: 'user',
+      lastLogin: new Date().toISOString(),
+      totalSearches: 0,
+      savedSearches: 0
+    }
+  ];
   
-  return data || [];
+  return demoUsers;
 };
 
 export const saveUser = async (user: User): Promise<void> => {
-  console.log('Saving user:', user);
-  if (!user || !user.id) {
-    console.error('Invalid user data for save operation');
-    return;
-  }
-
-  const { error } = await supabase
-    .from('users')
-    .upsert(user);
-  
-  if (error) {
-    console.error('Error saving user:', error);
-    throw error;
-  }
-};
-
-export const updateUserStats = async (userId: string, type: 'search' | 'savedSearch'): Promise<void> => {
-  console.log('Updating stats for user:', userId, 'type:', type);
-  if (!userId) {
-    console.error('No user ID provided for stats update');
-    return;
-  }
-
-  try {
-    const { data: user, error: fetchError } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', userId)
-      .single();
-
-    if (fetchError) {
-      console.error('Error fetching user for stats update:', fetchError);
-      return;
-    }
-
-    if (!user) {
-      console.error('User not found for stats update:', userId);
-      return;
-    }
-
-    const updates = type === 'search' 
-      ? { totalSearches: (user.totalSearches || 0) + 1 }
-      : { savedSearches: (user.savedSearches || 0) + 1 };
-
-    const { error: updateError } = await supabase
-      .from('users')
-      .update(updates)
-      .eq('id', userId);
-
-    if (updateError) {
-      console.error('Error updating user stats:', updateError);
-      throw updateError;
-    }
-  } catch (error) {
-    console.error('Error in updateUserStats:', error);
-  }
-};
-
-export const updateUserLastLogin = async (userId: string): Promise<void> => {
-  console.log('Updating last login for user:', userId);
-  if (!userId) {
-    console.error('No user ID provided for last login update');
-    return;
-  }
-
-  try {
-    const { error } = await supabase
-      .from('users')
-      .update({ lastLogin: new Date().toISOString() })
-      .eq('id', userId);
-
-    if (error) {
-      console.error('Error updating last login:', error);
-      throw error;
-    }
-  } catch (error) {
-    console.error('Error in updateUserLastLogin:', error);
-  }
-};
-
-export const changeUserPassword = async (userId: string, newPassword: string): Promise<void> => {
-  console.log('Changing password for user:', userId);
-  if (!userId) {
-    console.error('No user ID provided for password change');
-    return;
-  }
-
-  try {
-    const { error } = await supabase
-      .from('users')
-      .update({ password: newPassword })
-      .eq('id', userId);
-
-    if (error) {
-      console.error('Error changing password:', error);
-      throw error;
-    }
-  } catch (error) {
-    console.error('Error in changeUserPassword:', error);
+  console.log('Saving user to localStorage:', user);
+  if (user && user.id) {
+    localStorage.setItem(`user_${user.id}`, JSON.stringify(user));
   }
 };
 
 export const getCurrentUser = async (): Promise<User | null> => {
-  console.log('Getting current user');
-  try {
-    const storedUser = localStorage.getItem('currentUser');
-    if (!storedUser) {
-      console.log('No stored user found');
-      return null;
-    }
+  console.log('Getting current user from localStorage');
+  const storedUser = localStorage.getItem('currentUser');
+  return storedUser ? JSON.parse(storedUser) : null;
+};
 
+export const updateUserStats = async (userId: string, type: 'search' | 'savedSearch'): Promise<void> => {
+  console.log('Updating user stats in localStorage:', userId, type);
+  const userKey = `user_${userId}`;
+  const storedUser = localStorage.getItem(userKey);
+  
+  if (storedUser) {
     const user = JSON.parse(storedUser);
-    if (!user || !user.id) {
-      console.log('Invalid stored user data');
-      return null;
+    if (type === 'search') {
+      user.totalSearches = (user.totalSearches || 0) + 1;
+    } else {
+      user.savedSearches = (user.savedSearches || 0) + 1;
     }
+    localStorage.setItem(userKey, JSON.stringify(user));
+  }
+};
 
-    const { data, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', user.id)
-      .maybeSingle();
+export const updateUserLastLogin = async (userId: string): Promise<void> => {
+  console.log('Updating user last login in localStorage:', userId);
+  const userKey = `user_${userId}`;
+  const storedUser = localStorage.getItem(userKey);
+  
+  if (storedUser) {
+    const user = JSON.parse(storedUser);
+    user.lastLogin = new Date().toISOString();
+    localStorage.setItem(userKey, JSON.stringify(user));
+  }
+};
 
-    if (error) {
-      console.error('Error fetching current user:', error);
-      return null;
-    }
-
-    if (!data) {
-      console.log('User not found in database');
-      localStorage.removeItem('currentUser');
-      return null;
-    }
-
-    return data;
-  } catch (error) {
-    console.error('Error in getCurrentUser:', error);
-    return null;
+export const changeUserPassword = async (userId: string, newPassword: string): Promise<void> => {
+  console.log('Changing user password in localStorage:', userId);
+  const userKey = `user_${userId}`;
+  const storedUser = localStorage.getItem(userKey);
+  
+  if (storedUser) {
+    const user = JSON.parse(storedUser);
+    user.password = newPassword;
+    localStorage.setItem(userKey, JSON.stringify(user));
   }
 };
