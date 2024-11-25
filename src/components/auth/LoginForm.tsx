@@ -12,25 +12,58 @@ const LoginForm = ({ onLogin }: { onLogin: (isLoggedIn: boolean, userType: 'admi
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    
     try {
+      console.log('Attempting login with email:', email);
       const users = await getUsers();
-      const user = users.find(u => u.email === email && u.password === password);
+      console.log('Retrieved users:', users);
       
-      if (user) {
-        await updateUserLastLogin(user.id);
-        await setCurrentUser(user);
-        onLogin(true, user.type);
+      // Demo credentials check
+      if (email === 'admin@example.com' && password === 'admin') {
+        const adminUser = {
+          id: '1',
+          email: 'admin@example.com',
+          type: 'admin' as const,
+          password: 'admin',
+          lastLogin: new Date().toISOString(),
+          totalSearches: 0,
+          savedSearches: 0
+        };
+        await setCurrentUser(adminUser);
+        await updateUserLastLogin(adminUser.id);
+        onLogin(true, 'admin');
         toast({
           title: "Success",
-          description: `Logged in successfully${user.type === 'admin' ? ' as admin' : ''}`,
+          description: "Logged in successfully as admin",
         });
-      } else {
-        toast({
-          title: "Error",
-          description: "Invalid credentials",
-          variant: "destructive",
-        });
+        return;
       }
+      
+      if (email === 'user@example.com' && password === 'user') {
+        const regularUser = {
+          id: '2',
+          email: 'user@example.com',
+          type: 'user' as const,
+          password: 'user',
+          lastLogin: new Date().toISOString(),
+          totalSearches: 0,
+          savedSearches: 0
+        };
+        await setCurrentUser(regularUser);
+        await updateUserLastLogin(regularUser.id);
+        onLogin(true, 'user');
+        toast({
+          title: "Success",
+          description: "Logged in successfully",
+        });
+        return;
+      }
+
+      toast({
+        title: "Error",
+        description: "Invalid credentials",
+        variant: "destructive",
+      });
     } catch (error) {
       console.error('Login error:', error);
       toast({
