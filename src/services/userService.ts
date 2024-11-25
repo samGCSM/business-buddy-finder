@@ -7,7 +7,9 @@ export const getUsers = async (): Promise<User[]> => {
 
 export const saveUsers = async (users: User[]) => {
   for (const user of users) {
-    await supabaseService.saveUser(user);
+    if (user && user.id) {
+      await supabaseService.saveUser(user);
+    }
   }
 };
 
@@ -16,7 +18,7 @@ export const getCurrentUser = async (): Promise<User | null> => {
 };
 
 export const setCurrentUser = async (user: User | null) => {
-  if (user) {
+  if (user && user.id) {
     localStorage.setItem('currentUser', JSON.stringify(user));
     await supabaseService.saveUser(user);
   } else {

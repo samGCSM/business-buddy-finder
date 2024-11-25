@@ -26,6 +26,11 @@ export const getUsers = async (): Promise<User[]> => {
 
 export const saveUser = async (user: User): Promise<void> => {
   console.log('Saving user:', user);
+  if (!user || !user.id) {
+    console.error('Invalid user data for save operation');
+    return;
+  }
+
   const { error } = await supabase
     .from('users')
     .upsert(user);
@@ -43,20 +48,20 @@ export const updateUserStats = async (userId: string, type: 'search' | 'savedSea
     return;
   }
 
-  const { data: users, error: fetchError } = await supabase
+  const { data: user, error: fetchError } = await supabase
     .from('users')
     .select('*')
     .eq('id', userId)
     .single();
 
-  if (fetchError) {
+  if (fetchError || !user) {
     console.error('Error fetching user for stats update:', fetchError);
-    throw fetchError;
+    return;
   }
 
   const updates = type === 'search' 
-    ? { totalSearches: (users.totalSearches || 0) + 1 }
-    : { savedSearches: (users.savedSearches || 0) + 1 };
+    ? { totalSearches: (user.totalSearches || 0) + 1 }
+    : { savedSearches: (user.savedSearches || 0) + 1 };
 
   const { error: updateError } = await supabase
     .from('users')
@@ -107,23 +112,24 @@ export const changeUserPassword = async (userId: string, newPassword: string): P
 
 export const getCurrentUser = async (): Promise<User | null> => {
   console.log('Getting current user');
-  const { data: sessionData } = await supabase.auth.getSession();
-  
-  if (!sessionData?.session) {
-    console.log('No active session found');
-    const storedUser = localStorage.getItem('currentUser');
-    return storedUser ? JSON.parse(storedUser) : null;
+  const storedUser = localStorage.getItem('currentUser');
+  if (storedUser) {
+    const user = JSON.parse(storedUser);
+    if (user && user.id) {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (error) {
+        console.error('Error fetching current user:', error);
+        return null;
+      }
+
+      return data;
+    }
   }
-
-  const { data, error } = await supabase
-    .from('users')
-    .select('*')
-    .single();
-
-  if (error) {
-    console.error('Error fetching current user:', error);
-    return null;
-  }
-
-  return data;
+  console.log('No stored user found');
+  return null;
 };
