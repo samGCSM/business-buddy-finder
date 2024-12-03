@@ -13,35 +13,39 @@ export const supabase = createClient(supabaseUrl, supabaseKey);
 export const getUsers = async (): Promise<User[]> => {
   console.log('Fetching users from Supabase');
   
-  // For demo purposes, return hardcoded users instead of querying Supabase
-  const demoUsers: User[] = [
-    {
-      id: '1',
-      email: 'admin@example.com',
-      type: 'admin',
-      password: 'admin',
-      lastLogin: new Date().toISOString(),
-      totalSearches: 0,
-      savedSearches: 0
-    },
-    {
-      id: '2',
-      email: 'user@example.com',
-      type: 'user',
-      password: 'user',
-      lastLogin: new Date().toISOString(),
-      totalSearches: 0,
-      savedSearches: 0
-    }
-  ];
-  
-  return demoUsers;
+  try {
+    const { data, error } = await supabase
+      .from('users')
+      .select('*');
+
+    if (error) throw error;
+    
+    return data || [];
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    return [];
+  }
 };
 
 export const saveUser = async (user: User): Promise<void> => {
-  console.log('Saving user to localStorage:', user);
-  if (user && user.id) {
-    localStorage.setItem(`user_${user.id}`, JSON.stringify(user));
+  console.log('Saving user to Supabase:', user);
+  try {
+    const { error } = await supabase
+      .from('users')
+      .upsert({
+        id: user.id,
+        email: user.email,
+        type: user.type,
+        password: user.password,
+        lastLogin: user.lastLogin,
+        totalSearches: user.totalSearches.toString(),
+        savedSearches: user.savedSearches.toString()
+      });
+
+    if (error) throw error;
+  } catch (error) {
+    console.error('Error saving user:', error);
+    throw error;
   }
 };
 
@@ -52,41 +56,76 @@ export const getCurrentUser = async (): Promise<User | null> => {
 };
 
 export const updateUserStats = async (userId: string, type: 'search' | 'savedSearch'): Promise<void> => {
-  console.log('Updating user stats in localStorage:', userId, type);
-  const userKey = `user_${userId}`;
-  const storedUser = localStorage.getItem(userKey);
-  
-  if (storedUser) {
-    const user = JSON.parse(storedUser);
-    if (type === 'search') {
-      user.totalSearches = (user.totalSearches || 0) + 1;
-    } else {
-      user.savedSearches = (user.savedSearches || 0) + 1;
+  console.log('Updating user stats in Supabase:', userId, type);
+  try {
+    // First get the current user stats
+    const { data: userData, error: fetchError } = await supabase
+      .from('users')
+      .select('totalSearches, savedSearches')
+      .eq('id', userId)
+      .single();
+
+    if (fetchError) throw fetchError;
+
+    // Parse current values and increment
+    const currentTotalSearches = parseInt(userData.totalSearches || '0', 10);
+    const currentSavedSearches = parseInt(userData.savedSearches || '0', 10);
+
+    const updates = type === 'search'
+      ? { totalSearches: (currentTotalSearches + 1).toString() }
+      : { savedSearches: (currentSavedSearches + 1).toString() };
+
+    // Update the stats
+    const { error: updateError } = await supabase
+      .from('users')
+      .update(updates)
+      .eq('id', userId);
+
+    if (updateError) throw updateError;
+
+    // Update localStorage to keep it in sync
+    const storedUser = localStorage.getItem(`user_${userId}`);
+    if (storedUser) {
+      const user = JSON.parse(storedUser);
+      if (type === 'search') {
+        user.totalSearches = currentTotalSearches + 1;
+      } else {
+        user.savedSearches = currentSavedSearches + 1;
+      }
+      localStorage.setItem(`user_${userId}`, JSON.stringify(user));
     }
-    localStorage.setItem(userKey, JSON.stringify(user));
+  } catch (error) {
+    console.error('Error updating user stats:', error);
+    throw error;
   }
 };
 
 export const updateUserLastLogin = async (userId: string): Promise<void> => {
-  console.log('Updating user last login in localStorage:', userId);
-  const userKey = `user_${userId}`;
-  const storedUser = localStorage.getItem(userKey);
-  
-  if (storedUser) {
-    const user = JSON.parse(storedUser);
-    user.lastLogin = new Date().toISOString();
-    localStorage.setItem(userKey, JSON.stringify(user));
+  console.log('Updating user last login in Supabase:', userId);
+  try {
+    const { error } = await supabase
+      .from('users')
+      .update({ lastLogin: new Date().toISOString() })
+      .eq('id', userId);
+
+    if (error) throw error;
+  } catch (error) {
+    console.error('Error updating last login:', error);
+    throw error;
   }
 };
 
 export const changeUserPassword = async (userId: string, newPassword: string): Promise<void> => {
-  console.log('Changing user password in localStorage:', userId);
-  const userKey = `user_${userId}`;
-  const storedUser = localStorage.getItem(userKey);
-  
-  if (storedUser) {
-    const user = JSON.parse(storedUser);
-    user.password = newPassword;
-    localStorage.setItem(userKey, JSON.stringify(user));
+  console.log('Changing user password in Supabase:', userId);
+  try {
+    const { error } = await supabase
+      .from('users')
+      .update({ password: newPassword })
+      .eq('id', userId);
+
+    if (error) throw error;
+  } catch (error) {
+    console.error('Error changing password:', error);
+    throw error;
   }
 };
