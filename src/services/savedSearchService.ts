@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Business } from "@/types/business";
-import { Database } from "@/integrations/supabase/types";
+import type { Json } from "@/integrations/supabase/types";
 
 export interface SavedSearch {
   id: string;
@@ -8,6 +8,17 @@ export interface SavedSearch {
   location: string;
   keyword: string;
   results: Business[];
+}
+
+interface JsonResult {
+  id?: string | null;
+  name?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  website?: string | null;
+  reviewCount?: number | null;
+  rating?: number | null;
+  address?: string | null;
 }
 
 export const getSavedSearches = async (userId: string): Promise<SavedSearch[]> => {
@@ -26,15 +37,15 @@ export const getSavedSearches = async (userId: string): Promise<SavedSearch[]> =
   return data.map(search => {
     // Validate and transform the results array
     const results = Array.isArray(search.results) 
-      ? search.results.map(result => ({
-          id: String(result.id || ''),
-          name: String(result.name || ''),
-          phone: String(result.phone || ''),
-          email: String(result.email || ''),
-          website: String(result.website || ''),
-          reviewCount: Number(result.reviewCount || 0),
-          rating: Number(result.rating || 0),
-          address: String(result.address || '')
+      ? (search.results as JsonResult[]).map(result => ({
+          id: String(result?.id || ''),
+          name: String(result?.name || ''),
+          phone: String(result?.phone || ''),
+          email: String(result?.email || ''),
+          website: String(result?.website || ''),
+          reviewCount: Number(result?.reviewCount || 0),
+          rating: Number(result?.rating || 0),
+          address: String(result?.address || '')
         }))
       : [];
 
@@ -62,7 +73,7 @@ export const saveSearch = async (
       user_id: parseInt(userId),
       location,
       keyword,
-      results: results as unknown as Database['public']['Tables']['saved_searches']['Insert']['results']
+      results: results as unknown as Json
     });
 
   if (error) {
