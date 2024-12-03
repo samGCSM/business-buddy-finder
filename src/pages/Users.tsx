@@ -63,7 +63,7 @@ const Users = () => {
           <div className="flex justify-between items-center">
             <h2 className="text-2xl font-bold">Manage Users</h2>
             <div className="space-x-4">
-              <Button variant="outline" onClick={() => navigate("/")}>
+              <Button variant="outline" onClick={() => navigate("/", { replace: true })}>
                 Back to Search
               </Button>
               <Button variant="destructive" onClick={handleLogout}>

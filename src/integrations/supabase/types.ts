@@ -9,6 +9,41 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      saved_searches: {
+        Row: {
+          created_at: string | null
+          id: string
+          keyword: string
+          location: string
+          results: Json
+          user_id: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          keyword: string
+          location: string
+          results: Json
+          user_id?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          keyword?: string
+          location?: string
+          results?: Json
+          user_id?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_searches_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       users: {
         Row: {
           created_at: string
