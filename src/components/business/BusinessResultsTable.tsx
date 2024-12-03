@@ -1,6 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import * as XLSX from 'xlsx';
+import { saveSearch } from "@/services/savedSearchService";
+import { getCurrentUser } from "@/services/userService";
 
 interface Business {
   id: string;
@@ -15,10 +17,11 @@ interface Business {
 
 interface BusinessResultsTableProps {
   results: Business[];
-  onExport: () => void;
+  location: string;
+  keyword: string;
 }
 
-const BusinessResultsTable = ({ results }: BusinessResultsTableProps) => {
+const BusinessResultsTable = ({ results, location, keyword }: BusinessResultsTableProps) => {
   const handleExport = () => {
     try {
       // Transform data for Excel
@@ -56,9 +59,39 @@ const BusinessResultsTable = ({ results }: BusinessResultsTableProps) => {
     }
   };
 
+  const handleSaveSearch = async () => {
+    try {
+      const currentUser = await getCurrentUser();
+      if (!currentUser) {
+        toast({
+          title: "Error",
+          description: "You must be logged in to save searches",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      await saveSearch(currentUser.id, location, keyword, results);
+      toast({
+        title: "Success",
+        description: "Search saved successfully",
+      });
+    } catch (error) {
+      console.error('Save search error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save search",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-2">
+        <Button type="button" variant="outline" onClick={handleSaveSearch}>
+          Save Search
+        </Button>
         <Button type="button" variant="outline" onClick={handleExport}>
           Export to Excel
         </Button>

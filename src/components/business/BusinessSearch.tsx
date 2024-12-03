@@ -1,8 +1,6 @@
 import { useState } from "react";
 import { toast } from "@/hooks/use-toast";
 import { searchBusinesses } from "@/utils/googleApi";
-import { getCurrentUser } from "@/services/userService";
-import { saveSearch } from "@/services/savedSearchService";
 import type { Business } from "@/types/business";
 import BusinessSearchForm from "./BusinessSearchForm";
 import BusinessResultsTable from "./BusinessResultsTable";
@@ -22,18 +20,12 @@ const BusinessSearch = ({ onShowSavedSearches }: BusinessSearchProps) => {
     setIsLoading(true);
     setCurrentLocation(location);
     setCurrentKeyword(keyword);
+    
     try {
+      console.log('Searching businesses:', { location, keyword });
       const businesses = await searchBusinesses(location, keyword);
+      console.log('Search results:', businesses);
       setResults(businesses);
-      
-      const currentUser = await getCurrentUser();
-      if (currentUser) {
-        await saveSearch(currentUser.id, location, keyword, businesses);
-        toast({
-          title: "Success",
-          description: "Search completed and saved successfully",
-        });
-      }
     } catch (error) {
       console.error('Search error:', error);
       toast({
@@ -58,12 +50,11 @@ const BusinessSearch = ({ onShowSavedSearches }: BusinessSearchProps) => {
       <BusinessSearchForm onSearch={handleSearch} isLoading={isLoading} />
       
       {results.length > 0 && (
-        <BusinessResultsTable results={results} onExport={() => {
-          toast({
-            title: "Coming Soon",
-            description: "Export functionality will be implemented soon",
-          });
-        }} />
+        <BusinessResultsTable 
+          results={results}
+          location={currentLocation}
+          keyword={currentKeyword}
+        />
       )}
     </div>
   );
