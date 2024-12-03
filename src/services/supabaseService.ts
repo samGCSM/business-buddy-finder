@@ -18,9 +18,16 @@ export const getUsers = async (): Promise<User[]> => {
       .from('users')
       .select('*');
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error fetching users:', error);
+      throw error;
+    }
     
-    return data || [];
+    return data.map(user => ({
+      ...user,
+      totalSearches: parseInt(user.totalSearches || '0', 10),
+      savedSearches: parseInt(user.savedSearches || '0', 10)
+    })) || [];
   } catch (error) {
     console.error('Error fetching users:', error);
     return [];
@@ -42,7 +49,10 @@ export const saveUser = async (user: User): Promise<void> => {
         savedSearches: user.savedSearches.toString()
       });
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error saving user:', error);
+      throw error;
+    }
   } catch (error) {
     console.error('Error saving user:', error);
     throw error;
@@ -65,7 +75,10 @@ export const updateUserStats = async (userId: string, type: 'search' | 'savedSea
       .eq('id', userId)
       .single();
 
-    if (fetchError) throw fetchError;
+    if (fetchError) {
+      console.error('Error fetching user stats:', fetchError);
+      throw fetchError;
+    }
 
     // Parse current values and increment
     const currentTotalSearches = parseInt(userData.totalSearches || '0', 10);
@@ -81,10 +94,13 @@ export const updateUserStats = async (userId: string, type: 'search' | 'savedSea
       .update(updates)
       .eq('id', userId);
 
-    if (updateError) throw updateError;
+    if (updateError) {
+      console.error('Error updating user stats:', updateError);
+      throw updateError;
+    }
 
     // Update localStorage to keep it in sync
-    const storedUser = localStorage.getItem(`user_${userId}`);
+    const storedUser = localStorage.getItem('currentUser');
     if (storedUser) {
       const user = JSON.parse(storedUser);
       if (type === 'search') {
@@ -92,7 +108,7 @@ export const updateUserStats = async (userId: string, type: 'search' | 'savedSea
       } else {
         user.savedSearches = currentSavedSearches + 1;
       }
-      localStorage.setItem(`user_${userId}`, JSON.stringify(user));
+      localStorage.setItem('currentUser', JSON.stringify(user));
     }
   } catch (error) {
     console.error('Error updating user stats:', error);
@@ -108,7 +124,10 @@ export const updateUserLastLogin = async (userId: string): Promise<void> => {
       .update({ lastLogin: new Date().toISOString() })
       .eq('id', userId);
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error updating last login:', error);
+      throw error;
+    }
   } catch (error) {
     console.error('Error updating last login:', error);
     throw error;
@@ -123,7 +142,10 @@ export const changeUserPassword = async (userId: string, newPassword: string): P
       .update({ password: newPassword })
       .eq('id', userId);
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error changing password:', error);
+      throw error;
+    }
   } catch (error) {
     console.error('Error changing password:', error);
     throw error;
