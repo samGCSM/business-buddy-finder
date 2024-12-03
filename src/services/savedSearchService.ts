@@ -16,20 +16,36 @@ export const getSavedSearches = async (userId: string): Promise<SavedSearch[]> =
   const { data, error } = await supabase
     .from('saved_searches')
     .select('*')
-    .eq('user_id', userId);
+    .eq('user_id', parseInt(userId));
 
   if (error) {
     console.error('Error fetching saved searches:', error);
     throw error;
   }
 
-  return data.map(search => ({
-    id: search.id,
-    date: new Date(search.created_at || '').toLocaleDateString(),
-    location: search.location,
-    keyword: search.keyword,
-    results: search.results as Business[] // Type assertion since we know the structure
-  }));
+  return data.map(search => {
+    // Validate and transform the results array
+    const results = Array.isArray(search.results) 
+      ? search.results.map(result => ({
+          id: String(result.id || ''),
+          name: String(result.name || ''),
+          phone: String(result.phone || ''),
+          email: String(result.email || ''),
+          website: String(result.website || ''),
+          reviewCount: Number(result.reviewCount || 0),
+          rating: Number(result.rating || 0),
+          address: String(result.address || '')
+        }))
+      : [];
+
+    return {
+      id: search.id,
+      date: new Date(search.created_at || '').toLocaleDateString(),
+      location: search.location,
+      keyword: search.keyword,
+      results: results
+    };
+  });
 };
 
 export const saveSearch = async (
