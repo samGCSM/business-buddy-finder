@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Business } from "@/types/business";
+import { Database } from "@/integrations/supabase/types";
 
 export interface SavedSearch {
   id: string;
@@ -11,6 +12,7 @@ export interface SavedSearch {
 
 export const getSavedSearches = async (userId: string): Promise<SavedSearch[]> => {
   console.log('Fetching saved searches for user:', userId);
+  
   const { data, error } = await supabase
     .from('saved_searches')
     .select('*')
@@ -23,10 +25,10 @@ export const getSavedSearches = async (userId: string): Promise<SavedSearch[]> =
 
   return data.map(search => ({
     id: search.id,
-    date: new Date(search.created_at).toLocaleDateString(),
+    date: new Date(search.created_at || '').toLocaleDateString(),
     location: search.location,
     keyword: search.keyword,
-    results: search.results
+    results: search.results as Business[] // Type assertion since we know the structure
   }));
 };
 
@@ -37,13 +39,14 @@ export const saveSearch = async (
   results: Business[]
 ): Promise<void> => {
   console.log('Saving search for user:', userId);
+  
   const { error } = await supabase
     .from('saved_searches')
     .insert({
-      user_id: userId,
+      user_id: parseInt(userId),
       location,
       keyword,
-      results
+      results: results as unknown as Database['public']['Tables']['saved_searches']['Insert']['results']
     });
 
   if (error) {
