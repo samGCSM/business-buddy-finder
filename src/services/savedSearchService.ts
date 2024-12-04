@@ -66,6 +66,14 @@ export const saveSearch = async (
 ): Promise<void> => {
   console.log('Saving search for user:', userId);
   
+  // Get the current user's session to ensure we're authenticated
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  
+  if (sessionError || !session) {
+    console.error('Authentication error:', sessionError);
+    throw new Error('User must be authenticated to save searches');
+  }
+
   const { error } = await supabase
     .from('saved_searches')
     .insert({
