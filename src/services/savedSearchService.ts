@@ -36,7 +36,7 @@ export const getSavedSearches = async (userId: string): Promise<SavedSearch[]> =
 
   return data.map(search => {
     const results = Array.isArray(search.results) 
-      ? (search.results as JsonResult[]).map(result => ({
+      ? ((search.results as unknown) as JsonResult[]).map(result => ({
           id: result.id,
           name: result.name,
           phone: result.phone,
