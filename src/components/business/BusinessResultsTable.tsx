@@ -3,6 +3,7 @@ import { toast } from "@/hooks/use-toast";
 import * as XLSX from 'xlsx';
 import { saveSearch } from "@/services/savedSearchService";
 import { getCurrentUser } from "@/services/userService";
+import { useSession } from '@supabase/auth-helpers-react';
 
 interface Business {
   id: string;
@@ -22,6 +23,8 @@ interface BusinessResultsTableProps {
 }
 
 const BusinessResultsTable = ({ results, location, keyword }: BusinessResultsTableProps) => {
+  const session = useSession();
+
   const handleExport = () => {
     try {
       const exportData = results.map(business => ({
@@ -55,8 +58,7 @@ const BusinessResultsTable = ({ results, location, keyword }: BusinessResultsTab
 
   const handleSaveSearch = async () => {
     try {
-      const currentUser = await getCurrentUser();
-      if (!currentUser) {
+      if (!session) {
         toast({
           title: "Error",
           description: "Please log in to save searches",
@@ -65,7 +67,7 @@ const BusinessResultsTable = ({ results, location, keyword }: BusinessResultsTab
         return;
       }
 
-      await saveSearch(currentUser.id, location, keyword, results);
+      await saveSearch(session.user.id, location, keyword, results);
       toast({
         title: "Success",
         description: "Search saved successfully",

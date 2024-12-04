@@ -64,17 +64,19 @@ export const saveSearch = async (
   keyword: string,
   results: Business[]
 ): Promise<void> => {
-  console.log('Saving search for user:', userId);
+  console.log('Attempting to save search for user:', userId);
   
   try {
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
     
-    if (authError || !user) {
-      console.error('Authentication error:', authError);
-      throw new Error('User must be authenticated to save searches');
+    if (sessionError || !session) {
+      console.error('Session error:', sessionError);
+      throw new Error('No active session found');
     }
 
-    const { error } = await supabase
+    console.log('Active session found, proceeding with save');
+
+    const { error: insertError } = await supabase
       .from('saved_searches')
       .insert({
         user_id: parseInt(userId),
@@ -84,9 +86,9 @@ export const saveSearch = async (
         created_at: new Date().toISOString()
       });
 
-    if (error) {
-      console.error('Error saving search:', error);
-      throw error;
+    if (insertError) {
+      console.error('Insert error:', insertError);
+      throw new Error('Failed to save search to database');
     }
 
     console.log('Search saved successfully');
