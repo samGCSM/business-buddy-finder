@@ -67,15 +67,8 @@ export const saveSearch = async (
   console.log('Attempting to save search for user:', userId);
   
   try {
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    console.log('Saving search with user ID:', userId);
     
-    if (sessionError || !session) {
-      console.error('Session error:', sessionError);
-      throw new Error('No active session found');
-    }
-
-    console.log('Active session found, proceeding with save');
-
     const { error: insertError } = await supabase
       .from('saved_searches')
       .insert({

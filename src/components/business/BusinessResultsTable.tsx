@@ -2,7 +2,6 @@ import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import * as XLSX from 'xlsx';
 import { saveSearch } from "@/services/savedSearchService";
-import { getCurrentUser } from "@/services/userService";
 import { useSession } from '@supabase/auth-helpers-react';
 
 interface Business {
@@ -58,7 +57,10 @@ const BusinessResultsTable = ({ results, location, keyword }: BusinessResultsTab
 
   const handleSaveSearch = async () => {
     try {
-      if (!session) {
+      console.log('Current session:', session);
+      
+      if (!session?.user) {
+        console.log('No session user found');
         toast({
           title: "Error",
           description: "Please log in to save searches",
