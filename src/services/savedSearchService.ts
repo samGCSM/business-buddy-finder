@@ -11,14 +11,14 @@ export interface SavedSearch {
 }
 
 interface JsonResult {
-  id?: string | null;
-  name?: string | null;
-  phone?: string | null;
-  email?: string | null;
-  website?: string | null;
-  reviewCount?: number | null;
-  rating?: number | null;
-  address?: string | null;
+  id: string;
+  name: string;
+  phone: string;
+  email: string;
+  website: string;
+  reviewCount: number;
+  rating: number;
+  address: string;
 }
 
 export const getSavedSearches = async (userId: string): Promise<SavedSearch[]> => {
@@ -35,17 +35,16 @@ export const getSavedSearches = async (userId: string): Promise<SavedSearch[]> =
   }
 
   return data.map(search => {
-    // Validate and transform the results array
     const results = Array.isArray(search.results) 
       ? (search.results as JsonResult[]).map(result => ({
-          id: String(result?.id || ''),
-          name: String(result?.name || ''),
-          phone: String(result?.phone || ''),
-          email: String(result?.email || ''),
-          website: String(result?.website || ''),
-          reviewCount: Number(result?.reviewCount || 0),
-          rating: Number(result?.rating || 0),
-          address: String(result?.address || '')
+          id: result.id,
+          name: result.name,
+          phone: result.phone,
+          email: result.email,
+          website: result.website,
+          reviewCount: result.reviewCount,
+          rating: result.rating,
+          address: result.address
         }))
       : [];
 
@@ -73,7 +72,8 @@ export const saveSearch = async (
       user_id: parseInt(userId),
       location,
       keyword,
-      results: results as unknown as Json
+      results: results as unknown as Json,
+      created_at: new Date().toISOString()
     });
 
   if (error) {
