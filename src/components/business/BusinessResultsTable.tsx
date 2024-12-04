@@ -24,7 +24,6 @@ interface BusinessResultsTableProps {
 const BusinessResultsTable = ({ results, location, keyword }: BusinessResultsTableProps) => {
   const handleExport = () => {
     try {
-      // Transform data for Excel
       const exportData = results.map(business => ({
         'Business Name': business.name,
         'Phone': business.phone,
@@ -35,14 +34,9 @@ const BusinessResultsTable = ({ results, location, keyword }: BusinessResultsTab
         'Address': business.address
       }));
 
-      // Create worksheet
       const ws = XLSX.utils.json_to_sheet(exportData);
-      
-      // Create workbook
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Businesses");
-      
-      // Generate Excel file
       XLSX.writeFile(wb, "business_search_results.xlsx");
 
       toast({
@@ -65,7 +59,7 @@ const BusinessResultsTable = ({ results, location, keyword }: BusinessResultsTab
       if (!currentUser) {
         toast({
           title: "Error",
-          description: "You must be logged in to save searches",
+          description: "Please log in to save searches",
           variant: "destructive",
         });
         return;
@@ -80,7 +74,7 @@ const BusinessResultsTable = ({ results, location, keyword }: BusinessResultsTab
       console.error('Save search error:', error);
       toast({
         title: "Error",
-        description: "Failed to save search",
+        description: "Failed to save search. Please try again.",
         variant: "destructive",
       });
     }
@@ -89,7 +83,12 @@ const BusinessResultsTable = ({ results, location, keyword }: BusinessResultsTab
   return (
     <div className="space-y-4">
       <div className="flex justify-end gap-2">
-        <Button type="button" variant="outline" onClick={handleSaveSearch}>
+        <Button 
+          type="button" 
+          variant="outline" 
+          onClick={handleSaveSearch}
+          className="bg-green-500 text-white hover:bg-green-600"
+        >
           Save Search
         </Button>
         <Button type="button" variant="outline" onClick={handleExport}>
