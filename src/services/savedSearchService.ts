@@ -27,7 +27,7 @@ export const getSavedSearches = async (userId: string): Promise<SavedSearch[]> =
   const { data, error } = await supabase
     .from('saved_searches')
     .select('*')
-    .eq('user_id', parseInt(userId));
+    .eq('user_id', userId);
 
   if (error) {
     console.error('Error fetching saved searches:', error);
@@ -72,7 +72,7 @@ export const saveSearch = async (
     const { error: insertError } = await supabase
       .from('saved_searches')
       .insert({
-        user_id: parseInt(userId),
+        user_id: userId,
         location,
         keyword,
         results: results as unknown as Json,
