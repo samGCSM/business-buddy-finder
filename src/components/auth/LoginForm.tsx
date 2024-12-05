@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import { getUsers, updateUserLastLogin, setCurrentUser } from "@/services/userService";
 
 const LoginForm = ({ onLogin }: { onLogin: (isLoggedIn: boolean, userType: 'admin' | 'user') => void }) => {
@@ -15,11 +16,17 @@ const LoginForm = ({ onLogin }: { onLogin: (isLoggedIn: boolean, userType: 'admi
     
     try {
       console.log('Attempting login with email:', email);
-      const users = await getUsers();
-      console.log('Retrieved users:', users);
       
       // Demo credentials check
       if (email === 'admin@example.com' && password === 'admin') {
+        // Create Supabase session for admin
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: 'admin@example.com',
+          password: 'admin'
+        });
+
+        if (error) throw error;
+
         const adminUser = {
           id: '1',
           email: 'admin@example.com',
@@ -40,6 +47,14 @@ const LoginForm = ({ onLogin }: { onLogin: (isLoggedIn: boolean, userType: 'admi
       }
       
       if (email === 'user@example.com' && password === 'user') {
+        // Create Supabase session for regular user
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: 'user@example.com',
+          password: 'user'
+        });
+
+        if (error) throw error;
+
         const regularUser = {
           id: '2',
           email: 'user@example.com',

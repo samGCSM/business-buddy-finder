@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { saveSearch } from "@/services/savedSearchService";
-import { useSession } from '@supabase/auth-helpers-react';
+import { supabase } from "@/integrations/supabase/client";
 import type { Business } from "@/types/business";
 
 interface BusinessTableActionsProps {
@@ -12,10 +12,11 @@ interface BusinessTableActionsProps {
 }
 
 const BusinessTableActions = ({ results, location, keyword, onExport }: BusinessTableActionsProps) => {
-  const session = useSession();
-
   const handleSaveSearch = async () => {
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      console.log('Current session:', session);
+
       if (!session?.user?.id) {
         console.log('No session found:', session);
         toast({
