@@ -1,8 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { saveSearch } from "@/services/savedSearchService";
-import { supabase } from "@/integrations/supabase/client";
-import { useEffect, useState } from 'react';
+import { useSession } from '@supabase/auth-helpers-react';
 import type { Business } from "@/types/business";
 
 interface BusinessTableActionsProps {
@@ -13,30 +12,12 @@ interface BusinessTableActionsProps {
 }
 
 const BusinessTableActions = ({ results, location, keyword, onExport }: BusinessTableActionsProps) => {
-  const [session, setSession] = useState<any>(null);
-
-  useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('Initial session:', session);
-      setSession(session);
-    });
-
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      console.log('Auth state changed:', session);
-      setSession(session);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+  const session = useSession();
 
   const handleSaveSearch = async () => {
     try {
       if (!session?.user?.id) {
-        console.log('No session user ID found:', session);
+        console.log('No session found:', session);
         toast({
           title: "Error",
           description: "Please log in to save searches",

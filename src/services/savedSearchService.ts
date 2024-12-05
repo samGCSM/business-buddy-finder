@@ -24,10 +24,16 @@ interface JsonResult {
 export const getSavedSearches = async (userId: string): Promise<SavedSearch[]> => {
   console.log('Fetching saved searches for user:', userId);
   
+  const userIdNumber = parseInt(userId);
+  if (isNaN(userIdNumber)) {
+    console.error('Invalid user ID format');
+    throw new Error('Invalid user ID format');
+  }
+
   const { data, error } = await supabase
     .from('saved_searches')
     .select('*')
-    .eq('user_id', parseInt(userId));
+    .eq('user_id', userIdNumber);
 
   if (error) {
     console.error('Error fetching saved searches:', error);
@@ -67,7 +73,6 @@ export const saveSearch = async (
   console.log('Attempting to save search for user:', userId);
   
   try {
-    // Convert userId to number since the database expects a number
     const userIdNumber = parseInt(userId);
     console.log('Parsed user ID:', userIdNumber);
     
