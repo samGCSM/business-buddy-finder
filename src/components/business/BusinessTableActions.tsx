@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { saveSearch } from "@/services/savedSearchService";
-import { useSession } from '@supabase/auth-helpers-react';
+import { supabase } from "@/integrations/supabase/client";
+import { useEffect, useState } from 'react';
 import type { Business } from "@/types/business";
 
 interface BusinessTableActionsProps {
@@ -12,14 +13,34 @@ interface BusinessTableActionsProps {
 }
 
 const BusinessTableActions = ({ results, location, keyword, onExport }: BusinessTableActionsProps) => {
-  const session = useSession();
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      console.log('Current session:', session);
+      if (session?.user?.id) {
+        setUserId(session.user.id);
+      }
+    };
+
+    checkSession();
+
+    // Subscribe to auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      console.log('Auth state changed:', session);
+      setUserId(session?.user?.id || null);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
   const handleSaveSearch = async () => {
     try {
-      console.log('Current session:', session);
-      
-      if (!session?.user?.id) {
-        console.log('No session user ID found');
+      if (!userId) {
+        console.log('No user ID found');
         toast({
           title: "Error",
           description: "Please log in to save searches",
@@ -28,7 +49,8 @@ const BusinessTableActions = ({ results, location, keyword, onExport }: Business
         return;
       }
 
-      await saveSearch(session.user.id, location, keyword, results);
+      console.log('Saving search for user:', userId);
+      await saveSearch(userId, location, keyword, results);
       toast({
         title: "Success",
         description: "Search saved successfully",
