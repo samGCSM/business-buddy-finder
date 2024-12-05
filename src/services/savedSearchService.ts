@@ -27,7 +27,7 @@ export const getSavedSearches = async (userId: string): Promise<SavedSearch[]> =
   const { data, error } = await supabase
     .from('saved_searches')
     .select('*')
-    .eq('user_id', userId);
+    .eq('user_id', parseInt(userId));
 
   if (error) {
     console.error('Error fetching saved searches:', error);
@@ -67,10 +67,19 @@ export const saveSearch = async (
   console.log('Attempting to save search for user:', userId);
   
   try {
+    // Convert userId to number since the database expects a number
+    const userIdNumber = parseInt(userId);
+    console.log('Parsed user ID:', userIdNumber);
+    
+    if (isNaN(userIdNumber)) {
+      console.error('Invalid user ID format');
+      throw new Error('Invalid user ID format');
+    }
+
     const { error: insertError } = await supabase
       .from('saved_searches')
       .insert({
-        user_id: userId,
+        user_id: userIdNumber,
         location,
         keyword,
         results: results as unknown as Json,
