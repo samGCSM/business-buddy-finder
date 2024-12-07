@@ -32,13 +32,7 @@ const LoginForm = ({ onLogin }: { onLogin: (isLoggedIn: boolean, userType: 'admi
 
       console.log('Found user:', users);
 
-      // Try to sign up the user first (this will fail if they already exist, which is fine)
-      const { error: signUpError } = await supabase.auth.signUp({
-        email: email,
-        password: password,
-      });
-
-      // Now try to sign in, regardless of whether sign up succeeded or failed
+      // Attempt to sign in with Supabase auth
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email: email,
         password: password,
@@ -46,6 +40,17 @@ const LoginForm = ({ onLogin }: { onLogin: (isLoggedIn: boolean, userType: 'admi
 
       if (authError) {
         console.error('Auth error:', authError);
+        
+        // Handle specific auth errors
+        if (authError.message.includes('Email not confirmed')) {
+          toast({
+            title: "Email Not Verified",
+            description: "Please check your email for a verification link. For testing, you can disable email verification in the Supabase dashboard.",
+            variant: "destructive",
+          });
+          return;
+        }
+        
         throw authError;
       }
 
