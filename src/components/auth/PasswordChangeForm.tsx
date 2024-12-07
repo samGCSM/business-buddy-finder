@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
-import { changeUserPassword } from "@/services/userService";
+import { supabase } from "@/integrations/supabase/client";
 
 interface PasswordChangeFormProps {
   userId: string;
@@ -13,8 +13,9 @@ const PasswordChangeForm = ({ userId, onClose }: PasswordChangeFormProps) => {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (newPassword !== confirmPassword) {
@@ -26,18 +27,26 @@ const PasswordChangeForm = ({ userId, onClose }: PasswordChangeFormProps) => {
       return;
     }
 
-    if (changeUserPassword(userId, newPassword)) {
+    setIsLoading(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      
+      if (error) throw error;
+
       toast({
         title: "Success",
         description: "Password changed successfully",
       });
       onClose();
-    } else {
+    } catch (error) {
+      console.error('Error changing password:', error);
       toast({
         title: "Error",
         description: "Failed to change password",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -83,8 +92,8 @@ const PasswordChangeForm = ({ userId, onClose }: PasswordChangeFormProps) => {
         <Button type="button" variant="outline" onClick={onClose}>
           Cancel
         </Button>
-        <Button type="submit">
-          Change Password
+        <Button type="submit" disabled={isLoading}>
+          {isLoading ? "Changing Password..." : "Change Password"}
         </Button>
       </div>
     </form>
