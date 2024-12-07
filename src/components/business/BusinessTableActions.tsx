@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { saveSearch } from "@/services/savedSearchService";
-import { supabase } from "@/integrations/supabase/client";
+import { getCurrentUser } from "@/services/userService";
 import type { Business } from "@/types/business";
 
 interface BusinessTableActionsProps {
@@ -14,11 +14,11 @@ interface BusinessTableActionsProps {
 const BusinessTableActions = ({ results, location, keyword, onExport }: BusinessTableActionsProps) => {
   const handleSaveSearch = async () => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      console.log('Current session:', session);
+      const currentUser = await getCurrentUser();
+      console.log('Current user:', currentUser);
 
-      if (!session?.user?.id) {
-        console.log('No session found:', session);
+      if (!currentUser?.id) {
+        console.log('No user found:', currentUser);
         toast({
           title: "Error",
           description: "Please log in to save searches",
@@ -27,8 +27,8 @@ const BusinessTableActions = ({ results, location, keyword, onExport }: Business
         return;
       }
 
-      console.log('Saving search for user:', session.user.id);
-      await saveSearch(session.user.id, location, keyword, results);
+      console.log('Saving search for user:', currentUser.id);
+      await saveSearch(currentUser.id.toString(), location, keyword, results);
       toast({
         title: "Success",
         description: "Search saved successfully",
