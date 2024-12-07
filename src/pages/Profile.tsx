@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSession } from "@supabase/auth-helpers-react";
 import { Card } from "@/components/ui/card";
@@ -11,18 +11,18 @@ import { supabase } from "@/integrations/supabase/client";
 const Profile = () => {
   const session = useSession();
   const navigate = useNavigate();
-  const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
+
+  useEffect(() => {
+    if (!session) {
+      navigate("/");
+    }
+  }, [session, navigate]);
 
   if (!session) {
-    navigate("/");
     return null;
   }
 
   const user = session.user;
-
-  const handlePasswordChange = () => {
-    setIsPasswordDialogOpen(true);
-  };
 
   const handleSignOut = async () => {
     try {
@@ -44,31 +44,39 @@ const Profile = () => {
 
   return (
     <div className="container mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-6">User Profile</h1>
-      <Card className="p-6 space-y-6">
-        <div className="space-y-2">
-          <h2 className="text-lg font-semibold">Email</h2>
-          <p className="text-gray-600">{user.email}</p>
-        </div>
-
-        <div className="space-y-4">
-          <Dialog open={isPasswordDialogOpen} onOpenChange={setIsPasswordDialogOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={handlePasswordChange}>Change Password</Button>
-            </DialogTrigger>
-            <DialogContent>
-              <PasswordChangeForm 
-                userId={user.id} 
-                onClose={() => setIsPasswordDialogOpen(false)} 
-              />
-            </DialogContent>
-          </Dialog>
-
-          <Button variant="outline" onClick={handleSignOut}>
-            Sign Out
+      <div className="max-w-2xl mx-auto">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold">User Profile</h1>
+          <Button variant="outline" onClick={() => navigate("/")}>
+            Back to Home
           </Button>
         </div>
-      </Card>
+        
+        <Card className="p-6 space-y-6">
+          <div className="space-y-2">
+            <h2 className="text-lg font-semibold">Email</h2>
+            <p className="text-gray-600">{user.email}</p>
+          </div>
+
+          <div className="space-y-4">
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button>Change Password</Button>
+              </DialogTrigger>
+              <DialogContent>
+                <PasswordChangeForm 
+                  userId={user.id} 
+                  onClose={() => document.querySelector('button[aria-label="Close"]')?.click()} 
+                />
+              </DialogContent>
+            </Dialog>
+
+            <Button variant="outline" onClick={handleSignOut}>
+              Sign Out
+            </Button>
+          </div>
+        </Card>
+      </div>
     </div>
   );
 };
