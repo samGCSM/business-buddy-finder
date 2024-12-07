@@ -29,6 +29,11 @@ export const UserTable = ({ users, setUsers, setSelectedUserId }: UserTableProps
     }
   };
 
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return "Never";
+    return new Date(dateString).toLocaleString();
+  };
+
   return (
     <div className="bg-white rounded-lg shadow overflow-hidden">
       <table className="min-w-full divide-y divide-gray-200">
@@ -64,13 +69,13 @@ export const UserTable = ({ users, setUsers, setSelectedUserId }: UserTableProps
                 {user.type}
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                {user.lastLogin}
+                {formatDate(user.lastLogin)}
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                {user.totalSearches}
+                {user.totalSearches || 0}
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                {user.savedSearches}
+                {user.savedSearches || 0}
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
                 {user.type !== "admin" && (
