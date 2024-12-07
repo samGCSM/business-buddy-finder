@@ -1,20 +1,31 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
 import { searchBusinesses } from "@/utils/googleApi";
 import type { Business } from "@/types/business";
+import type { SavedSearch } from "@/services/savedSearchService";
 import BusinessSearchForm from "./BusinessSearchForm";
 import BusinessResultsTable from "./BusinessResultsTable";
 import { Button } from "@/components/ui/button";
 
 interface BusinessSearchProps {
   onShowSavedSearches: () => void;
+  initialSearch?: SavedSearch | null;
 }
 
-const BusinessSearch = ({ onShowSavedSearches }: BusinessSearchProps) => {
+const BusinessSearch = ({ onShowSavedSearches, initialSearch }: BusinessSearchProps) => {
   const [results, setResults] = useState<Business[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [currentLocation, setCurrentLocation] = useState("");
   const [currentKeyword, setCurrentKeyword] = useState("");
+
+  useEffect(() => {
+    if (initialSearch) {
+      console.log('Loading initial search:', initialSearch);
+      setResults(initialSearch.results);
+      setCurrentLocation(initialSearch.location);
+      setCurrentKeyword(initialSearch.keyword);
+    }
+  }, [initialSearch]);
 
   const handleSearch = async (location: string, keyword: string) => {
     setIsLoading(true);
@@ -47,7 +58,12 @@ const BusinessSearch = ({ onShowSavedSearches }: BusinessSearchProps) => {
         </Button>
       </div>
 
-      <BusinessSearchForm onSearch={handleSearch} isLoading={isLoading} />
+      <BusinessSearchForm 
+        onSearch={handleSearch} 
+        isLoading={isLoading}
+        initialLocation={currentLocation}
+        initialKeyword={currentKeyword}
+      />
       
       {results.length > 0 && (
         <BusinessResultsTable 

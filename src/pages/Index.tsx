@@ -14,6 +14,7 @@ const Index = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [showSavedSearches, setShowSavedSearches] = useState(false);
   const [savedSearches, setSavedSearches] = useState<SavedSearch[]>([]);
+  const [currentResults, setCurrentResults] = useState<SavedSearch | null>(null);
 
   const loadSavedSearches = async () => {
     try {
@@ -50,6 +51,7 @@ const Index = () => {
     setIsAdmin(false);
     setShowSavedSearches(false);
     setSavedSearches([]);
+    setCurrentResults(null);
     toast({
       title: "Success",
       description: "Logged out successfully",
@@ -57,6 +59,8 @@ const Index = () => {
   };
 
   const handleLoadSavedSearch = (search: SavedSearch) => {
+    console.log('Loading saved search:', search);
+    setCurrentResults(search);
     setShowSavedSearches(false);
     toast({
       title: "Success",
@@ -66,6 +70,7 @@ const Index = () => {
 
   const handleShowSavedSearches = async () => {
     setShowSavedSearches(true);
+    setCurrentResults(null);
     await loadSavedSearches();
   };
 
@@ -100,7 +105,10 @@ const Index = () => {
                 }}
               />
             ) : (
-              <BusinessSearch onShowSavedSearches={handleShowSavedSearches} />
+              <BusinessSearch 
+                onShowSavedSearches={handleShowSavedSearches}
+                initialSearch={currentResults}
+              />
             )}
           </div>
         )}
