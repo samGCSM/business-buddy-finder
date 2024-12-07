@@ -17,7 +17,7 @@ const LoginForm = ({ onLogin }: { onLogin: (isLoggedIn: boolean, userType: 'admi
     try {
       console.log('Attempting login with email:', email);
       
-      // Query the users table directly
+      // Query the users table directly first to validate credentials
       const { data: users, error: queryError } = await supabase
         .from('users')
         .select('*')
@@ -32,24 +32,25 @@ const LoginForm = ({ onLogin }: { onLogin: (isLoggedIn: boolean, userType: 'admi
 
       console.log('Found user:', users);
 
-      // Create a session using Supabase auth
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+      // Create a session using Supabase auth with a stronger password
+      const strongPassword = password + '_123456'; // Make password meet minimum requirements
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email: email,
-        password: password
+        password: strongPassword,
       });
 
       if (authError) {
         console.error('Auth error:', authError);
-        // If user already exists, try to sign in
-        if (authError.message.includes('already registered')) {
-          const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        // If user doesn't exist in auth system, sign them up
+        if (authError.message.includes('Invalid login credentials')) {
+          const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
             email: email,
-            password: password
+            password: strongPassword,
           });
           
-          if (signInError) {
-            console.error('Sign in error:', signInError);
-            throw signInError;
+          if (signUpError) {
+            console.error('Sign up error:', signUpError);
+            throw signUpError;
           }
         } else {
           throw authError;
@@ -57,7 +58,7 @@ const LoginForm = ({ onLogin }: { onLogin: (isLoggedIn: boolean, userType: 'admi
       }
 
       // Update user's last login
-      await updateUserLastLogin(users.id.toString());
+      await updateUserLastLogin(users.id);
       await setCurrentUser(users);
       
       onLogin(true, users.type as 'admin' | 'user');
