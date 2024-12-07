@@ -87,6 +87,9 @@ const Index = () => {
                   Manage Users
                 </Button>
               )}
+              <Button variant="outline" onClick={() => navigate('/profile')}>
+                Profile
+              </Button>
               <Button variant="destructive" onClick={handleLogout}>
                 Logout
               </Button>
