@@ -20,7 +20,7 @@ const Index = () => {
       try {
         const currentUser = await getCurrentUser();
         if (currentUser) {
-          const searches = await getSavedSearches(currentUser.id);
+          const searches = await getSavedSearches(currentUser.id.toString());
           setSavedSearches(searches);
         }
       } catch (error) {
