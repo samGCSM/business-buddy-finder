@@ -2,6 +2,9 @@ import { Button } from "@/components/ui/button";
 import { saveUsers } from "@/services/userService";
 import type { User } from "@/types/user";
 import { toast } from "@/hooks/use-toast";
+import { UserTableHeader } from "./UserTableHeader";
+import { UserTableRow } from "./UserTableRow";
+import { formatDate, getNumericValue } from "./UserTableUtils";
 
 interface UserTableProps {
   users: User[];
@@ -29,92 +32,20 @@ export const UserTable = ({ users, setUsers, setSelectedUserId }: UserTableProps
     }
   };
 
-  const formatDate = (dateString: string | null) => {
-    console.log('Formatting date:', dateString);
-    if (!dateString) return "Never";
-    
-    try {
-      const date = new Date(dateString);
-      if (isNaN(date.getTime())) {
-        console.error('Invalid date:', dateString);
-        return "Never";
-      }
-      return date.toLocaleString();
-    } catch (error) {
-      console.error('Error formatting date:', error);
-      return "Never";
-    }
-  };
-
-  const getNumericValue = (value: number | null | undefined): number => {
-    console.log('Getting numeric value:', value);
-    if (value === null || value === undefined) return 0;
-    const numValue = Number(value);
-    return isNaN(numValue) ? 0 : numValue;
-  };
-
   return (
     <div className="bg-white rounded-lg shadow overflow-hidden">
       <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
-          <tr>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Email
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Type
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Last Login
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Total Searches
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Saved Searches
-            </th>
-            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Actions
-            </th>
-          </tr>
-        </thead>
+        <UserTableHeader />
         <tbody className="bg-white divide-y divide-gray-200">
           {users.map((user) => (
-            <tr key={user.id}>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                {user.email}
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                {user.type}
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                {formatDate(user.lastLogin)}
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                {getNumericValue(user.totalSearches)}
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                {getNumericValue(user.savedSearches)}
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                {user.type !== "admin" && (
-                  <>
-                    <Button
-                      variant="outline"
-                      onClick={() => setSelectedUserId(user.id.toString())}
-                    >
-                      Change Password
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      onClick={() => handleDeleteUser(user.id)}
-                    >
-                      Delete
-                    </Button>
-                  </>
-                )}
-              </td>
-            </tr>
+            <UserTableRow
+              key={user.id}
+              user={user}
+              formatDate={formatDate}
+              getNumericValue={getNumericValue}
+              onDelete={handleDeleteUser}
+              onChangePassword={setSelectedUserId}
+            />
           ))}
         </tbody>
       </table>
