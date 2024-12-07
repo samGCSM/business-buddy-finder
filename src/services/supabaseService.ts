@@ -88,9 +88,13 @@ export const updateUserStats = async (userId: string, type: 'search' | 'savedSea
     const currentTotalSearches = Number(userData?.totalSearches) || 0;
     const currentSavedSearches = Number(userData?.savedSearches) || 0;
 
-    const updates = type === 'search'
-      ? { totalSearches: currentTotalSearches + 1 }
-      : { savedSearches: currentSavedSearches + 1 };
+    // Prepare the update object
+    let updates = {};
+    if (type === 'search') {
+      updates = { totalSearches: currentTotalSearches + 1 };
+    } else {
+      updates = { savedSearches: currentSavedSearches + 1 };
+    }
 
     console.log('Updating stats with:', updates);
 
@@ -130,6 +134,7 @@ export const updateUserLastLogin = async (userId: string): Promise<void> => {
     const lastLogin = new Date().toISOString();
     console.log('Setting lastLogin to:', lastLogin);
 
+    // Update the lastLogin timestamp
     const { error } = await supabase
       .from('users')
       .update({ lastLogin })
