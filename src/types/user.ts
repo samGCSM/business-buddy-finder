@@ -1,7 +1,7 @@
 export interface User {
   id: number;
   email: string;
-  type: 'admin' | 'user';
+  type: string;
   password: string;
   lastLogin: string;
   totalSearches: number;

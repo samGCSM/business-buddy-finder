@@ -17,7 +17,7 @@ export const AddUserForm = ({ users, setUsers }: AddUserFormProps) => {
   const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
     const newUser: User = {
-      id: (users.length + 1).toString(),
+      id: users.length + 1,
       email: newUserEmail,
       password: newUserPassword,
       type: "user",

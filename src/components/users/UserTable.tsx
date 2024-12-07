@@ -10,7 +10,7 @@ interface UserTableProps {
 }
 
 export const UserTable = ({ users, setUsers, setSelectedUserId }: UserTableProps) => {
-  const handleDeleteUser = async (id: string) => {
+  const handleDeleteUser = async (id: number) => {
     try {
       const updatedUsers = users.filter((user) => user.id !== id);
       await saveUsers(updatedUsers);
@@ -77,7 +77,7 @@ export const UserTable = ({ users, setUsers, setSelectedUserId }: UserTableProps
                   <>
                     <Button
                       variant="outline"
-                      onClick={() => setSelectedUserId(user.id)}
+                      onClick={() => setSelectedUserId(user.id.toString())}
                     >
                       Change Password
                     </Button>

@@ -58,7 +58,7 @@ const LoginForm = ({ onLogin }: { onLogin: (isLoggedIn: boolean, userType: 'admi
       }
 
       // Update user's last login
-      await updateUserLastLogin(users.id);
+      await updateUserLastLogin(users.id.toString());
       await setCurrentUser(users);
       
       onLogin(true, users.type as 'admin' | 'user');
