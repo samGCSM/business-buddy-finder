@@ -22,11 +22,11 @@ const Index = () => {
   useEffect(() => {
     console.log("Index - Session state:", session);
     const checkAuth = async () => {
-      if (session) {
-        const currentUser = await getCurrentUser();
-        console.log("Index - Current user:", currentUser);
+      const currentUser = await getCurrentUser();
+      console.log("Index - Current user:", currentUser);
+      if (currentUser) {
         setIsLoggedIn(true);
-        setIsAdmin(currentUser?.type === 'admin');
+        setIsAdmin(currentUser.type === 'admin');
       } else {
         setIsLoggedIn(false);
         setIsAdmin(false);
@@ -102,7 +102,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8">
-        {!session ? (
+        {!isLoggedIn ? (
           <LoginForm onLogin={handleLogin} />
         ) : (
           <div className="max-w-4xl mx-auto space-y-6">
