@@ -17,41 +17,35 @@ const LoginForm = ({ onLogin }: { onLogin: (isLoggedIn: boolean, userType: 'admi
     try {
       console.log('Attempting login with email:', email);
       
-      // Query the users table directly first to validate credentials
+      // Query the users table directly to validate credentials
       const { data: users, error: queryError } = await supabase
         .from('users')
         .select('*')
         .eq('email', email)
-        .eq('password', password)
-        .single();
+        .eq('password', password);
 
-      if (queryError || !users) {
+      if (queryError) {
         console.error('Login query error:', queryError);
         throw new Error('Invalid credentials');
       }
 
-      console.log('Found user:', users);
-
-      // Attempt to sign in with Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email: email,
-        password: password,
-      });
-
-      if (authError) {
-        console.error('Auth error:', authError);
-        throw authError;
+      if (!users || users.length === 0) {
+        console.error('No user found with provided credentials');
+        throw new Error('Invalid credentials');
       }
 
+      const user = users[0];
+      console.log('Found user:', user);
+
       // Update user's last login
-      await updateUserLastLogin(users.id.toString());
-      await setCurrentUser(users);
+      await updateUserLastLogin(user.id.toString());
+      await setCurrentUser(user);
       
-      onLogin(true, users.type as 'admin' | 'user');
+      onLogin(true, user.type as 'admin' | 'user');
       
       toast({
         title: "Success",
-        description: `Logged in successfully${users.type === 'admin' ? ' as admin' : ''}`,
+        description: `Logged in successfully${user.type === 'admin' ? ' as admin' : ''}`,
       });
     } catch (error) {
       console.error('Login error:', error);
