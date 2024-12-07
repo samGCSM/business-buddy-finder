@@ -23,10 +23,12 @@ export const getUsers = async (): Promise<User[]> => {
       throw error;
     }
     
+    console.log('Raw user data from Supabase:', data);
+    
     return data.map(user => ({
       ...user,
-      totalSearches: parseInt(user.totalSearches?.toString() || '0', 10),
-      savedSearches: parseInt(user.savedSearches?.toString() || '0', 10)
+      totalSearches: Number(user.totalSearches) || 0,
+      savedSearches: Number(user.savedSearches) || 0
     })) || [];
   } catch (error) {
     console.error('Error fetching users:', error);
@@ -45,8 +47,8 @@ export const saveUser = async (user: User): Promise<void> => {
         type: user.type,
         password: user.password,
         lastLogin: user.lastLogin,
-        totalSearches: user.totalSearches,
-        savedSearches: user.savedSearches
+        totalSearches: Number(user.totalSearches),
+        savedSearches: Number(user.savedSearches)
       });
 
     if (error) {
@@ -80,13 +82,17 @@ export const updateUserStats = async (userId: string, type: 'search' | 'savedSea
       throw fetchError;
     }
 
+    console.log('Current user stats:', userData);
+
     // Parse current values and increment
-    const currentTotalSearches = parseInt(userData?.totalSearches?.toString() || '0', 10);
-    const currentSavedSearches = parseInt(userData?.savedSearches?.toString() || '0', 10);
+    const currentTotalSearches = Number(userData?.totalSearches) || 0;
+    const currentSavedSearches = Number(userData?.savedSearches) || 0;
 
     const updates = type === 'search'
       ? { totalSearches: currentTotalSearches + 1 }
       : { savedSearches: currentSavedSearches + 1 };
+
+    console.log('Updating stats with:', updates);
 
     // Update the stats
     const { error: updateError } = await supabase
@@ -110,6 +116,8 @@ export const updateUserStats = async (userId: string, type: 'search' | 'savedSea
       }
       localStorage.setItem('currentUser', JSON.stringify(user));
     }
+
+    console.log('Stats updated successfully');
   } catch (error) {
     console.error('Error updating user stats:', error);
     throw error;
@@ -120,6 +128,8 @@ export const updateUserLastLogin = async (userId: string): Promise<void> => {
   console.log('Updating user last login in Supabase:', userId);
   try {
     const lastLogin = new Date().toISOString();
+    console.log('Setting lastLogin to:', lastLogin);
+
     const { error } = await supabase
       .from('users')
       .update({ lastLogin })
@@ -137,6 +147,8 @@ export const updateUserLastLogin = async (userId: string): Promise<void> => {
       user.lastLogin = lastLogin;
       localStorage.setItem('currentUser', JSON.stringify(user));
     }
+
+    console.log('Last login updated successfully');
   } catch (error) {
     console.error('Error updating last login:', error);
     throw error;

@@ -31,7 +31,12 @@ export const UserTable = ({ users, setUsers, setSelectedUserId }: UserTableProps
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return "Never";
-    return new Date(dateString).toLocaleString();
+    try {
+      return new Date(dateString).toLocaleString();
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return "Invalid Date";
+    }
   };
 
   return (
@@ -72,10 +77,10 @@ export const UserTable = ({ users, setUsers, setSelectedUserId }: UserTableProps
                 {formatDate(user.lastLogin)}
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                {user.totalSearches || 0}
+                {Number(user.totalSearches) || 0}
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                {user.savedSearches || 0}
+                {Number(user.savedSearches) || 0}
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
                 {user.type !== "admin" && (
