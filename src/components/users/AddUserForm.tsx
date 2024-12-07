@@ -21,11 +21,12 @@ export const AddUserForm = ({ users, setUsers }: AddUserFormProps) => {
       email: newUserEmail,
       password: newUserPassword,
       type: "user",
-      lastLogin: "-",
+      lastLogin: null, // Changed from "-" to null
       totalSearches: 0,
       savedSearches: 0,
     };
     try {
+      console.log('Adding new user:', newUser);
       const updatedUsers = [...users, newUser];
       await saveUsers(updatedUsers);
       setUsers(updatedUsers);
