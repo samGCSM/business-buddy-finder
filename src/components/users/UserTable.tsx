@@ -6,7 +6,7 @@ import { UserTableHeader } from "./UserTableHeader";
 import { UserTableRow } from "./UserTableRow";
 import { formatDate, getNumericValue } from "./UserTableUtils";
 import { supabase } from "@/integrations/supabase/client";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 interface UserTableProps {
   users: User[];
@@ -15,6 +15,8 @@ interface UserTableProps {
 }
 
 export const UserTable = ({ users, setUsers, setSelectedUserId }: UserTableProps) => {
+  const [isLoading, setIsLoading] = useState(true);
+
   useEffect(() => {
     const fetchLatestUserData = async () => {
       try {
@@ -23,22 +25,13 @@ export const UserTable = ({ users, setUsers, setSelectedUserId }: UserTableProps
           .select('*');
         
         if (error) {
+          console.error('Error fetching users:', error);
           throw error;
         }
 
         if (data) {
-          console.log('Latest user data from Supabase:', data);
-          // Transform the data to ensure proper typing
-          const transformedUsers = data.map(user => ({
-            id: user.id,
-            email: user.email || '',
-            type: user.type || 'user',
-            password: user.password || '',
-            lastLogin: user.lastLogin || null,
-            totalSearches: typeof user.totalSearches === 'number' ? user.totalSearches : 0,
-            savedSearches: typeof user.savedSearches === 'number' ? user.savedSearches : 0
-          }));
-          setUsers(transformedUsers);
+          console.log('Raw user data from Supabase:', data);
+          setUsers(data);
         }
       } catch (error) {
         console.error('Error fetching latest user data:', error);
@@ -47,10 +40,31 @@ export const UserTable = ({ users, setUsers, setSelectedUserId }: UserTableProps
           description: "Failed to fetch latest user data",
           variant: "destructive",
         });
+      } finally {
+        setIsLoading(false);
       }
     };
 
+    // Fetch initial data
     fetchLatestUserData();
+
+    // Set up real-time subscription for updates
+    const subscription = supabase
+      .channel('users_channel')
+      .on('postgres_changes', 
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'users' 
+        }, 
+        fetchLatestUserData
+      )
+      .subscribe();
+
+    // Cleanup subscription
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [setUsers]);
 
   const handleDeleteUser = async (id: number) => {
@@ -71,6 +85,10 @@ export const UserTable = ({ users, setUsers, setSelectedUserId }: UserTableProps
       });
     }
   };
+
+  if (isLoading) {
+    return <div className="flex justify-center items-center">Loading...</div>;
+  }
 
   return (
     <div className="bg-white rounded-lg shadow overflow-hidden">

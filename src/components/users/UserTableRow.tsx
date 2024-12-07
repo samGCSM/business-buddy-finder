@@ -16,11 +16,6 @@ export const UserTableRow = ({
   onDelete, 
   onChangePassword 
 }: UserTableRowProps) => {
-  console.log('Rendering user row:', user);
-  console.log('Last login:', user.lastLogin);
-  console.log('Total searches:', user.totalSearches);
-  console.log('Saved searches:', user.savedSearches);
-
   return (
     <tr key={user.id}>
       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">

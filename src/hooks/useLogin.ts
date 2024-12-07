@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { updateUserLastLogin, setCurrentUser } from "@/services/userService";
 
 export const useLogin = (onLogin: (isLoggedIn: boolean, userType: 'admin' | 'user') => void) => {
   const [isLoading, setIsLoading] = useState(false);
@@ -12,6 +11,7 @@ export const useLogin = (onLogin: (isLoggedIn: boolean, userType: 'admin' | 'use
     try {
       console.log('Attempting login with email:', email);
       
+      // First, check if user exists and get credentials
       const { data: users, error: queryError } = await supabase
         .from('users')
         .select('*')
@@ -31,8 +31,30 @@ export const useLogin = (onLogin: (isLoggedIn: boolean, userType: 'admin' | 'use
       const user = users[0];
       console.log('Found user:', user);
 
-      await updateUserLastLogin(user.id.toString());
-      await setCurrentUser(user);
+      // Update the lastLogin timestamp directly in the database
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({ 
+          lastLogin: new Date().toISOString()
+        })
+        .eq('id', user.id);
+
+      if (updateError) {
+        console.error('Error updating last login:', updateError);
+        throw updateError;
+      }
+
+      // Get the updated user data
+      const { data: updatedUser } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (updatedUser) {
+        console.log('Updated user data:', updatedUser);
+        localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+      }
       
       onLogin(true, user.type as 'admin' | 'user');
       

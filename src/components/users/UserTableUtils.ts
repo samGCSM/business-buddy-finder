@@ -11,9 +11,7 @@ export const formatDate = (dateString: string | null) => {
       console.error('Invalid date:', dateString);
       return "Never";
     }
-    const formattedDate = date.toLocaleString();
-    console.log('Formatted date:', formattedDate);
-    return formattedDate;
+    return date.toLocaleString();
   } catch (error) {
     console.error('Error formatting date:', error);
     return "Never";
@@ -21,16 +19,9 @@ export const formatDate = (dateString: string | null) => {
 };
 
 export const getNumericValue = (value: number | null | undefined): number => {
-  console.log('Getting numeric value:', value);
   if (value === null || value === undefined) {
-    console.log('Null or undefined value, returning 0');
     return 0;
   }
   const numValue = Number(value);
-  if (isNaN(numValue)) {
-    console.log('Invalid number, returning 0');
-    return 0;
-  }
-  console.log('Returning numeric value:', numValue);
-  return numValue;
+  return isNaN(numValue) ? 0 : numValue;
 };
