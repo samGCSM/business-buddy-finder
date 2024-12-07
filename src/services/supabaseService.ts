@@ -25,8 +25,8 @@ export const getUsers = async (): Promise<User[]> => {
     
     return data.map(user => ({
       ...user,
-      totalSearches: parseInt(user.totalSearches || '0', 10),
-      savedSearches: parseInt(user.savedSearches || '0', 10)
+      totalSearches: parseInt(user.totalSearches?.toString() || '0', 10),
+      savedSearches: parseInt(user.savedSearches?.toString() || '0', 10)
     })) || [];
   } catch (error) {
     console.error('Error fetching users:', error);
@@ -45,8 +45,8 @@ export const saveUser = async (user: User): Promise<void> => {
         type: user.type,
         password: user.password,
         lastLogin: user.lastLogin,
-        totalSearches: user.totalSearches.toString(),
-        savedSearches: user.savedSearches.toString()
+        totalSearches: user.totalSearches,
+        savedSearches: user.savedSearches
       });
 
     if (error) {
@@ -81,12 +81,12 @@ export const updateUserStats = async (userId: string, type: 'search' | 'savedSea
     }
 
     // Parse current values and increment
-    const currentTotalSearches = parseInt(userData.totalSearches || '0', 10);
-    const currentSavedSearches = parseInt(userData.savedSearches || '0', 10);
+    const currentTotalSearches = parseInt(userData?.totalSearches?.toString() || '0', 10);
+    const currentSavedSearches = parseInt(userData?.savedSearches?.toString() || '0', 10);
 
     const updates = type === 'search'
-      ? { totalSearches: (currentTotalSearches + 1).toString() }
-      : { savedSearches: (currentSavedSearches + 1).toString() };
+      ? { totalSearches: currentTotalSearches + 1 }
+      : { savedSearches: currentSavedSearches + 1 };
 
     // Update the stats
     const { error: updateError } = await supabase
@@ -119,14 +119,23 @@ export const updateUserStats = async (userId: string, type: 'search' | 'savedSea
 export const updateUserLastLogin = async (userId: string): Promise<void> => {
   console.log('Updating user last login in Supabase:', userId);
   try {
+    const lastLogin = new Date().toISOString();
     const { error } = await supabase
       .from('users')
-      .update({ lastLogin: new Date().toISOString() })
+      .update({ lastLogin })
       .eq('id', userId);
 
     if (error) {
       console.error('Error updating last login:', error);
       throw error;
+    }
+
+    // Update localStorage to keep it in sync
+    const storedUser = localStorage.getItem('currentUser');
+    if (storedUser) {
+      const user = JSON.parse(storedUser);
+      user.lastLogin = lastLogin;
+      localStorage.setItem('currentUser', JSON.stringify(user));
     }
   } catch (error) {
     console.error('Error updating last login:', error);
