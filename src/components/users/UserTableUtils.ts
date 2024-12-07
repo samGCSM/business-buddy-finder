@@ -11,8 +11,9 @@ export const formatDate = (dateString: string | null) => {
       console.error('Invalid date:', dateString);
       return "Never";
     }
-    console.log('Formatted date:', date.toLocaleString());
-    return date.toLocaleString();
+    const formattedDate = date.toLocaleString();
+    console.log('Formatted date:', formattedDate);
+    return formattedDate;
   } catch (error) {
     console.error('Error formatting date:', error);
     return "Never";

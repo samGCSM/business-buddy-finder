@@ -28,11 +28,17 @@ export const UserTable = ({ users, setUsers, setSelectedUserId }: UserTableProps
 
         if (data) {
           console.log('Latest user data from Supabase:', data);
-          setUsers(data.map(user => ({
-            ...user,
-            totalSearches: getNumericValue(user.totalSearches),
-            savedSearches: getNumericValue(user.savedSearches)
-          })));
+          // Transform the data to ensure proper typing
+          const transformedUsers = data.map(user => ({
+            id: user.id,
+            email: user.email || '',
+            type: user.type || 'user',
+            password: user.password || '',
+            lastLogin: user.lastLogin || null,
+            totalSearches: typeof user.totalSearches === 'number' ? user.totalSearches : 0,
+            savedSearches: typeof user.savedSearches === 'number' ? user.savedSearches : 0
+          }));
+          setUsers(transformedUsers);
         }
       } catch (error) {
         console.error('Error fetching latest user data:', error);
