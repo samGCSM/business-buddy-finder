@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
 import PasswordChangeForm from "@/components/auth/PasswordChangeForm";
 import { supabase } from "@/integrations/supabase/client";
+import { getCurrentUser } from "@/services/userService";
 
 const Profile = () => {
   const session = useSession();
@@ -15,19 +16,16 @@ const Profile = () => {
   useEffect(() => {
     console.log("Profile - Session state:", session);
     const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      console.log("Profile - Checked session:", session);
-      if (!session) {
+      const currentUser = await getCurrentUser();
+      console.log("Profile - Current user:", currentUser);
+      if (!currentUser) {
+        console.log("Profile - No current user, redirecting to home");
         navigate("/");
       }
     };
     
     checkAuth();
   }, [navigate]);
-
-  if (!session) {
-    return null;
-  }
 
   const handleSignOut = async () => {
     try {
@@ -67,7 +65,7 @@ const Profile = () => {
         <Card className="p-6 space-y-6">
           <div className="space-y-2">
             <h2 className="text-lg font-semibold">Email</h2>
-            <p className="text-gray-600">{session.user.email}</p>
+            <p className="text-gray-600">{session?.user?.email}</p>
           </div>
 
           <div className="space-y-4">
@@ -77,7 +75,7 @@ const Profile = () => {
               </DialogTrigger>
               <DialogContent>
                 <PasswordChangeForm 
-                  userId={session.user.id} 
+                  userId={session?.user?.id || ''} 
                   onClose={handleCloseDialog} 
                 />
               </DialogContent>
