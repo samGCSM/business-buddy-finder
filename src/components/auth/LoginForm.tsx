@@ -32,11 +32,10 @@ const LoginForm = ({ onLogin }: { onLogin: (isLoggedIn: boolean, userType: 'admi
 
       console.log('Found user:', users);
 
-      // Create a session using Supabase auth with a stronger password
-      const strongPassword = password + '_123456'; // Make password meet minimum requirements
+      // Create a session using Supabase auth
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email: email,
-        password: strongPassword,
+        password: password,
       });
 
       if (authError) {
@@ -45,7 +44,7 @@ const LoginForm = ({ onLogin }: { onLogin: (isLoggedIn: boolean, userType: 'admi
         if (authError.message.includes('Invalid login credentials')) {
           const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
             email: email,
-            password: strongPassword,
+            password: password,
           });
           
           if (signUpError) {
@@ -115,8 +114,8 @@ const LoginForm = ({ onLogin }: { onLogin: (isLoggedIn: boolean, userType: 'admi
       </form>
       <p className="mt-4 text-sm text-gray-600 text-center">
         Demo credentials:<br />
-        Admin: admin@example.com / admin<br />
-        User: user@example.com / user
+        Admin: admin@example.com / admin123<br />
+        User: user@example.com / user123
       </p>
     </div>
   );
