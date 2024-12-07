@@ -13,6 +13,7 @@ const Profile = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    console.log("Session state:", session); // Debug log
     if (!session) {
       navigate("/");
     }
