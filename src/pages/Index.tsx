@@ -15,22 +15,30 @@ const Index = () => {
   const [showSavedSearches, setShowSavedSearches] = useState(false);
   const [savedSearches, setSavedSearches] = useState<SavedSearch[]>([]);
 
-  useEffect(() => {
-    const loadSavedSearches = async () => {
-      try {
-        const currentUser = await getCurrentUser();
-        if (currentUser) {
-          const searches = await getSavedSearches(currentUser.id.toString());
-          setSavedSearches(searches);
-        }
-      } catch (error) {
-        console.error('Error loading saved searches:', error);
+  const loadSavedSearches = async () => {
+    try {
+      const currentUser = await getCurrentUser();
+      console.log('Loading saved searches for user:', currentUser);
+      if (currentUser) {
+        const searches = await getSavedSearches(currentUser.id.toString());
+        console.log('Loaded saved searches:', searches);
+        setSavedSearches(searches);
       }
-    };
-    if (isLoggedIn) {
+    } catch (error) {
+      console.error('Error loading saved searches:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load saved searches",
+        variant: "destructive",
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (isLoggedIn && showSavedSearches) {
       loadSavedSearches();
     }
-  }, [isLoggedIn]);
+  }, [isLoggedIn, showSavedSearches]);
 
   const handleLogin = async (isLoggedIn: boolean, userType: 'admin' | 'user') => {
     setIsLoggedIn(isLoggedIn);
@@ -54,6 +62,11 @@ const Index = () => {
       title: "Success",
       description: "Saved search loaded successfully",
     });
+  };
+
+  const handleShowSavedSearches = async () => {
+    setShowSavedSearches(true);
+    await loadSavedSearches();
   };
 
   return (
@@ -87,7 +100,7 @@ const Index = () => {
                 }}
               />
             ) : (
-              <BusinessSearch onShowSavedSearches={() => setShowSavedSearches(true)} />
+              <BusinessSearch onShowSavedSearches={handleShowSavedSearches} />
             )}
           </div>
         )}

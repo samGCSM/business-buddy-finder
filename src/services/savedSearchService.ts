@@ -33,12 +33,15 @@ export const getSavedSearches = async (userId: string): Promise<SavedSearch[]> =
   const { data, error } = await supabase
     .from('saved_searches')
     .select('*')
-    .eq('user_id', userIdNumber);
+    .eq('user_id', userIdNumber)
+    .order('created_at', { ascending: false });
 
   if (error) {
     console.error('Error fetching saved searches:', error);
     throw error;
   }
+
+  console.log('Raw saved searches data:', data);
 
   return data.map(search => {
     const results = Array.isArray(search.results) 
@@ -81,15 +84,19 @@ export const saveSearch = async (
       throw new Error('Invalid user ID format');
     }
 
+    const searchData = {
+      user_id: userIdNumber,
+      location,
+      keyword,
+      results: results as unknown as Json,
+      created_at: new Date().toISOString()
+    };
+
+    console.log('Saving search data:', searchData);
+
     const { error: insertError } = await supabase
       .from('saved_searches')
-      .insert({
-        user_id: userIdNumber,
-        location,
-        keyword,
-        results: results as unknown as Json,
-        created_at: new Date().toISOString()
-      });
+      .insert(searchData);
 
     if (insertError) {
       console.error('Insert error:', insertError);
