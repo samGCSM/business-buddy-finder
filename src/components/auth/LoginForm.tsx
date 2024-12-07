@@ -32,7 +32,13 @@ const LoginForm = ({ onLogin }: { onLogin: (isLoggedIn: boolean, userType: 'admi
 
       console.log('Found user:', users);
 
-      // Create a session using Supabase auth
+      // Try to sign up the user first (this will fail if they already exist, which is fine)
+      const { error: signUpError } = await supabase.auth.signUp({
+        email: email,
+        password: password,
+      });
+
+      // Now try to sign in, regardless of whether sign up succeeded or failed
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email: email,
         password: password,
@@ -40,20 +46,7 @@ const LoginForm = ({ onLogin }: { onLogin: (isLoggedIn: boolean, userType: 'admi
 
       if (authError) {
         console.error('Auth error:', authError);
-        // If user doesn't exist in auth system, sign them up
-        if (authError.message.includes('Invalid login credentials')) {
-          const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-            email: email,
-            password: password,
-          });
-          
-          if (signUpError) {
-            console.error('Sign up error:', signUpError);
-            throw signUpError;
-          }
-        } else {
-          throw authError;
-        }
+        throw authError;
       }
 
       // Update user's last login
