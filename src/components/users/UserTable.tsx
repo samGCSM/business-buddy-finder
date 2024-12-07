@@ -32,9 +32,9 @@ export const UserTable = ({ users, setUsers, setSelectedUserId }: UserTableProps
   const formatDate = (dateString: string | null) => {
     console.log('Formatting date:', dateString);
     if (!dateString) return "Never";
+    
     try {
       const date = new Date(dateString);
-      // Check if the date is valid
       if (isNaN(date.getTime())) {
         console.error('Invalid date:', dateString);
         return "Never";
@@ -44,6 +44,13 @@ export const UserTable = ({ users, setUsers, setSelectedUserId }: UserTableProps
       console.error('Error formatting date:', error);
       return "Never";
     }
+  };
+
+  const getNumericValue = (value: number | null | undefined): number => {
+    console.log('Getting numeric value:', value);
+    if (value === null || value === undefined) return 0;
+    const numValue = Number(value);
+    return isNaN(numValue) ? 0 : numValue;
   };
 
   return (
@@ -84,10 +91,10 @@ export const UserTable = ({ users, setUsers, setSelectedUserId }: UserTableProps
                 {formatDate(user.lastLogin)}
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                {Number(user.totalSearches) || 0}
+                {getNumericValue(user.totalSearches)}
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                {Number(user.savedSearches) || 0}
+                {getNumericValue(user.savedSearches)}
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
                 {user.type !== "admin" && (
