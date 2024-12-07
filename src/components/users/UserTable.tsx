@@ -30,12 +30,19 @@ export const UserTable = ({ users, setUsers, setSelectedUserId }: UserTableProps
   };
 
   const formatDate = (dateString: string | null) => {
+    console.log('Formatting date:', dateString);
     if (!dateString) return "Never";
     try {
-      return new Date(dateString).toLocaleString();
+      const date = new Date(dateString);
+      // Check if the date is valid
+      if (isNaN(date.getTime())) {
+        console.error('Invalid date:', dateString);
+        return "Never";
+      }
+      return date.toLocaleString();
     } catch (error) {
       console.error('Error formatting date:', error);
-      return "Invalid Date";
+      return "Never";
     }
   };
 
