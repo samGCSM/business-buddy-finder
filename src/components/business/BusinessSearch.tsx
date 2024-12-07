@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
 import { searchBusinesses } from "@/utils/googleApi";
+import { supabase } from "@/integrations/supabase/client";
 import type { Business } from "@/types/business";
 import type { SavedSearch } from "@/services/savedSearchService";
 import BusinessSearchForm from "./BusinessSearchForm";
@@ -27,6 +28,39 @@ const BusinessSearch = ({ onShowSavedSearches, initialSearch }: BusinessSearchPr
     }
   }, [initialSearch]);
 
+  const updateSearchCount = async (userId: number) => {
+    console.log('Updating search count for user:', userId);
+    
+    try {
+      // First get the current search count
+      const { data: userData, error: fetchError } = await supabase
+        .from('users')
+        .select('totalSearches')
+        .eq('id', userId)
+        .single();
+
+      if (fetchError) {
+        console.error('Error fetching user data:', fetchError);
+        return;
+      }
+
+      const currentSearches = (userData?.totalSearches || 0) + 1;
+      console.log('New search count:', currentSearches);
+
+      // Update the search count
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({ totalSearches: currentSearches })
+        .eq('id', userId);
+
+      if (updateError) {
+        console.error('Error updating search count:', updateError);
+      }
+    } catch (error) {
+      console.error('Error in updateSearchCount:', error);
+    }
+  };
+
   const handleSearch = async (location: string, keyword: string) => {
     setIsLoading(true);
     setCurrentLocation(location);
@@ -37,6 +71,15 @@ const BusinessSearch = ({ onShowSavedSearches, initialSearch }: BusinessSearchPr
       const businesses = await searchBusinesses(location, keyword);
       console.log('Search results:', businesses);
       setResults(businesses);
+
+      // Get the current user from localStorage
+      const currentUserStr = localStorage.getItem('currentUser');
+      if (currentUserStr) {
+        const currentUser = JSON.parse(currentUserStr);
+        if (currentUser && currentUser.id) {
+          await updateSearchCount(currentUser.id);
+        }
+      }
     } catch (error) {
       console.error('Search error:', error);
       toast({
