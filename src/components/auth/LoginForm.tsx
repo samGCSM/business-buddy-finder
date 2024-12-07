@@ -17,73 +17,60 @@ const LoginForm = ({ onLogin }: { onLogin: (isLoggedIn: boolean, userType: 'admi
     try {
       console.log('Attempting login with email:', email);
       
-      // Demo credentials check
-      if (email === 'admin@example.com' && password === 'admin') {
-        // Create Supabase session for admin
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email: 'admin@example.com',
-          password: 'admin'
-        });
+      // Query the users table directly
+      const { data: users, error: queryError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('email', email)
+        .eq('password', password)
+        .single();
 
-        if (error) throw error;
-
-        const adminUser = {
-          id: '1',
-          email: 'admin@example.com',
-          type: 'admin' as const,
-          password: 'admin',
-          lastLogin: new Date().toISOString(),
-          totalSearches: 0,
-          savedSearches: 0
-        };
-        await setCurrentUser(adminUser);
-        await updateUserLastLogin(adminUser.id);
-        onLogin(true, 'admin');
-        toast({
-          title: "Success",
-          description: "Logged in successfully as admin",
-        });
-        return;
+      if (queryError || !users) {
+        console.error('Login query error:', queryError);
+        throw new Error('Invalid credentials');
       }
+
+      console.log('Found user:', users);
+
+      // Create a session using Supabase auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: email,
+        password: password
+      });
+
+      if (authError) {
+        console.error('Auth error:', authError);
+        // If user already exists, try to sign in
+        if (authError.message.includes('already registered')) {
+          const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+            email: email,
+            password: password
+          });
+          
+          if (signInError) {
+            console.error('Sign in error:', signInError);
+            throw signInError;
+          }
+        } else {
+          throw authError;
+        }
+      }
+
+      // Update user's last login
+      await updateUserLastLogin(users.id.toString());
+      await setCurrentUser(users);
       
-      if (email === 'user@example.com' && password === 'user') {
-        // Create Supabase session for regular user
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email: 'user@example.com',
-          password: 'user'
-        });
-
-        if (error) throw error;
-
-        const regularUser = {
-          id: '2',
-          email: 'user@example.com',
-          type: 'user' as const,
-          password: 'user',
-          lastLogin: new Date().toISOString(),
-          totalSearches: 0,
-          savedSearches: 0
-        };
-        await setCurrentUser(regularUser);
-        await updateUserLastLogin(regularUser.id);
-        onLogin(true, 'user');
-        toast({
-          title: "Success",
-          description: "Logged in successfully",
-        });
-        return;
-      }
-
+      onLogin(true, users.type as 'admin' | 'user');
+      
       toast({
-        title: "Error",
-        description: "Invalid credentials",
-        variant: "destructive",
+        title: "Success",
+        description: `Logged in successfully${users.type === 'admin' ? ' as admin' : ''}`,
       });
     } catch (error) {
       console.error('Login error:', error);
       toast({
         title: "Error",
-        description: "An error occurred during login",
+        description: "Invalid credentials",
         variant: "destructive",
       });
     } finally {

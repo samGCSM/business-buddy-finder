@@ -46,33 +46,33 @@ export type Database = {
       }
       users: {
         Row: {
-          created_at: string
+          created_at: string | null
           email: string | null
           id: number
           lastLogin: string | null
           password: string | null
-          savedSearches: string | null
-          totalSearches: string | null
+          savedSearches: number | null
+          totalSearches: number | null
           type: string | null
         }
         Insert: {
-          created_at?: string
+          created_at?: string | null
           email?: string | null
-          id?: number
+          id: number
           lastLogin?: string | null
           password?: string | null
-          savedSearches?: string | null
-          totalSearches?: string | null
+          savedSearches?: number | null
+          totalSearches?: number | null
           type?: string | null
         }
         Update: {
-          created_at?: string
+          created_at?: string | null
           email?: string | null
           id?: number
           lastLogin?: string | null
           password?: string | null
-          savedSearches?: string | null
-          totalSearches?: string | null
+          savedSearches?: number | null
+          totalSearches?: number | null
           type?: string | null
         }
         Relationships: []
