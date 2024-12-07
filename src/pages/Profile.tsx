@@ -42,6 +42,13 @@ const Profile = () => {
     }
   };
 
+  const handleCloseDialog = () => {
+    const closeButton = document.querySelector('button[aria-label="Close"]') as HTMLButtonElement;
+    if (closeButton) {
+      closeButton.click();
+    }
+  };
+
   return (
     <div className="container mx-auto p-6">
       <div className="max-w-2xl mx-auto">
@@ -66,7 +73,7 @@ const Profile = () => {
               <DialogContent>
                 <PasswordChangeForm 
                   userId={user.id} 
-                  onClose={() => document.querySelector('button[aria-label="Close"]')?.click()} 
+                  onClose={handleCloseDialog} 
                 />
               </DialogContent>
             </Dialog>
