@@ -32,7 +32,18 @@ const LoginForm = ({ onLogin }: { onLogin: (isLoggedIn: boolean, userType: 'admi
 
       console.log('Found user:', users);
 
-      // Attempt to sign in with Supabase auth
+      // First try to create the user in Supabase Auth
+      const { error: signUpError } = await supabase.auth.signUp({
+        email: email,
+        password: password,
+      });
+
+      if (signUpError && !signUpError.message.includes('User already registered')) {
+        console.error('Sign up error:', signUpError);
+        throw signUpError;
+      }
+
+      // Now attempt to sign in
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email: email,
         password: password,
