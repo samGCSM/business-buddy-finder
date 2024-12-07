@@ -5,6 +5,8 @@ import { toast } from "@/hooks/use-toast";
 import { UserTableHeader } from "./UserTableHeader";
 import { UserTableRow } from "./UserTableRow";
 import { formatDate, getNumericValue } from "./UserTableUtils";
+import { supabase } from "@/integrations/supabase/client";
+import { useEffect } from "react";
 
 interface UserTableProps {
   users: User[];
@@ -13,6 +15,38 @@ interface UserTableProps {
 }
 
 export const UserTable = ({ users, setUsers, setSelectedUserId }: UserTableProps) => {
+  useEffect(() => {
+    const fetchLatestUserData = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('users')
+          .select('*');
+        
+        if (error) {
+          throw error;
+        }
+
+        if (data) {
+          console.log('Latest user data from Supabase:', data);
+          setUsers(data.map(user => ({
+            ...user,
+            totalSearches: getNumericValue(user.totalSearches),
+            savedSearches: getNumericValue(user.savedSearches)
+          })));
+        }
+      } catch (error) {
+        console.error('Error fetching latest user data:', error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch latest user data",
+          variant: "destructive",
+        });
+      }
+    };
+
+    fetchLatestUserData();
+  }, [setUsers]);
+
   const handleDeleteUser = async (id: number) => {
     try {
       const updatedUsers = users.filter((user) => user.id !== id);
