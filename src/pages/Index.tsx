@@ -4,7 +4,7 @@ import { useSession } from "@supabase/auth-helpers-react";
 import LoginForm from "@/components/auth/LoginForm";
 import SavedSearchesList from "@/components/business/SavedSearchesList";
 import BusinessSearch from "@/components/business/BusinessSearch";
-import { Button } from "@/components/ui/button";
+import Header from "@/components/layout/Header";
 import { toast } from "@/hooks/use-toast";
 import { getCurrentUser } from "@/services/userService";
 import { getSavedSearches, type SavedSearch } from "@/services/savedSearchService";
@@ -101,25 +101,14 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-8">
-        {!isLoggedIn ? (
+      {!isLoggedIn ? (
+        <div className="container mx-auto px-4 py-8">
           <LoginForm onLogin={handleLogin} />
-        ) : (
-          <div className="max-w-4xl mx-auto space-y-6">
-            <div className="flex justify-end space-x-4">
-              {isAdmin && (
-                <Button variant="outline" onClick={() => navigate('/users')}>
-                  Manage Users
-                </Button>
-              )}
-              <Button variant="outline" onClick={() => navigate('/profile')}>
-                Profile
-              </Button>
-              <Button variant="destructive" onClick={handleLogout}>
-                Logout
-              </Button>
-            </div>
-
+        </div>
+      ) : (
+        <>
+          <Header isAdmin={isAdmin} onLogout={handleLogout} />
+          <div className="container mx-auto px-4">
             {showSavedSearches ? (
               <SavedSearchesList
                 savedSearches={savedSearches}
@@ -139,8 +128,8 @@ const Index = () => {
               />
             )}
           </div>
-        )}
-      </div>
+        </>
+      )}
     </div>
   );
 };

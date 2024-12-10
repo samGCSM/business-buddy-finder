@@ -16,7 +16,14 @@ const LoginForm = ({ onLogin }: { onLogin: (isLoggedIn: boolean, userType: 'admi
 
   return (
     <div className="max-w-md mx-auto bg-white rounded-lg shadow-md p-6">
-      <h1 className="text-2xl font-bold text-center mb-6">Business Buddy Finder</h1>
+      <div className="flex flex-col items-center mb-6">
+        <img 
+          src="/lovable-uploads/a39fe416-87d2-481d-bf99-5a86c104e18e.png" 
+          alt="Sales Storm Logo" 
+          className="w-32 h-32 mb-4"
+        />
+        <h1 className="text-2xl font-bold text-center">Sales Storm Prospecting</h1>
+      </div>
       <form onSubmit={onSubmit} className="space-y-4">
         <div>
           <label htmlFor="email" className="block text-sm font-medium text-gray-700">
