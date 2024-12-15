@@ -1,4 +1,5 @@
 import { MessageSquare, FileText, Image as ImageIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export type ActivityLogItemType = 'note' | 'file' | 'image';
 
@@ -33,8 +34,19 @@ const ActivityLogItem = ({ item }: ActivityLogItemProps) => {
       <div className="bg-gray-100 p-2 rounded">
         {getIcon()}
       </div>
-      <div>
-        <p className="text-gray-600">{item.content}</p>
+      <div className="flex-1">
+        {item.fileUrl ? (
+          <a 
+            href={item.fileUrl} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:underline"
+          >
+            {item.content} {item.fileName && `(${item.fileName})`}
+          </a>
+        ) : (
+          <p className="text-gray-600">{item.content}</p>
+        )}
         <p className="text-xs text-gray-400">
           {new Date(item.timestamp).toLocaleString()}
         </p>

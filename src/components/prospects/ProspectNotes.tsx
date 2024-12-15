@@ -3,6 +3,7 @@ import { MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ActivityLog from "./notes/ActivityLog";
 import FileUpload from "./notes/FileUpload";
 import NotesInput from "./notes/NotesInput";
@@ -71,26 +72,37 @@ const ProspectNotes = ({ prospectId, existingNotes, onNotesUpdated }: ProspectNo
           </SheetHeader>
           
           <div className="flex flex-col h-full gap-4 mt-4">
-            {existingNotes && (
-              <div className="bg-gray-50 p-4 rounded-lg text-sm whitespace-pre-wrap mb-4">
-                {existingNotes}
-              </div>
-            )}
-            
-            <ActivityLog items={activityLog} />
+            <Tabs defaultValue="notes" className="flex-1">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="notes">Notes</TabsTrigger>
+                <TabsTrigger value="activity">Activity Log</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="notes" className="flex flex-col flex-1">
+                {existingNotes && (
+                  <div className="bg-gray-50 p-4 rounded-lg text-sm whitespace-pre-wrap mb-4">
+                    {existingNotes}
+                  </div>
+                )}
+                
+                <div className="space-y-4 mt-auto">
+                  <FileUpload 
+                    onFileUpload={handleFileUpload}
+                    isUploading={isUploading}
+                  />
 
-            <div className="space-y-4">
-              <FileUpload 
-                onFileUpload={handleFileUpload}
-                isUploading={isUploading}
-              />
-
-              <NotesInput
-                value={newNote}
-                onChange={(e) => setNewNote(e.target.value)}
-                onSave={handleSaveNote}
-              />
-            </div>
+                  <NotesInput
+                    value={newNote}
+                    onChange={(e) => setNewNote(e.target.value)}
+                    onSave={handleSaveNote}
+                  />
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="activity" className="flex-1">
+                <ActivityLog items={activityLog} />
+              </TabsContent>
+            </Tabs>
           </div>
         </SheetContent>
       </Sheet>
