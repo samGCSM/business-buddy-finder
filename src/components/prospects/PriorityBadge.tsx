@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Badge } from "@/components/ui/badge";
 import {
   Popover,
   PopoverContent,
@@ -33,17 +32,19 @@ const PriorityBadge = ({ priority, onPriorityChange }: PriorityBadgeProps) => {
   };
 
   const handlePrioritySelect = (newPriority: string) => {
+    const newColor = priorityColors[newPriority as keyof typeof priorityColors] || customColor;
+    setCustomColor(newColor);
     if (onPriorityChange) {
-      onPriorityChange(newPriority, priorityColors[newPriority as keyof typeof priorityColors] || customColor);
+      onPriorityChange(newPriority, newColor);
     }
   };
 
   return (
-    <div className="flex items-stretch h-full w-full">
+    <div className="h-full w-full">
       <Popover>
         <PopoverTrigger asChild>
           <div
-            className="cursor-pointer w-full flex items-center justify-center px-4 text-sm font-medium"
+            className="h-full w-full cursor-pointer flex items-center justify-center px-4 text-sm font-medium"
             style={{
               backgroundColor: customColor,
               color: '#000000',

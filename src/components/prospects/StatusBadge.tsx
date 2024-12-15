@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Badge } from "@/components/ui/badge";
 import {
   Popover,
   PopoverContent,
@@ -36,17 +35,19 @@ const StatusBadge = ({ status, onStatusChange }: StatusBadgeProps) => {
   };
 
   const handleStatusSelect = (newStatus: string) => {
+    const newColor = statusColors[newStatus as keyof typeof statusColors] || customColor;
+    setCustomColor(newColor);
     if (onStatusChange) {
-      onStatusChange(newStatus, statusColors[newStatus as keyof typeof statusColors] || customColor);
+      onStatusChange(newStatus, newColor);
     }
   };
 
   return (
-    <div className="flex items-stretch h-full w-full">
+    <div className="h-full w-full">
       <Popover>
         <PopoverTrigger asChild>
           <div
-            className="cursor-pointer w-full flex items-center justify-center px-4 text-sm font-medium"
+            className="h-full w-full cursor-pointer flex items-center justify-center px-4 text-sm font-medium"
             style={{
               backgroundColor: customColor,
               color: '#000000',
