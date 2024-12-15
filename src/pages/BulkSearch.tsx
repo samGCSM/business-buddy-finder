@@ -1,13 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSession } from "@supabase/auth-helpers-react";
+import { toast } from "@/hooks/use-toast";
 import SavedSearchesList from "@/components/business/SavedSearchesList";
 import BusinessSearch from "@/components/business/BusinessSearch";
 import Header from "@/components/layout/Header";
-import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import { getCurrentUser } from "@/services/userService";
 import { getSavedSearches, type SavedSearch } from "@/services/savedSearchService";
-import { supabase } from "@/integrations/supabase/client";
 
 const BulkSearch = () => {
   const navigate = useNavigate();
@@ -15,6 +15,26 @@ const BulkSearch = () => {
   const [showSavedSearches, setShowSavedSearches] = useState(false);
   const [savedSearches, setSavedSearches] = useState<SavedSearch[]>([]);
   const [currentResults, setCurrentResults] = useState<SavedSearch | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    const checkUser = async () => {
+      if (!session?.user) {
+        navigate("/login");
+        return;
+      }
+
+      const { data: user } = await supabase
+        .from('users')
+        .select('type')
+        .eq('id', session.user.id)
+        .single();
+
+      setIsAdmin(user?.type === 'admin');
+    };
+
+    checkUser();
+  }, [session, navigate]);
 
   const loadSavedSearches = async () => {
     try {
@@ -66,9 +86,11 @@ const BulkSearch = () => {
     await loadSavedSearches();
   };
 
+  if (!session) return null;
+
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header isAdmin={false} onLogout={handleLogout} />
+      <Header isAdmin={isAdmin} onLogout={handleLogout} />
       <div className="container mx-auto px-4">
         {showSavedSearches ? (
           <SavedSearchesList
