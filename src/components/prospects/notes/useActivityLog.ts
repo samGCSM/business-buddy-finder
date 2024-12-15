@@ -19,7 +19,14 @@ export const useActivityLog = (prospectId: string, onUpdate: () => void) => {
       return [];
     }
 
-    return (data.activity_log || []) as ActivityLogItemData[];
+    // Convert the Json[] to ActivityLogItemData[]
+    return (data.activity_log || []).map((item: Json) => ({
+      type: item.type as ActivityLogItemData['type'],
+      content: item.content as string,
+      timestamp: item.timestamp as string,
+      fileUrl: item.fileUrl as string | undefined,
+      fileName: item.fileName as string | undefined
+    }));
   };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
