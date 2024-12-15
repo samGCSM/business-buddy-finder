@@ -1,10 +1,9 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from '@supabase/auth-helpers-react';
+import ProspectFormFields from "./ProspectFormFields";
 
 interface AddProspectFormProps {
   onClose: () => void;
@@ -30,18 +29,13 @@ const AddProspectForm = ({ onClose, onSuccess }: AddProspectFormProps) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!session?.user) {
-      toast({
-        title: "Error",
-        description: "You must be logged in to add prospects",
-        variant: "destructive",
-      });
-      return;
-    }
-
     try {
-      console.log("Current user email:", session.user.email);
+      console.log("Current user email:", session?.user?.email);
       
+      if (!session?.user?.email) {
+        throw new Error("User email not found");
+      }
+
       // Get the numeric user ID from the users table
       const { data: userIdData, error: userIdError } = await supabase
         .from('users')
@@ -98,110 +92,7 @@ const AddProspectForm = ({ onClose, onSuccess }: AddProspectFormProps) => {
       <div className="bg-white rounded-lg p-6 max-w-2xl w-full">
         <h3 className="text-lg font-semibold mb-4">Add New Prospect</h3>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="business_name">Business Name *</Label>
-              <Input
-                id="business_name"
-                name="business_name"
-                value={formData.business_name}
-                onChange={handleChange}
-                required
-              />
-            </div>
-            <div>
-              <Label htmlFor="website">Website</Label>
-              <Input
-                id="website"
-                name="website"
-                value={formData.website}
-                onChange={handleChange}
-              />
-            </div>
-            <div>
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                value={formData.email}
-                onChange={handleChange}
-              />
-            </div>
-            <div>
-              <Label htmlFor="business_address">Business Address</Label>
-              <Input
-                id="business_address"
-                name="business_address"
-                value={formData.business_address}
-                onChange={handleChange}
-              />
-            </div>
-            <div>
-              <Label htmlFor="phone_number">Phone Number</Label>
-              <Input
-                id="phone_number"
-                name="phone_number"
-                value={formData.phone_number}
-                onChange={handleChange}
-              />
-            </div>
-            <div>
-              <Label htmlFor="owner_name">Owner Name</Label>
-              <Input
-                id="owner_name"
-                name="owner_name"
-                value={formData.owner_name}
-                onChange={handleChange}
-              />
-            </div>
-            <div>
-              <Label htmlFor="owner_phone">Owner Phone</Label>
-              <Input
-                id="owner_phone"
-                name="owner_phone"
-                value={formData.owner_phone}
-                onChange={handleChange}
-              />
-            </div>
-            <div>
-              <Label htmlFor="owner_email">Owner Email</Label>
-              <Input
-                id="owner_email"
-                name="owner_email"
-                type="email"
-                value={formData.owner_email}
-                onChange={handleChange}
-              />
-            </div>
-            <div>
-              <Label htmlFor="status">Status</Label>
-              <Input
-                id="status"
-                name="status"
-                value={formData.status}
-                onChange={handleChange}
-              />
-            </div>
-            <div>
-              <Label htmlFor="priority">Priority</Label>
-              <Input
-                id="priority"
-                name="priority"
-                value={formData.priority}
-                onChange={handleChange}
-              />
-            </div>
-          </div>
-          <div>
-            <Label htmlFor="notes">Notes</Label>
-            <Input
-              id="notes"
-              name="notes"
-              value={formData.notes}
-              onChange={handleChange}
-            />
-          </div>
+          <ProspectFormFields formData={formData} handleChange={handleChange} />
           <div className="flex justify-end space-x-4">
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
