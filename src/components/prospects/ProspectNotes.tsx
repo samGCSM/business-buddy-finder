@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerFooter } from "@/components/ui/drawer";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +16,12 @@ interface ProspectNotesProps {
 const ProspectNotes = ({ prospectId, existingNotes, onNotesUpdated }: ProspectNotesProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [newNote, setNewNote] = useState("");
+
+  // Calculate number of notes by counting timestamp entries
+  const getNoteCount = () => {
+    if (!existingNotes) return 0;
+    return existingNotes.split('[').length - 1;
+  };
 
   const handleSaveNote = async () => {
     if (!newNote.trim()) return;
@@ -53,16 +60,28 @@ const ProspectNotes = ({ prospectId, existingNotes, onNotesUpdated }: ProspectNo
     }
   };
 
+  const noteCount = getNoteCount();
+
   return (
     <>
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => setIsOpen(true)}
-        className="h-8 w-8"
-      >
-        <MessageSquare className="h-4 w-4" />
-      </Button>
+      <div className="relative">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setIsOpen(true)}
+          className="h-8 w-8"
+        >
+          <MessageSquare className="h-4 w-4" />
+        </Button>
+        {noteCount > 0 && (
+          <Badge 
+            variant="secondary" 
+            className="absolute -top-2 -right-2 h-4 w-4 p-0 flex items-center justify-center rounded-full"
+          >
+            {noteCount}
+          </Badge>
+        )}
+      </div>
 
       <Drawer open={isOpen} onOpenChange={setIsOpen}>
         <DrawerContent>
