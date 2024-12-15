@@ -31,9 +31,10 @@ const AddProspectForm = ({ onClose, onSuccess }: AddProspectFormProps) => {
     
     try {
       console.log("Session state:", session);
-      
-      if (!session?.user) {
-        console.error("No user session found");
+      console.log("Form data:", formData);
+
+      if (!session?.user?.email) {
+        console.error("No user email found in session");
         throw new Error("Please log in to add prospects");
       }
 
@@ -55,17 +56,21 @@ const AddProspectForm = ({ onClose, onSuccess }: AddProspectFormProps) => {
 
       console.log("Found user data:", userData);
 
-      const { error: insertError } = await supabase
+      const { data: prospectData, error: insertError } = await supabase
         .from('prospects')
         .insert({
           ...formData,
           user_id: userData.id
-        });
+        })
+        .select()
+        .single();
 
       if (insertError) {
         console.error("Insert error:", insertError);
         throw insertError;
       }
+
+      console.log("Successfully added prospect:", prospectData);
 
       toast({
         title: "Success",
