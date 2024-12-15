@@ -119,9 +119,9 @@ const ProspectFormFields = ({
         <Label htmlFor="status">Status</Label>
         <Select 
           value={formData.status} 
-          onValueChange={(value) => onStatusChange?.(value)}
+          onValueChange={onStatusChange}
         >
-          <SelectTrigger>
+          <SelectTrigger className="bg-background">
             <SelectValue placeholder="Select status" />
           </SelectTrigger>
           <SelectContent>
@@ -137,9 +137,9 @@ const ProspectFormFields = ({
         <Label htmlFor="priority">Priority</Label>
         <Select 
           value={formData.priority} 
-          onValueChange={(value) => onPriorityChange?.(value)}
+          onValueChange={onPriorityChange}
         >
-          <SelectTrigger>
+          <SelectTrigger className="bg-background">
             <SelectValue placeholder="Select priority" />
           </SelectTrigger>
           <SelectContent>
