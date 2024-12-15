@@ -9,6 +9,71 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      prospects: {
+        Row: {
+          business_address: string | null
+          business_name: string
+          created_at: string | null
+          email: string | null
+          id: string
+          last_contact: string | null
+          notes: string | null
+          owner_email: string | null
+          owner_name: string | null
+          owner_phone: string | null
+          phone_number: string | null
+          priority: string | null
+          status: string | null
+          updated_at: string | null
+          user_id: number
+          website: string | null
+        }
+        Insert: {
+          business_address?: string | null
+          business_name: string
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          last_contact?: string | null
+          notes?: string | null
+          owner_email?: string | null
+          owner_name?: string | null
+          owner_phone?: string | null
+          phone_number?: string | null
+          priority?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id: number
+          website?: string | null
+        }
+        Update: {
+          business_address?: string | null
+          business_name?: string
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          last_contact?: string | null
+          notes?: string | null
+          owner_email?: string | null
+          owner_name?: string | null
+          owner_phone?: string | null
+          phone_number?: string | null
+          priority?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: number
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prospects_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       saved_searches: {
         Row: {
           created_at: string | null
