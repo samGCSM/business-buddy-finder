@@ -8,6 +8,7 @@ import ProspectNotes from "./ProspectNotes";
 import EditProspectForm from "./EditProspectForm";
 import StatusBadge from "./StatusBadge";
 import PriorityBadge from "./PriorityBadge";
+import LastContactCell from "./LastContactCell";
 
 interface Prospect {
   id: string;
@@ -57,7 +58,7 @@ const ProspectsTable = ({ prospects, onUpdate }: ProspectsTableProps) => {
     }
   };
 
-  const handleStatusChange = async (id: string, newStatus: string, color: string) => {
+  const handleStatusChange = async (id: string, newStatus: string) => {
     try {
       const { error } = await supabase
         .from('prospects')
@@ -76,7 +77,7 @@ const ProspectsTable = ({ prospects, onUpdate }: ProspectsTableProps) => {
     }
   };
 
-  const handlePriorityChange = async (id: string, newPriority: string, color: string) => {
+  const handlePriorityChange = async (id: string, newPriority: string) => {
     try {
       const { error } = await supabase
         .from('prospects')
@@ -158,18 +159,25 @@ const ProspectsTable = ({ prospects, onUpdate }: ProspectsTableProps) => {
                 <TableCell>
                   <StatusBadge
                     status={prospect.status}
-                    onStatusChange={(newStatus, color) => handleStatusChange(prospect.id, newStatus, color)}
+                    onStatusChange={(newStatus) => handleStatusChange(prospect.id, newStatus)}
                   />
                 </TableCell>
                 <TableCell>
                   <PriorityBadge
                     priority={prospect.priority}
-                    onPriorityChange={(newPriority, color) => handlePriorityChange(prospect.id, newPriority, color)}
+                    onPriorityChange={(newPriority) => handlePriorityChange(prospect.id, newPriority)}
                   />
                 </TableCell>
                 <TableCell>{prospect.owner_phone}</TableCell>
                 <TableCell>{prospect.owner_email}</TableCell>
-                <TableCell>{new Date(prospect.last_contact).toLocaleDateString()}</TableCell>
+                <TableCell>
+                  <LastContactCell
+                    prospectId={prospect.id}
+                    prospectName={prospect.business_name}
+                    lastContact={prospect.last_contact}
+                    onUpdate={onUpdate}
+                  />
+                </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
                     <Button
