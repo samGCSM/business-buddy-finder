@@ -4,6 +4,7 @@ import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from '@supabase/auth-helpers-react';
 import ProspectFormFields from "./ProspectFormFields";
+import { getCurrentUser } from "@/services/userService";
 
 interface AddProspectFormProps {
   onClose: () => void;
@@ -31,10 +32,10 @@ const AddProspectForm = ({ onClose, onSuccess, userRole }: AddProspectFormProps)
     e.preventDefault();
     
     try {
-      console.log("Session state:", session);
       console.log("Form data:", formData);
-
-      if (!session?.user?.id) {
+      
+      const currentUser = await getCurrentUser();
+      if (!currentUser?.id) {
         toast({
           title: "Error",
           description: "Please log in to add prospects",
@@ -43,12 +44,13 @@ const AddProspectForm = ({ onClose, onSuccess, userRole }: AddProspectFormProps)
         return;
       }
 
-      // Insert directly with the auth user's ID
+      console.log("Current user:", currentUser);
+
       const { data: prospectData, error: insertError } = await supabase
         .from('prospects')
         .insert({
           ...formData,
-          user_id: parseInt(session.user.id),
+          user_id: currentUser.id,
           last_contact: new Date().toISOString()
         })
         .select()
