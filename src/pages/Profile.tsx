@@ -1,10 +1,14 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSession } from "@supabase/auth-helpers-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "@/hooks/use-toast";
+import { User, Camera, UserRound } from "lucide-react";
 import PasswordChangeForm from "@/components/auth/PasswordChangeForm";
 import { supabase } from "@/integrations/supabase/client";
 import { getCurrentUser } from "@/services/userService";
@@ -12,6 +16,10 @@ import { getCurrentUser } from "@/services/userService";
 const Profile = () => {
   const session = useSession();
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [fullName, setFullName] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     console.log("Profile - Session state:", session);
@@ -21,11 +29,114 @@ const Profile = () => {
       if (!currentUser) {
         console.log("Profile - No current user, redirecting to home");
         navigate("/");
+        return;
       }
+      getProfile();
     };
     
     checkAuth();
-  }, [navigate]);
+  }, [navigate, session]);
+
+  const getProfile = async () => {
+    try {
+      if (!session?.user?.id) return;
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('full_name, avatar_url')
+        .eq('id', session.user.id)
+        .single();
+
+      if (error) throw error;
+
+      if (data) {
+        setFullName(data.full_name || '');
+        setAvatarUrl(data.avatar_url);
+      }
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load profile",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateProfile = async () => {
+    try {
+      if (!session?.user?.id) return;
+
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          full_name: fullName,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', session.user.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Profile updated successfully",
+      });
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update profile",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const uploadAvatar = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      setUploading(true);
+      if (!event.target.files || event.target.files.length === 0) {
+        throw new Error('You must select an image to upload.');
+      }
+
+      const file = event.target.files[0];
+      const fileExt = file.name.split('.').pop();
+      const filePath = `${session?.user?.id}/${Math.random()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ avatar_url: publicUrl })
+        .eq('id', session?.user?.id);
+
+      if (updateError) throw updateError;
+
+      setAvatarUrl(publicUrl);
+      toast({
+        title: "Success",
+        description: "Avatar updated successfully",
+      });
+    } catch (error) {
+      console.error('Error uploading avatar:', error);
+      toast({
+        title: "Error",
+        description: "Failed to upload avatar",
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleSignOut = async () => {
     try {
@@ -52,6 +163,10 @@ const Profile = () => {
     }
   };
 
+  if (loading) {
+    return <div className="flex justify-center items-center min-h-screen">Loading...</div>;
+  }
+
   return (
     <div className="container mx-auto p-6">
       <div className="max-w-2xl mx-auto">
@@ -63,15 +178,57 @@ const Profile = () => {
         </div>
         
         <Card className="p-6 space-y-6">
-          <div className="space-y-2">
-            <h2 className="text-lg font-semibold">Email</h2>
-            <p className="text-gray-600">{session?.user?.email}</p>
+          <div className="flex items-center space-x-4">
+            <div className="relative">
+              <Avatar className="h-24 w-24">
+                <AvatarImage src={avatarUrl || ''} alt="Profile" />
+                <AvatarFallback>
+                  <UserRound className="h-12 w-12" />
+                </AvatarFallback>
+              </Avatar>
+              <label 
+                htmlFor="avatar-upload" 
+                className="absolute bottom-0 right-0 p-1 bg-primary text-primary-foreground rounded-full cursor-pointer hover:bg-primary/90"
+              >
+                <Camera className="h-4 w-4" />
+                <input
+                  id="avatar-upload"
+                  type="file"
+                  accept="image/*"
+                  onChange={uploadAvatar}
+                  disabled={uploading}
+                  className="hidden"
+                />
+              </label>
+            </div>
+            <div className="flex-1">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={session?.user?.email || ''}
+                disabled
+                className="mb-4"
+              />
+              <Label htmlFor="fullName">Full Name</Label>
+              <Input
+                id="fullName"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                className="mb-2"
+              />
+              <Button onClick={updateProfile} size="sm">
+                Update Profile
+              </Button>
+            </div>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-4 pt-4 border-t">
             <Dialog>
               <DialogTrigger asChild>
-                <Button>Change Password</Button>
+                <Button variant="outline" className="w-full">
+                  Change Password
+                </Button>
               </DialogTrigger>
               <DialogContent>
                 <PasswordChangeForm 
@@ -81,7 +238,11 @@ const Profile = () => {
               </DialogContent>
             </Dialog>
 
-            <Button variant="outline" onClick={handleSignOut}>
+            <Button 
+              variant="destructive" 
+              onClick={handleSignOut}
+              className="w-full"
+            >
               Sign Out
             </Button>
           </div>
