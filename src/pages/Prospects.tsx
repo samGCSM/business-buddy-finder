@@ -3,11 +3,15 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useSession } from '@supabase/auth-helpers-react';
 import ProspectsTable from "@/components/prospects/ProspectsTable";
 import AddProspectForm from "@/components/prospects/AddProspectForm";
+import { insertDummyProspects } from "@/utils/dummyData";
+import Header from "@/components/layout/Header";
 
 const Prospects = () => {
   const navigate = useNavigate();
+  const session = useSession();
   const [prospects, setProspects] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -56,12 +60,34 @@ const Prospects = () => {
     }
   };
 
+  const handleAddDummyData = async () => {
+    try {
+      if (!session?.user?.id) {
+        throw new Error("No user ID found in session");
+      }
+      await insertDummyProspects(session.user.id);
+      toast({
+        title: "Success",
+        description: "Dummy prospects added successfully",
+      });
+      fetchProspects();
+    } catch (error) {
+      console.error('Error adding dummy prospects:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add dummy prospects",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (isLoading) {
     return <div className="flex justify-center items-center min-h-screen">Loading...</div>;
   }
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <Header isAdmin={false} onLogout={handleLogout} />
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         <div className="space-y-6">
           <div className="flex justify-between items-center">
@@ -70,11 +96,8 @@ const Prospects = () => {
               <Button onClick={() => setShowAddForm(true)}>
                 Add New Prospect
               </Button>
-              <Button variant="outline" onClick={() => navigate("/", { replace: true })}>
-                Back to Search
-              </Button>
-              <Button variant="destructive" onClick={handleLogout}>
-                Logout
+              <Button variant="outline" onClick={handleAddDummyData}>
+                Add Dummy Data
               </Button>
             </div>
           </div>
