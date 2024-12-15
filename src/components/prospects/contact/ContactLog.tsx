@@ -5,6 +5,7 @@ import { toast } from "@/hooks/use-toast";
 import { ContactLogProps, ContactHistoryItem, ContactType } from "./types";
 import { ContactHistory } from "./ContactHistory";
 import { ContactForm } from "./ContactForm";
+import { Json } from "@/integrations/supabase/types";
 
 export const ContactLog = ({ 
   isOpen, 
