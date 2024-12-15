@@ -40,7 +40,9 @@ export const UserTableRow = ({
 
   const handleSupervisorChange = async (supervisorId: string) => {
     try {
-      await onUpdateUser(user.id, { supervisor_id: parseInt(supervisorId) });
+      // If "none" is selected, set supervisor_id to null
+      const newSupervisorId = supervisorId === "none" ? null : parseInt(supervisorId);
+      await onUpdateUser(user.id, { supervisor_id: newSupervisorId });
     } catch (error) {
       console.error('Error updating supervisor:', error);
     }
@@ -78,14 +80,14 @@ export const UserTableRow = ({
       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
         {isEditing ? (
           <Select 
-            defaultValue={user.supervisor_id?.toString() || ''} 
+            defaultValue={user.supervisor_id?.toString() || "none"} 
             onValueChange={handleSupervisorChange}
           >
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Select supervisor" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">None</SelectItem>
+              <SelectItem value="none">None</SelectItem>
               {supervisors.map((supervisor) => (
                 <SelectItem key={supervisor.id} value={supervisor.id.toString()}>
                   {supervisor.email}
