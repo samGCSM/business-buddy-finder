@@ -121,10 +121,10 @@ const ProspectFormFields = ({
           value={formData.status} 
           onValueChange={onStatusChange}
         >
-          <SelectTrigger className="bg-background">
+          <SelectTrigger className="bg-white dark:bg-gray-800">
             <SelectValue placeholder="Select status" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-white dark:bg-gray-800">
             {statusOptions.map((option) => (
               <SelectItem key={option} value={option}>
                 {option}
@@ -139,10 +139,10 @@ const ProspectFormFields = ({
           value={formData.priority} 
           onValueChange={onPriorityChange}
         >
-          <SelectTrigger className="bg-background">
+          <SelectTrigger className="bg-white dark:bg-gray-800">
             <SelectValue placeholder="Select priority" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-white dark:bg-gray-800">
             {priorityOptions.map((option) => (
               <SelectItem key={option} value={option}>
                 {option}

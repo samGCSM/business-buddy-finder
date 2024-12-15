@@ -35,33 +35,20 @@ const AddProspectForm = ({ onClose, onSuccess, userRole }: AddProspectFormProps)
       console.log("Form data:", formData);
 
       if (!session?.user?.id) {
-        console.error("No user ID found in session");
-        throw new Error("Please log in to add prospects");
+        toast({
+          title: "Error",
+          description: "Please log in to add prospects",
+          variant: "destructive",
+        });
+        return;
       }
 
-      const { data: userData, error: userError } = await supabase
-        .from('users')
-        .select('id')
-        .eq('id', session.user.id)
-        .single();
-
-      if (userError) {
-        console.error("Error fetching user data:", userError);
-        throw new Error("Failed to get user data");
-      }
-
-      if (!userData?.id) {
-        console.error("No user found with ID:", session.user.id);
-        throw new Error("User not found");
-      }
-
-      console.log("Found user data:", userData);
-
+      // Insert directly with the auth user's ID
       const { data: prospectData, error: insertError } = await supabase
         .from('prospects')
         .insert({
           ...formData,
-          user_id: userData.id,
+          user_id: parseInt(session.user.id),
           last_contact: new Date().toISOString()
         })
         .select()
