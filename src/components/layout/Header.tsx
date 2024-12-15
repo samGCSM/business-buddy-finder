@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu } from "lucide-react";
+import { Menu, Plus } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -23,6 +23,13 @@ const Header = ({ isAdmin, onLogout }: { isAdmin: boolean; onLogout: () => void 
           Manage Users
         </Button>
       )}
+      <Button 
+        variant="outline" 
+        onClick={() => navigate('/prospects')}
+        className="w-full justify-start"
+      >
+        Prospect Now
+      </Button>
       <Button 
         variant="outline" 
         onClick={() => navigate('/profile')}
@@ -59,6 +66,14 @@ const Header = ({ isAdmin, onLogout }: { isAdmin: boolean; onLogout: () => void 
               Manage Users
             </Button>
           )}
+          <Button 
+            variant="outline" 
+            onClick={() => navigate('/prospects')}
+            className="flex items-center gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            Prospect Now
+          </Button>
           <Button variant="outline" onClick={() => navigate('/profile')}>
             Profile
           </Button>
