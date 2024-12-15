@@ -4,7 +4,6 @@ import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from '@supabase/auth-helpers-react';
 import Header from "@/components/layout/Header";
-import ProspectHeader from "@/components/prospects/ProspectHeader";
 import ProspectContent from "@/components/prospects/ProspectContent";
 
 const Prospects = () => {
@@ -66,18 +65,12 @@ const Prospects = () => {
     <div className="min-h-screen bg-gray-50">
       <Header isAdmin={false} onLogout={handleLogout} />
       <div className="container mx-auto px-4 py-8 max-w-7xl">
-        <div className="space-y-6">
-          <ProspectHeader 
-            onAddClick={() => setShowAddForm(true)}
-            onBulkUploadSuccess={fetchProspects}
-          />
-          <ProspectContent
-            prospects={prospects}
-            showAddForm={showAddForm}
-            onAddFormClose={() => setShowAddForm(false)}
-            onProspectAdded={fetchProspects}
-          />
-        </div>
+        <ProspectContent
+          prospects={prospects}
+          showAddForm={showAddForm}
+          onAddFormClose={() => setShowAddForm(false)}
+          onProspectAdded={fetchProspects}
+        />
       </div>
     </div>
   );
