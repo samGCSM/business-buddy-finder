@@ -14,18 +14,28 @@ const Login = () => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        console.log("Login - Checking authentication status");
-        const currentUser = await getCurrentUser();
-        console.log("Login - Current user check result:", currentUser);
-        
-        if (currentUser) {
-          console.log("Login - User found, setting states");
-          setIsLoggedIn(true);
-          setIsAdmin(currentUser.type === 'admin');
-          navigate('/');
+        console.log("Login - Starting auth check");
+        if (session?.user) {
+          console.log("Login - Session exists, checking user");
+          const currentUser = await getCurrentUser();
+          console.log("Login - Current user data:", currentUser);
+          
+          if (currentUser) {
+            console.log("Login - Valid user found, setting states");
+            setIsLoggedIn(true);
+            setIsAdmin(currentUser.type === 'admin');
+            navigate('/', { replace: true });
+          } else {
+            console.log("Login - No user data found");
+            setIsLoggedIn(false);
+          }
+        } else {
+          console.log("Login - No session found");
+          setIsLoggedIn(false);
         }
       } catch (error) {
         console.error("Login - Auth check error:", error);
+        setIsLoggedIn(false);
       } finally {
         setIsLoading(false);
       }
@@ -40,11 +50,10 @@ const Login = () => {
     setIsAdmin(userType === 'admin');
     if (isLoggedIn) {
       console.log("Login - Successfully logged in, redirecting to home");
-      navigate('/');
+      navigate('/', { replace: true });
     }
   };
 
-  // Show loading state
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -53,7 +62,6 @@ const Login = () => {
     );
   }
 
-  // If already logged in, don't render the login form
   if (isLoggedIn) {
     return null;
   }
