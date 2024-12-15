@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSession } from '@supabase/auth-helpers-react';
 import ProspectsTable from "@/components/prospects/ProspectsTable";
 import AddProspectForm from "@/components/prospects/AddProspectForm";
-import { insertDummyProspects } from "@/utils/dummyData";
+import BulkUploadProspects from "@/components/prospects/BulkUploadProspects";
 import Header from "@/components/layout/Header";
 
 const Prospects = () => {
@@ -60,27 +60,6 @@ const Prospects = () => {
     }
   };
 
-  const handleAddDummyData = async () => {
-    try {
-      if (!session?.user?.id) {
-        throw new Error("No user ID found in session");
-      }
-      await insertDummyProspects(session.user.id);
-      toast({
-        title: "Success",
-        description: "Dummy prospects added successfully",
-      });
-      fetchProspects();
-    } catch (error) {
-      console.error('Error adding dummy prospects:', error);
-      toast({
-        title: "Error",
-        description: "Failed to add dummy prospects",
-        variant: "destructive",
-      });
-    }
-  };
-
   if (isLoading) {
     return <div className="flex justify-center items-center min-h-screen">Loading...</div>;
   }
@@ -96,9 +75,7 @@ const Prospects = () => {
               <Button onClick={() => setShowAddForm(true)}>
                 Add New Prospect
               </Button>
-              <Button variant="outline" onClick={handleAddDummyData}>
-                Add Dummy Data
-              </Button>
+              <BulkUploadProspects onSuccess={fetchProspects} />
             </div>
           </div>
 
