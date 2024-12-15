@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Home, Search, Plus } from "lucide-react";
+import { Home, Search, Plus, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface DesktopNavigationProps {
@@ -22,6 +22,7 @@ const DesktopNavigation = ({ isAdmin, onLogout }: DesktopNavigationProps) => {
       </Button>
       {isAdmin && (
         <Button variant="outline" onClick={() => navigate('/users')}>
+          <Users className="h-4 w-4 mr-2" />
           Manage Users
         </Button>
       )}

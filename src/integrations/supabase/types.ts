@@ -93,6 +93,13 @@ export type Database = {
             foreignKeyName: "prospects_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "user_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prospects_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
@@ -128,6 +135,13 @@ export type Database = {
             foreignKeyName: "saved_searches_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "user_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saved_searches_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
@@ -140,6 +154,7 @@ export type Database = {
           id: number
           lastLogin: string | null
           password: string | null
+          role: string | null
           savedSearches: number | null
           supervisor_id: number | null
           totalSearches: number | null
@@ -151,6 +166,7 @@ export type Database = {
           id: number
           lastLogin?: string | null
           password?: string | null
+          role?: string | null
           savedSearches?: number | null
           supervisor_id?: number | null
           totalSearches?: number | null
@@ -162,12 +178,20 @@ export type Database = {
           id?: number
           lastLogin?: string | null
           password?: string | null
+          role?: string | null
           savedSearches?: number | null
           supervisor_id?: number | null
           totalSearches?: number | null
           type?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "users_supervisor_id_fkey"
+            columns: ["supervisor_id"]
+            isOneToOne: false
+            referencedRelation: "user_stats"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "users_supervisor_id_fkey"
             columns: ["supervisor_id"]
@@ -179,7 +203,15 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      user_stats: {
+        Row: {
+          id: number | null
+          searches_last_30_days: number | null
+          total_prospects: number | null
+          total_saved_searches: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never

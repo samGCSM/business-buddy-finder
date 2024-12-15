@@ -1,3 +1,10 @@
+export interface UserStats {
+  id: number;
+  total_prospects: number;
+  searches_last_30_days: number;
+  total_saved_searches: number;
+}
+
 export interface User {
   id: number;
   email: string;
@@ -6,4 +13,5 @@ export interface User {
   lastLogin: string;
   totalSearches: number;
   savedSearches: number;
+  stats?: UserStats;
 }

@@ -20,19 +20,27 @@ export const UserTable = ({ users, setUsers, setSelectedUserId }: UserTableProps
   useEffect(() => {
     const fetchLatestUserData = async () => {
       try {
-        const { data, error } = await supabase
+        const { data: userData, error: userError } = await supabase
           .from('users')
           .select('*');
         
-        if (error) {
-          console.error('Error fetching users:', error);
-          throw error;
-        }
+        if (userError) throw userError;
 
-        if (data) {
-          console.log('Raw user data from Supabase:', data);
-          setUsers(data);
-        }
+        // Fetch user stats
+        const { data: statsData, error: statsError } = await supabase
+          .from('user_stats')
+          .select('*');
+
+        if (statsError) throw statsError;
+
+        // Combine user data with stats
+        const enrichedUsers = userData.map(user => ({
+          ...user,
+          stats: statsData.find(stat => stat.id === user.id)
+        }));
+
+        console.log('Enriched user data:', enrichedUsers);
+        setUsers(enrichedUsers);
       } catch (error) {
         console.error('Error fetching latest user data:', error);
         toast({
@@ -45,10 +53,8 @@ export const UserTable = ({ users, setUsers, setSelectedUserId }: UserTableProps
       }
     };
 
-    // Fetch initial data
     fetchLatestUserData();
 
-    // Set up real-time subscription for updates
     const subscription = supabase
       .channel('users_channel')
       .on('postgres_changes', 
@@ -61,7 +67,6 @@ export const UserTable = ({ users, setUsers, setSelectedUserId }: UserTableProps
       )
       .subscribe();
 
-    // Cleanup subscription
     return () => {
       subscription.unsubscribe();
     };
@@ -86,6 +91,29 @@ export const UserTable = ({ users, setUsers, setSelectedUserId }: UserTableProps
     }
   };
 
+  const handleUpdateUser = async (id: number, updates: Partial<User>) => {
+    try {
+      const { error } = await supabase
+        .from('users')
+        .update(updates)
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "User updated successfully",
+      });
+    } catch (error) {
+      console.error('Error updating user:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update user",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (isLoading) {
     return <div className="flex justify-center items-center">Loading...</div>;
   }
@@ -103,6 +131,7 @@ export const UserTable = ({ users, setUsers, setSelectedUserId }: UserTableProps
               getNumericValue={getNumericValue}
               onDelete={handleDeleteUser}
               onChangePassword={setSelectedUserId}
+              onUpdateUser={handleUpdateUser}
             />
           ))}
         </tbody>
