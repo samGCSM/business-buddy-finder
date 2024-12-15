@@ -41,7 +41,7 @@ const Header = ({ isAdmin, onLogout }: { isAdmin: boolean; onLogout: () => void 
   );
 
   return (
-    <header className="bg-white shadow-sm py-4 px-6 mb-8">
+    <header className="bg-white shadow-sm py-4 px-6">
       <div className="max-w-7xl mx-auto flex justify-between items-center">
         <div className="flex items-center space-x-4">
           <img 
