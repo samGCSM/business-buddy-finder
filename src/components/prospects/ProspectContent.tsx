@@ -25,7 +25,8 @@ const ProspectContent = ({
     setIsAddFormVisible(true);
   };
 
-  const canAddProspects = userRole === 'admin' || userRole === 'supervisor';
+  // Allow all users to add prospects
+  const canAddProspects = true;
 
   return (
     <div className="space-y-6">
