@@ -2,6 +2,7 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import ProspectNotes from "./ProspectNotes";
 
 interface Prospect {
   id: string;
@@ -56,7 +57,6 @@ const ProspectsTable = ({ prospects, onUpdate }: ProspectsTableProps) => {
           <TableHeader>
             <TableRow>
               <TableHead>Business Name</TableHead>
-              <TableHead>Notes</TableHead>
               <TableHead>Website</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Address</TableHead>
@@ -74,7 +74,6 @@ const ProspectsTable = ({ prospects, onUpdate }: ProspectsTableProps) => {
             {prospects.map((prospect) => (
               <TableRow key={prospect.id}>
                 <TableCell>{prospect.business_name}</TableCell>
-                <TableCell>{prospect.notes}</TableCell>
                 <TableCell>{prospect.website}</TableCell>
                 <TableCell>{prospect.email}</TableCell>
                 <TableCell>{prospect.business_address}</TableCell>
@@ -86,13 +85,20 @@ const ProspectsTable = ({ prospects, onUpdate }: ProspectsTableProps) => {
                 <TableCell>{prospect.owner_email}</TableCell>
                 <TableCell>{new Date(prospect.last_contact).toLocaleDateString()}</TableCell>
                 <TableCell>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => handleDelete(prospect.id)}
-                  >
-                    Delete
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <ProspectNotes
+                      prospectId={prospect.id}
+                      existingNotes={prospect.notes}
+                      onNotesUpdated={onUpdate}
+                    />
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => handleDelete(prospect.id)}
+                    >
+                      Delete
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
