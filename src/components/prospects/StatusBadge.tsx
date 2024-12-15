@@ -25,16 +25,18 @@ interface StatusBadgeProps {
 }
 
 const StatusBadge = ({ status, onStatusChange }: StatusBadgeProps) => {
+  const [currentStatus, setCurrentStatus] = useState(status);
   const [customColor, setCustomColor] = useState(statusColors[status as keyof typeof statusColors] || '#E5DEFF');
 
   const handleColorChange = (color: string) => {
     setCustomColor(color);
     if (onStatusChange) {
-      onStatusChange(status, color);
+      onStatusChange(currentStatus, color);
     }
   };
 
   const handleStatusSelect = (newStatus: string) => {
+    setCurrentStatus(newStatus);
     const newColor = statusColors[newStatus as keyof typeof statusColors] || customColor;
     setCustomColor(newColor);
     if (onStatusChange) {
@@ -53,7 +55,7 @@ const StatusBadge = ({ status, onStatusChange }: StatusBadgeProps) => {
               color: '#000000',
             }}
           >
-            {status}
+            {currentStatus}
           </div>
         </PopoverTrigger>
         <PopoverContent className="w-80">

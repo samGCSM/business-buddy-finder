@@ -1,12 +1,5 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 interface ProspectFormData {
   business_name: string;
@@ -29,14 +22,9 @@ interface ProspectFormFieldsProps {
   onPriorityChange?: (value: string) => void;
 }
 
-const statusOptions = ['New', 'Contacted', 'Meeting', 'Proposal', 'Won', 'Lost'];
-const priorityOptions = ['Low', 'Medium', 'High'];
-
 const ProspectFormFields = ({ 
   formData, 
   handleChange,
-  onStatusChange,
-  onPriorityChange 
 }: ProspectFormFieldsProps) => (
   <div className="space-y-4">
     <div className="grid grid-cols-2 gap-4">
@@ -114,42 +102,6 @@ const ProspectFormFields = ({
           value={formData.owner_email}
           onChange={handleChange}
         />
-      </div>
-      <div>
-        <Label htmlFor="status">Status</Label>
-        <Select 
-          value={formData.status} 
-          onValueChange={onStatusChange}
-        >
-          <SelectTrigger className="bg-white dark:bg-gray-800">
-            <SelectValue placeholder="Select status" />
-          </SelectTrigger>
-          <SelectContent className="bg-white dark:bg-gray-800">
-            {statusOptions.map((option) => (
-              <SelectItem key={option} value={option}>
-                {option}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      <div>
-        <Label htmlFor="priority">Priority</Label>
-        <Select 
-          value={formData.priority} 
-          onValueChange={onPriorityChange}
-        >
-          <SelectTrigger className="bg-white dark:bg-gray-800">
-            <SelectValue placeholder="Select priority" />
-          </SelectTrigger>
-          <SelectContent className="bg-white dark:bg-gray-800">
-            {priorityOptions.map((option) => (
-              <SelectItem key={option} value={option}>
-                {option}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
       </div>
     </div>
     <div>

@@ -22,16 +22,18 @@ interface PriorityBadgeProps {
 }
 
 const PriorityBadge = ({ priority, onPriorityChange }: PriorityBadgeProps) => {
+  const [currentPriority, setCurrentPriority] = useState(priority);
   const [customColor, setCustomColor] = useState(priorityColors[priority as keyof typeof priorityColors] || '#FEF7CD');
 
   const handleColorChange = (color: string) => {
     setCustomColor(color);
     if (onPriorityChange) {
-      onPriorityChange(priority, color);
+      onPriorityChange(currentPriority, color);
     }
   };
 
   const handlePrioritySelect = (newPriority: string) => {
+    setCurrentPriority(newPriority);
     const newColor = priorityColors[newPriority as keyof typeof priorityColors] || customColor;
     setCustomColor(newColor);
     if (onPriorityChange) {
@@ -50,7 +52,7 @@ const PriorityBadge = ({ priority, onPriorityChange }: PriorityBadgeProps) => {
               color: '#000000',
             }}
           >
-            {priority}
+            {currentPriority}
           </div>
         </PopoverTrigger>
         <PopoverContent className="w-80">
