@@ -8,9 +8,10 @@ interface ProspectHeaderProps {
   onAddClick: () => void;
   onBulkUploadSuccess: () => void;
   prospects: any[];
+  showAddButton: boolean;  // Added this prop
 }
 
-const ProspectHeader = ({ onAddClick, onBulkUploadSuccess, prospects }: ProspectHeaderProps) => {
+const ProspectHeader = ({ onAddClick, onBulkUploadSuccess, prospects, showAddButton }: ProspectHeaderProps) => {
   const handleExport = () => {
     try {
       const exportData = prospects.map(prospect => ({
@@ -51,10 +52,12 @@ const ProspectHeader = ({ onAddClick, onBulkUploadSuccess, prospects }: Prospect
     <div className="flex justify-between items-center">
       <h2 className="text-2xl font-bold">Prospect Now</h2>
       <div className="space-x-4">
-        <Button onClick={onAddClick} className="gap-2">
-          <Plus className="h-4 w-4" />
-          Add New Prospect
-        </Button>
+        {showAddButton && (
+          <Button onClick={onAddClick} className="gap-2">
+            <Plus className="h-4 w-4" />
+            Add New Prospect
+          </Button>
+        )}
         <BulkUploadProspects onSuccess={onBulkUploadSuccess} />
         <Button onClick={handleExport} variant="outline" className="gap-2">
           <Download className="h-4 w-4" />

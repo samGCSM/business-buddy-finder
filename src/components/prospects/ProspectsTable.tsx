@@ -4,6 +4,8 @@ import EditProspectForm from "./EditProspectForm";
 import ProspectTableHeader from "./ProspectTableHeader";
 import ProspectTableRow from "./ProspectTableRow";
 import type { Prospect } from "@/types/prospects";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
 interface ProspectsTableProps {
   prospects: Prospect[];

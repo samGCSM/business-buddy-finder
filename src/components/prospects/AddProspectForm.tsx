@@ -8,9 +8,10 @@ import ProspectFormFields from "./ProspectFormFields";
 interface AddProspectFormProps {
   onClose: () => void;
   onSuccess: () => void;
+  userRole: 'admin' | 'supervisor' | 'user' | null;
 }
 
-const AddProspectForm = ({ onClose, onSuccess }: AddProspectFormProps) => {
+const AddProspectForm = ({ onClose, onSuccess, userRole }: AddProspectFormProps) => {
   const session = useSession();
   const [formData, setFormData] = useState({
     business_name: "",
