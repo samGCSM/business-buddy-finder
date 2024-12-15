@@ -17,15 +17,23 @@ const Header = ({ isAdmin, onLogout }: { isAdmin: boolean; onLogout: () => void 
   const handleLogout = async () => {
     try {
       console.log("Header - Logging out");
+      // First call the parent's logout handler to update app state
+      onLogout();
+      
+      // Then clear local storage and sign out from Supabase
+      localStorage.removeItem('currentUser');
       await supabase.auth.signOut();
-      localStorage.removeItem('currentUser'); // Clear user data
+      
       console.log("Header - Logged out successfully");
+      
+      // Navigate to login page
+      navigate("/login");
+      
+      // Show success message after navigation
       toast({
         title: "Success",
         description: "Logged out successfully",
       });
-      navigate("/login");
-      onLogout(); // Call the parent's logout handler
     } catch (error) {
       console.error('Error logging out:', error);
       toast({
@@ -126,7 +134,7 @@ const Header = ({ isAdmin, onLogout }: { isAdmin: boolean; onLogout: () => void 
           <Button variant="outline" onClick={() => navigate('/profile')}>
             Profile
           </Button>
-          <Button variant="destructive" onClick={onLogout}>
+          <Button variant="destructive" onClick={handleLogout}>
             Logout
           </Button>
         </div>
