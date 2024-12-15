@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -6,6 +6,7 @@ import { PhoneCall, Mail, MessageSquare, User } from "lucide-react";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { Json } from "@/integrations/supabase/types";
 
 interface ContactLogProps {
   isOpen: boolean;
@@ -28,6 +29,49 @@ export const ContactLog = ({ isOpen, onClose, prospectId, prospectName, onContac
   const [contactDate, setContactDate] = useState(format(new Date(), "yyyy-MM-dd'T'HH:mm"));
   const [notes, setNotes] = useState("");
   const [contactHistory, setContactHistory] = useState<ContactHistoryItem[]>([]);
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchContactHistory();
+    }
+  }, [isOpen, prospectId]);
+
+  const fetchContactHistory = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('prospects')
+        .select('activity_log')
+        .eq('id', prospectId)
+        .single();
+
+      if (error) throw error;
+
+      const history = (data?.activity_log || [])
+        .filter((item: Json) => 
+          typeof item === 'object' && 
+          item !== null && 
+          'type' in item && 
+          (item.type === 'Phone Call' || 
+           item.type === 'Email' || 
+           item.type === 'Text Message' || 
+           item.type === 'Face to Face')
+        )
+        .map((item: Json) => ({
+          type: item.type as ContactType,
+          timestamp: item.timestamp as string,
+          notes: item.notes as string
+        }));
+
+      setContactHistory(history);
+    } catch (error) {
+      console.error('Error fetching contact history:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch contact history",
+        variant: "destructive",
+      });
+    }
+  };
 
   const contactTypes = [
     { type: 'Phone Call' as ContactType, icon: PhoneCall },
@@ -57,11 +101,19 @@ export const ContactLog = ({ isOpen, onClose, prospectId, prospectName, onContac
         notes: notes,
       };
 
+      const { data: currentData } = await supabase
+        .from('prospects')
+        .select('activity_log')
+        .eq('id', prospectId)
+        .single();
+
+      const updatedLog = [...(currentData?.activity_log || []), newContact];
+
       const { error } = await supabase
         .from('prospects')
         .update({
           last_contact: newContact.timestamp,
-          activity_log: [...contactHistory, newContact]
+          activity_log: updatedLog
         })
         .eq('id', prospectId);
 
