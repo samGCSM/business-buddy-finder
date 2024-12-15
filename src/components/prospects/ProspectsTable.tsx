@@ -2,6 +2,7 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Pencil } from "lucide-react";
 import ProspectNotes from "./ProspectNotes";
 
 interface Prospect {
@@ -86,6 +87,13 @@ const ProspectsTable = ({ prospects, onUpdate }: ProspectsTableProps) => {
                 <TableCell>{new Date(prospect.last_contact).toLocaleDateString()}</TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
                     <ProspectNotes
                       prospectId={prospect.id}
                       existingNotes={prospect.notes}
