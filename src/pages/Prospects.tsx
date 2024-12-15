@@ -15,37 +15,45 @@ const Prospects = () => {
   const [userRole, setUserRole] = useState<'admin' | 'supervisor' | 'user' | null>(null);
 
   useEffect(() => {
-    if (session?.user?.id) {
-      fetchUserRole();
-      fetchProspects();
+    if (!session?.user?.id) {
+      navigate('/login');
+      return;
     }
+    fetchUserRole();
+    fetchProspects();
   }, [session?.user?.id]);
 
   const fetchUserRole = async () => {
     try {
+      console.log('Fetching user role for user:', session?.user?.id);
       const { data: userData, error } = await supabase
         .from('users')
         .select('type')
         .eq('id', session?.user?.id)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching user role:', error);
+        throw error;
+      }
+      console.log('User role data:', userData);
       setUserRole(userData?.type as 'admin' | 'supervisor' | 'user' | null);
     } catch (error) {
       console.error('Error fetching user role:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch user role",
+        variant: "destructive",
+      });
     }
   };
 
   const fetchProspects = async () => {
     try {
-      let query = supabase.from('prospects').select(`
-        *,
-        users!prospects_user_id_fkey (
-          id,
-          email,
-          supervisor_id
-        )
-      `);
+      console.log('Fetching prospects for user role:', userRole);
+      let query = supabase
+        .from('prospects')
+        .select('*, users!prospects_user_id_fkey (id, email, supervisor_id)');
 
       // Filter prospects based on user role
       if (userRole === 'supervisor') {
@@ -62,11 +70,13 @@ const Prospects = () => {
         query = query.eq('user_id', session?.user?.id);
       }
 
-      query = query.order('created_at', { ascending: false });
+      const { data, error } = await query.order('created_at', { ascending: false });
 
-      const { data, error } = await query;
+      if (error) {
+        console.error('Error fetching prospects:', error);
+        throw error;
+      }
 
-      if (error) throw error;
       console.log('Fetched prospects:', data);
       setProspects(data || []);
     } catch (error) {
@@ -84,7 +94,7 @@ const Prospects = () => {
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut();
-      navigate("/");
+      navigate("/login");
       toast({
         title: "Success",
         description: "Logged out successfully",
@@ -98,6 +108,11 @@ const Prospects = () => {
       });
     }
   };
+
+  if (!session) {
+    navigate('/login');
+    return null;
+  }
 
   if (isLoading) {
     return <div className="flex justify-center items-center min-h-screen">Loading...</div>;
