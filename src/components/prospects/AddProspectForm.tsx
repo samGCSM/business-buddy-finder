@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useSession } from '@supabase/auth-helpers-react';
 
 interface AddProspectFormProps {
   onClose: () => void;
@@ -11,6 +12,7 @@ interface AddProspectFormProps {
 }
 
 const AddProspectForm = ({ onClose, onSuccess }: AddProspectFormProps) => {
+  const session = useSession();
   const [formData, setFormData] = useState({
     business_name: "",
     notes: "",
@@ -27,27 +29,46 @@ const AddProspectForm = ({ onClose, onSuccess }: AddProspectFormProps) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user) throw new Error("No user found");
+    
+    if (!session?.user) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to add prospects",
+        variant: "destructive",
+      });
+      return;
+    }
 
+    try {
+      console.log("Current user email:", session.user.email);
+      
       // Get the numeric user ID from the users table
       const { data: userIdData, error: userIdError } = await supabase
         .from('users')
         .select('id')
-        .eq('email', userData.user.email)
+        .eq('email', session.user.email)
         .single();
 
-      if (userIdError || !userIdData) throw new Error("Failed to get user ID");
+      console.log("User ID lookup result:", { userIdData, userIdError });
 
-      const { error } = await supabase
+      if (userIdError || !userIdData) {
+        console.error("Failed to get user ID:", userIdError);
+        throw new Error("Failed to get user ID");
+      }
+
+      console.log("Inserting prospect with user ID:", userIdData.id);
+
+      const { error: insertError } = await supabase
         .from('prospects')
         .insert({
           ...formData,
-          user_id: userIdData.id, // Now using the numeric ID from users table
+          user_id: userIdData.id,
         });
 
-      if (error) throw error;
+      if (insertError) {
+        console.error("Insert error:", insertError);
+        throw insertError;
+      }
 
       toast({
         title: "Success",
@@ -58,7 +79,7 @@ const AddProspectForm = ({ onClose, onSuccess }: AddProspectFormProps) => {
       console.error('Error adding prospect:', error);
       toast({
         title: "Error",
-        description: "Failed to add prospect",
+        description: "Failed to add prospect. Please try again.",
         variant: "destructive",
       });
     }
