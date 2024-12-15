@@ -8,7 +8,6 @@ import ProspectNotes from "./ProspectNotes";
 import EditProspectForm from "./EditProspectForm";
 import StatusBadge from "./StatusBadge";
 import PriorityBadge from "./PriorityBadge";
-import * as XLSX from 'xlsx';
 
 interface Prospect {
   id: string;
@@ -140,7 +139,18 @@ const ProspectsTable = ({ prospects, onUpdate }: ProspectsTableProps) => {
                     onNotesUpdated={onUpdate}
                   />
                 </TableCell>
-                <TableCell>{prospect.website}</TableCell>
+                <TableCell>
+                  {prospect.website ? (
+                    <a 
+                      href={prospect.website.startsWith('http') ? prospect.website : `https://${prospect.website}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:text-blue-800 hover:underline"
+                    >
+                      {prospect.website}
+                    </a>
+                  ) : null}
+                </TableCell>
                 <TableCell>{prospect.email}</TableCell>
                 <TableCell>{prospect.business_address}</TableCell>
                 <TableCell>{prospect.phone_number}</TableCell>
