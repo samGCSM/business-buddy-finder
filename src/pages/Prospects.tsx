@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSession } from '@supabase/auth-helpers-react';
 import Header from "@/components/layout/Header";
 import ProspectContent from "@/components/prospects/ProspectContent";
+import { getCurrentUser } from "@/services/userService";
 
 const Prospects = () => {
   const navigate = useNavigate();
@@ -15,65 +16,43 @@ const Prospects = () => {
   const [userRole, setUserRole] = useState<'admin' | 'supervisor' | 'user' | null>(null);
 
   useEffect(() => {
-    const checkSession = async () => {
-      if (!session) {
-        console.log('No session found, redirecting to login');
+    const initializePage = async () => {
+      const currentUser = await getCurrentUser();
+      console.log("Prospects - Checking current user:", currentUser);
+      
+      if (!currentUser) {
+        console.log("Prospects - No user found, redirecting to login");
         navigate('/login');
         return;
       }
-      console.log('Session found, fetching user data');
-      await fetchUserRole();
-      await fetchProspects();
+
+      console.log("Prospects - User found, setting role:", currentUser.type);
+      setUserRole(currentUser.type as 'admin' | 'supervisor' | 'user');
+      await fetchProspects(currentUser);
     };
 
-    checkSession();
-  }, [session, navigate]);
+    initializePage();
+  }, [navigate]);
 
-  const fetchUserRole = async () => {
+  const fetchProspects = async (currentUser: any) => {
     try {
-      console.log('Fetching user role for user:', session?.user?.id);
-      const { data: userData, error } = await supabase
-        .from('users')
-        .select('type')
-        .eq('id', session?.user?.id)
-        .single();
-
-      if (error) {
-        console.error('Error fetching user role:', error);
-        throw error;
-      }
-      console.log('User role data:', userData);
-      setUserRole(userData?.type as 'admin' | 'supervisor' | 'user' | null);
-    } catch (error) {
-      console.error('Error fetching user role:', error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch user role",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const fetchProspects = async () => {
-    try {
-      console.log('Fetching prospects for user role:', userRole);
+      console.log('Fetching prospects for user:', currentUser);
       let query = supabase
         .from('prospects')
         .select('*, users!prospects_user_id_fkey (id, email, supervisor_id)');
 
-      // Filter prospects based on user role
-      if (userRole === 'supervisor') {
+      if (currentUser.type === 'supervisor') {
         const { data: supervisedUsers } = await supabase
           .from('users')
           .select('id')
-          .eq('supervisor_id', session?.user?.id);
+          .eq('supervisor_id', currentUser.id);
 
         if (supervisedUsers) {
           const userIds = supervisedUsers.map(user => user.id);
           query = query.in('user_id', userIds);
         }
-      } else if (userRole === 'user') {
-        query = query.eq('user_id', session?.user?.id);
+      } else if (currentUser.type === 'user') {
+        query = query.eq('user_id', currentUser.id);
       }
 
       const { data, error } = await query.order('created_at', { ascending: false });
@@ -127,7 +106,7 @@ const Prospects = () => {
           prospects={prospects}
           showAddForm={showAddForm}
           onAddFormClose={() => setShowAddForm(false)}
-          onProspectAdded={fetchProspects}
+          onProspectAdded={() => fetchProspects(getCurrentUser())}
           userRole={userRole}
         />
       </div>
