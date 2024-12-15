@@ -3,7 +3,9 @@ import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Pencil } from "lucide-react";
+import { useState } from "react";
 import ProspectNotes from "./ProspectNotes";
+import EditProspectForm from "./EditProspectForm";
 
 interface Prospect {
   id: string;
@@ -27,6 +29,8 @@ interface ProspectsTableProps {
 }
 
 const ProspectsTable = ({ prospects, onUpdate }: ProspectsTableProps) => {
+  const [editingProspect, setEditingProspect] = useState<Prospect | null>(null);
+
   const handleDelete = async (id: string) => {
     try {
       const { error } = await supabase
@@ -53,6 +57,16 @@ const ProspectsTable = ({ prospects, onUpdate }: ProspectsTableProps) => {
 
   return (
     <div className="bg-white rounded-lg shadow overflow-hidden">
+      {editingProspect && (
+        <EditProspectForm
+          prospect={editingProspect}
+          onClose={() => setEditingProspect(null)}
+          onSuccess={() => {
+            setEditingProspect(null);
+            onUpdate();
+          }}
+        />
+      )}
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
@@ -91,6 +105,7 @@ const ProspectsTable = ({ prospects, onUpdate }: ProspectsTableProps) => {
                       variant="ghost"
                       size="sm"
                       className="h-8 w-8 p-0"
+                      onClick={() => setEditingProspect(prospect)}
                     >
                       <Pencil className="h-4 w-4" />
                     </Button>
