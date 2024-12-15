@@ -15,13 +15,19 @@ const Prospects = () => {
   const [userRole, setUserRole] = useState<'admin' | 'supervisor' | 'user' | null>(null);
 
   useEffect(() => {
-    if (!session?.user?.id) {
-      navigate('/login');
-      return;
-    }
-    fetchUserRole();
-    fetchProspects();
-  }, [session?.user?.id]);
+    const checkSession = async () => {
+      if (!session) {
+        console.log('No session found, redirecting to login');
+        navigate('/login');
+        return;
+      }
+      console.log('Session found, fetching user data');
+      await fetchUserRole();
+      await fetchProspects();
+    };
+
+    checkSession();
+  }, [session, navigate]);
 
   const fetchUserRole = async () => {
     try {
@@ -108,11 +114,6 @@ const Prospects = () => {
       });
     }
   };
-
-  if (!session) {
-    navigate('/login');
-    return null;
-  }
 
   if (isLoading) {
     return <div className="flex justify-center items-center min-h-screen">Loading...</div>;
