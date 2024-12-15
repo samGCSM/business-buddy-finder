@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Json } from "@/integrations/supabase/types";
 
 interface ProspectNotesProps {
   prospectId: string;
@@ -14,8 +15,10 @@ interface ProspectNotesProps {
   onNotesUpdated: () => void;
 }
 
+type ActivityLogItemType = 'note' | 'file' | 'image';
+
 interface ActivityLogItem {
-  type: 'note' | 'file' | 'image';
+  type: ActivityLogItemType;
   content: string;
   timestamp: string;
   fileUrl?: string;
@@ -49,7 +52,7 @@ const ProspectNotes = ({ prospectId, existingNotes, onNotesUpdated }: ProspectNo
       const timestamp = new Date().toISOString();
       const fileType = file.type.startsWith('image/') ? 'image' : 'file';
       
-      const newLogItem = {
+      const newLogItem: ActivityLogItem = {
         type: fileType,
         content: `Uploaded ${fileType}: ${file.name}`,
         timestamp,
@@ -57,10 +60,11 @@ const ProspectNotes = ({ prospectId, existingNotes, onNotesUpdated }: ProspectNo
         fileName: file.name
       };
 
+      const currentLog = await getActivityLog();
       const { error: updateError } = await supabase
         .from('prospects')
         .update({ 
-          activity_log: [...(await getActivityLog()), newLogItem],
+          activity_log: [...currentLog, newLogItem as Json],
           last_contact: timestamp
         })
         .eq('id', prospectId);
@@ -89,20 +93,21 @@ const ProspectNotes = ({ prospectId, existingNotes, onNotesUpdated }: ProspectNo
     if (!newNote.trim()) return;
 
     const timestamp = new Date().toISOString();
-    const newLogItem = {
+    const newLogItem: ActivityLogItem = {
       type: 'note',
       content: newNote,
       timestamp
     };
 
     try {
+      const currentLog = await getActivityLog();
       const { error } = await supabase
         .from('prospects')
         .update({ 
           notes: existingNotes 
             ? `${existingNotes}\n[${new Date().toLocaleString()}] ${newNote}`
             : `[${new Date().toLocaleString()}] ${newNote}`,
-          activity_log: [...(await getActivityLog()), newLogItem],
+          activity_log: [...currentLog, newLogItem as Json],
           last_contact: timestamp
         })
         .eq('id', prospectId);
@@ -138,7 +143,7 @@ const ProspectNotes = ({ prospectId, existingNotes, onNotesUpdated }: ProspectNo
       return [];
     }
 
-    return data.activity_log || [];
+    return (data.activity_log || []) as ActivityLogItem[];
   };
 
   const getNoteCount = () => {
