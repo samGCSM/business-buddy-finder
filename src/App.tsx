@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { SessionContextProvider } from '@supabase/auth-helpers-react';
 import { supabase } from "@/integrations/supabase/client";
-import Index from "./pages/Index";
+import Login from "./pages/Login";
 import Home from "./pages/Home";
 import BulkSearch from "./pages/BulkSearch";
 import Users from "./pages/Users";
@@ -22,8 +22,8 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/home" element={<Home />} />
+            <Route path="/" element={<Home />} />
+            <Route path="/login" element={<Login />} />
             <Route path="/bulk-search" element={<BulkSearch />} />
             <Route path="/users" element={<Users />} />
             <Route path="/profile" element={<Profile />} />
