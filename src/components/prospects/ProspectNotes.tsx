@@ -17,7 +17,6 @@ const ProspectNotes = ({ prospectId, existingNotes, onNotesUpdated }: ProspectNo
   const [isOpen, setIsOpen] = useState(false);
   const [newNote, setNewNote] = useState("");
 
-  // Calculate number of notes by counting timestamp entries
   const getNoteCount = () => {
     if (!existingNotes) return 0;
     return existingNotes.split('[').length - 1;
@@ -64,7 +63,7 @@ const ProspectNotes = ({ prospectId, existingNotes, onNotesUpdated }: ProspectNo
 
   return (
     <>
-      <div className="relative">
+      <div className="relative inline-flex items-center">
         <Button
           variant="ghost"
           size="icon"
@@ -76,7 +75,7 @@ const ProspectNotes = ({ prospectId, existingNotes, onNotesUpdated }: ProspectNo
         {noteCount > 0 && (
           <Badge 
             variant="secondary" 
-            className="absolute -top-2 -right-2 h-4 w-4 p-0 flex items-center justify-center rounded-full"
+            className="absolute -top-2 -right-2 h-4 w-4 p-0 flex items-center justify-center rounded-full text-xs"
           >
             {noteCount}
           </Badge>

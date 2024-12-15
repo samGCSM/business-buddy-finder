@@ -6,6 +6,7 @@ import { Pencil } from "lucide-react";
 import { useState } from "react";
 import ProspectNotes from "./ProspectNotes";
 import EditProspectForm from "./EditProspectForm";
+import * as XLSX from 'xlsx';
 
 interface Prospect {
   id: string;
@@ -71,7 +72,7 @@ const ProspectsTable = ({ prospects, onUpdate }: ProspectsTableProps) => {
         <Table>
           <TableHeader className="sticky top-0 bg-white z-10">
             <TableRow>
-              <TableHead className="w-[300px] min-w-[300px] sticky left-0 bg-white z-20">Business Name</TableHead>
+              <TableHead className="w-[200px] min-w-[200px] sticky left-0 bg-white z-20">Business Name</TableHead>
               <TableHead className="min-w-[100px]">Notes</TableHead>
               <TableHead>Website</TableHead>
               <TableHead>Email</TableHead>

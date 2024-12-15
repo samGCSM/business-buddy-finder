@@ -1,6 +1,7 @@
 import { useState } from "react";
 import ProspectsTable from "./ProspectsTable";
 import AddProspectForm from "./AddProspectForm";
+import ProspectHeader from "./ProspectHeader";
 
 interface Prospect {
   id: string;
@@ -33,6 +34,11 @@ const ProspectContent = ({
 }: ProspectContentProps) => {
   return (
     <div className="space-y-6">
+      <ProspectHeader 
+        onAddClick={() => showAddForm}
+        onBulkUploadSuccess={onProspectAdded}
+        prospects={prospects}
+      />
       {showAddForm && (
         <AddProspectForm
           onClose={onAddFormClose}
