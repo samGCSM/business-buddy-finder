@@ -43,9 +43,9 @@ export const ContactLog = ({
         )
         .map((item: any) => ({
           type: item.type as ContactType,
-          timestamp: item.timestamp as string,
-          notes: item.notes as string
-        }));
+          timestamp: item.timestamp,
+          notes: item.notes
+        })) as ContactHistoryItem[];
 
       setContactHistory(history);
     } catch (error) {
@@ -66,7 +66,7 @@ export const ContactLog = ({
         .eq('id', prospectId)
         .single();
 
-      const updatedLog = [...(currentData?.activity_log || []), contact];
+      const updatedLog = [...(currentData?.activity_log || []), contact] as Json[];
 
       const { error } = await supabase
         .from('prospects')

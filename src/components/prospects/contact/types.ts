@@ -6,6 +6,7 @@ export interface ContactHistoryItem {
   type: ContactType;
   timestamp: string;
   notes: string;
+  [key: string]: string; // Add index signature to make it compatible with Json type
 }
 
 export interface ContactLogProps {
@@ -21,5 +22,5 @@ export interface ContactHistoryProps {
 }
 
 export interface ContactFormProps {
-  onSubmit: (contact: { type: ContactType; timestamp: string; notes: string; }) => void;
+  onSubmit: (contact: ContactHistoryItem) => void;
 }
