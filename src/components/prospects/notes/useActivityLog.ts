@@ -4,7 +4,7 @@ import { toast } from "@/hooks/use-toast";
 import { ActivityLogItemData } from "./ActivityLogItem";
 import { Json } from "@/integrations/supabase/types";
 
-export const useActivityLog = (prospectId: string, onUpdate: () => void) => {
+export const useActivityLog = (prospectId: string, onSuccess: () => void) => {
   const [isUploading, setIsUploading] = useState(false);
 
   const getActivityLog = async (): Promise<ActivityLogItemData[]> => {
@@ -14,19 +14,22 @@ export const useActivityLog = (prospectId: string, onUpdate: () => void) => {
       .eq('id', prospectId)
       .single();
 
-    if (error) {
+    if (error || !data) {
       console.error('Error fetching activity log:', error);
       return [];
     }
 
     // Convert the Json[] to ActivityLogItemData[]
-    return (data.activity_log || []).map((item: Json) => ({
-      type: item.type as ActivityLogItemData['type'],
-      content: item.content as string,
-      timestamp: item.timestamp as string,
-      fileUrl: item.fileUrl as string | undefined,
-      fileName: item.fileName as string | undefined
-    }));
+    return (data.activity_log || []).map((item) => {
+      const jsonItem = item as { [key: string]: Json };
+      return {
+        type: jsonItem.type as ActivityLogItemData['type'],
+        content: jsonItem.content as string,
+        timestamp: jsonItem.timestamp as string,
+        fileUrl: jsonItem.fileUrl as string | undefined,
+        fileName: jsonItem.fileName as string | undefined
+      };
+    });
   };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -36,8 +39,9 @@ export const useActivityLog = (prospectId: string, onUpdate: () => void) => {
     setIsUploading(true);
     try {
       const fileExt = file.name.split('.').pop();
-      const filePath = `${prospectId}/${Date.now()}.${fileExt}`;
-      
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `${prospectId}/${fileName}`;
+
       const { error: uploadError } = await supabase.storage
         .from('prospect-files')
         .upload(filePath, file);
@@ -48,24 +52,25 @@ export const useActivityLog = (prospectId: string, onUpdate: () => void) => {
         .from('prospect-files')
         .getPublicUrl(filePath);
 
-      const timestamp = new Date().toISOString();
-      const fileType = file.type.startsWith('image/') ? 'image' : 'file';
-      
-      const newLogItem: ActivityLogItemData = {
-        type: fileType,
-        content: `Uploaded ${fileType}: ${file.name}`,
-        timestamp,
+      const newActivity = {
+        type: 'file',
+        content: 'File uploaded',
+        timestamp: new Date().toISOString(),
         fileUrl: publicUrl,
         fileName: file.name
-      };
+      } as Json;
 
-      const currentLog = await getActivityLog();
+      const { data: currentData } = await supabase
+        .from('prospects')
+        .select('activity_log')
+        .eq('id', prospectId)
+        .single();
+
+      const updatedLog = [...(currentData?.activity_log || []), newActivity];
+
       const { error: updateError } = await supabase
         .from('prospects')
-        .update({ 
-          activity_log: [...currentLog, newLogItem as unknown as Json],
-          last_contact: timestamp
-        })
+        .update({ activity_log: updatedLog })
         .eq('id', prospectId);
 
       if (updateError) throw updateError;
@@ -74,8 +79,7 @@ export const useActivityLog = (prospectId: string, onUpdate: () => void) => {
         title: "Success",
         description: "File uploaded successfully",
       });
-      
-      onUpdate();
+      onSuccess();
     } catch (error) {
       console.error('Error uploading file:', error);
       toast({
@@ -88,26 +92,32 @@ export const useActivityLog = (prospectId: string, onUpdate: () => void) => {
     }
   };
 
-  const addNote = async (note: string, existingNotes: string) => {
-    if (!note.trim()) return;
-
-    const timestamp = new Date().toISOString();
-    const newLogItem: ActivityLogItemData = {
-      type: 'note',
-      content: note,
-      timestamp
-    };
-
+  const addNote = async (note: string, existingNotes: string): Promise<boolean> => {
     try {
-      const currentLog = await getActivityLog();
+      const timestamp = new Date().toISOString();
+      const newNote = `[${timestamp}] ${note}\n`;
+      const updatedNotes = existingNotes ? `${existingNotes}${newNote}` : newNote;
+
+      const newActivity = {
+        type: 'note',
+        content: note,
+        timestamp
+      } as Json;
+
+      const { data: currentData } = await supabase
+        .from('prospects')
+        .select('activity_log')
+        .eq('id', prospectId)
+        .single();
+
+      const updatedLog = [...(currentData?.activity_log || []), newActivity];
+
       const { error } = await supabase
         .from('prospects')
-        .update({ 
-          notes: existingNotes 
-            ? `${existingNotes}\n[${new Date().toLocaleString()}] ${note}`
-            : `[${new Date().toLocaleString()}] ${note}`,
-          activity_log: [...currentLog, newLogItem as unknown as Json],
-          last_contact: timestamp
+        .update({
+          notes: updatedNotes,
+          activity_log: updatedLog,
+          last_contact: new Date().toISOString()
         })
         .eq('id', prospectId);
 
@@ -117,14 +127,13 @@ export const useActivityLog = (prospectId: string, onUpdate: () => void) => {
         title: "Success",
         description: "Note added successfully",
       });
-      
-      onUpdate();
+      onSuccess();
       return true;
     } catch (error) {
-      console.error('Error saving note:', error);
+      console.error('Error adding note:', error);
       toast({
         title: "Error",
-        description: "Failed to save note",
+        description: "Failed to add note",
         variant: "destructive",
       });
       return false;
@@ -132,9 +141,9 @@ export const useActivityLog = (prospectId: string, onUpdate: () => void) => {
   };
 
   return {
-    getActivityLog,
     handleFileUpload,
     addNote,
-    isUploading
+    isUploading,
+    getActivityLog
   };
 };

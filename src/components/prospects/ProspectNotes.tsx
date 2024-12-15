@@ -65,9 +65,9 @@ const ProspectNotes = ({ prospectId, existingNotes, onNotesUpdated }: ProspectNo
       </div>
 
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
-        <SheetContent side="left" className="w-[400px] sm:w-[540px]">
+        <SheetContent side="right" className="w-[400px] sm:w-[540px]">
           <SheetHeader>
-            <SheetTitle>Prospect Notes & Activity</SheetTitle>
+            <SheetTitle>Notes & Activity</SheetTitle>
           </SheetHeader>
           
           <div className="flex flex-col h-full gap-4 mt-4">

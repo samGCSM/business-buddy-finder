@@ -113,7 +113,7 @@ const ProspectsTable = ({ prospects, onUpdate }: ProspectsTableProps) => {
           <TableHeader className="sticky top-0 bg-white z-10">
             <TableRow>
               <TableHead className="w-[200px] min-w-[200px] sticky left-0 bg-white z-20">Business Name</TableHead>
-              <TableHead className="min-w-[100px]">Notes & Files</TableHead>
+              <TableHead className="min-w-[100px]">Notes</TableHead>
               <TableHead>Website</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Address</TableHead>
