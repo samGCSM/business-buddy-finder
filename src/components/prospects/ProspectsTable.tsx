@@ -6,6 +6,8 @@ import { Pencil } from "lucide-react";
 import { useState } from "react";
 import ProspectNotes from "./ProspectNotes";
 import EditProspectForm from "./EditProspectForm";
+import StatusBadge from "./StatusBadge";
+import PriorityBadge from "./PriorityBadge";
 import * as XLSX from 'xlsx';
 
 interface Prospect {
@@ -51,6 +53,44 @@ const ProspectsTable = ({ prospects, onUpdate }: ProspectsTableProps) => {
       toast({
         title: "Error",
         description: "Failed to delete prospect",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleStatusChange = async (id: string, newStatus: string, color: string) => {
+    try {
+      const { error } = await supabase
+        .from('prospects')
+        .update({ status: newStatus })
+        .eq('id', id);
+
+      if (error) throw error;
+      onUpdate();
+    } catch (error) {
+      console.error('Error updating status:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update status",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handlePriorityChange = async (id: string, newPriority: string, color: string) => {
+    try {
+      const { error } = await supabase
+        .from('prospects')
+        .update({ priority: newPriority })
+        .eq('id', id);
+
+      if (error) throw error;
+      onUpdate();
+    } catch (error) {
+      console.error('Error updating priority:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update priority",
         variant: "destructive",
       });
     }
@@ -105,8 +145,18 @@ const ProspectsTable = ({ prospects, onUpdate }: ProspectsTableProps) => {
                 <TableCell>{prospect.business_address}</TableCell>
                 <TableCell>{prospect.phone_number}</TableCell>
                 <TableCell>{prospect.owner_name}</TableCell>
-                <TableCell>{prospect.status}</TableCell>
-                <TableCell>{prospect.priority}</TableCell>
+                <TableCell>
+                  <StatusBadge
+                    status={prospect.status}
+                    onStatusChange={(newStatus, color) => handleStatusChange(prospect.id, newStatus, color)}
+                  />
+                </TableCell>
+                <TableCell>
+                  <PriorityBadge
+                    priority={prospect.priority}
+                    onPriorityChange={(newPriority, color) => handlePriorityChange(prospect.id, newPriority, color)}
+                  />
+                </TableCell>
                 <TableCell>{prospect.owner_phone}</TableCell>
                 <TableCell>{prospect.owner_email}</TableCell>
                 <TableCell>{new Date(prospect.last_contact).toLocaleDateString()}</TableCell>
