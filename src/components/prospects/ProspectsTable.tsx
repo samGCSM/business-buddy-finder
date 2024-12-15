@@ -69,9 +69,10 @@ const ProspectsTable = ({ prospects, onUpdate }: ProspectsTableProps) => {
       )}
       <div className="overflow-x-auto">
         <Table>
-          <TableHeader>
+          <TableHeader className="sticky top-0 bg-white z-10">
             <TableRow>
-              <TableHead>Business Name</TableHead>
+              <TableHead className="w-[300px] min-w-[300px] sticky left-0 bg-white z-20">Business Name</TableHead>
+              <TableHead className="min-w-[100px]">Notes</TableHead>
               <TableHead>Website</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Address</TableHead>
@@ -88,7 +89,16 @@ const ProspectsTable = ({ prospects, onUpdate }: ProspectsTableProps) => {
           <TableBody>
             {prospects.map((prospect) => (
               <TableRow key={prospect.id}>
-                <TableCell>{prospect.business_name}</TableCell>
+                <TableCell className="sticky left-0 bg-white font-medium whitespace-nowrap">
+                  {prospect.business_name}
+                </TableCell>
+                <TableCell>
+                  <ProspectNotes
+                    prospectId={prospect.id}
+                    existingNotes={prospect.notes}
+                    onNotesUpdated={onUpdate}
+                  />
+                </TableCell>
                 <TableCell>{prospect.website}</TableCell>
                 <TableCell>{prospect.email}</TableCell>
                 <TableCell>{prospect.business_address}</TableCell>
@@ -109,11 +119,6 @@ const ProspectsTable = ({ prospects, onUpdate }: ProspectsTableProps) => {
                     >
                       <Pencil className="h-4 w-4" />
                     </Button>
-                    <ProspectNotes
-                      prospectId={prospect.id}
-                      existingNotes={prospect.notes}
-                      onNotesUpdated={onUpdate}
-                    />
                     <Button
                       variant="destructive"
                       size="sm"
