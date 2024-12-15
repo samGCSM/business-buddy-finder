@@ -69,6 +69,7 @@ export const useLogin = (onLogin: (isLoggedIn: boolean, userType: 'admin' | 'use
         description: "Invalid credentials",
         variant: "destructive",
       });
+      onLogin(false, 'user'); // Reset login state on error
     } finally {
       setIsLoading(false);
     }

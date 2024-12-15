@@ -1,6 +1,8 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Menu, Plus, Home, Search } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 import {
   Sheet,
   SheetContent,
@@ -11,6 +13,28 @@ import {
 
 const Header = ({ isAdmin, onLogout }: { isAdmin: boolean; onLogout: () => void }) => {
   const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    try {
+      console.log("Header - Logging out");
+      await supabase.auth.signOut();
+      localStorage.removeItem('currentUser'); // Clear user data
+      console.log("Header - Logged out successfully");
+      toast({
+        title: "Success",
+        description: "Logged out successfully",
+      });
+      navigate("/login");
+      onLogout(); // Call the parent's logout handler
+    } catch (error) {
+      console.error('Error logging out:', error);
+      toast({
+        title: "Error",
+        description: "Failed to logout",
+        variant: "destructive",
+      });
+    }
+  };
 
   const NavigationItems = () => (
     <div className="flex flex-col space-y-4">
@@ -56,7 +80,7 @@ const Header = ({ isAdmin, onLogout }: { isAdmin: boolean; onLogout: () => void 
       </Button>
       <Button 
         variant="destructive" 
-        onClick={onLogout}
+        onClick={handleLogout}
         className="w-full justify-start"
       >
         Logout

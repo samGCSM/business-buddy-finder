@@ -15,9 +15,10 @@ const Login = () => {
       const currentUser = await getCurrentUser();
       console.log("Login - Current user:", currentUser);
       if (currentUser) {
+        console.log("Login - User found, redirecting to home");
         setIsLoggedIn(true);
         setIsAdmin(currentUser.type === 'admin');
-        navigate('/'); // Always redirect to home after login
+        navigate('/'); // Redirect to home after login
       }
     };
     
@@ -28,10 +29,13 @@ const Login = () => {
     console.log("Login - Login handler:", { isLoggedIn, userType });
     setIsLoggedIn(isLoggedIn);
     setIsAdmin(userType === 'admin');
-    navigate('/'); // Redirect to home after successful login
+    if (isLoggedIn) {
+      console.log("Login - Successfully logged in, redirecting to home");
+      navigate('/');
+    }
   };
 
-  // If already logged in, redirect to home
+  // If already logged in, don't render the login form
   if (isLoggedIn) {
     return null;
   }
