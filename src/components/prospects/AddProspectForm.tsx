@@ -31,14 +31,21 @@ const AddProspectForm = ({ onClose, onSuccess }: AddProspectFormProps) => {
       const { data: userData } = await supabase.auth.getUser();
       if (!userData.user) throw new Error("No user found");
 
+      // Get the numeric user ID from the users table
+      const { data: userIdData, error: userIdError } = await supabase
+        .from('users')
+        .select('id')
+        .eq('email', userData.user.email)
+        .single();
+
+      if (userIdError || !userIdData) throw new Error("Failed to get user ID");
+
       const { error } = await supabase
         .from('prospects')
-        .insert([
-          {
-            ...formData,
-            user_id: userData.user.id,
-          }
-        ]);
+        .insert({
+          ...formData,
+          user_id: userIdData.id, // Now using the numeric ID from users table
+        });
 
       if (error) throw error;
 
