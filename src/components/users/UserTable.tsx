@@ -120,22 +120,24 @@ export const UserTable = ({ users, setUsers, setSelectedUserId }: UserTableProps
 
   return (
     <div className="bg-white rounded-lg shadow overflow-hidden">
-      <table className="min-w-full divide-y divide-gray-200">
-        <UserTableHeader />
-        <tbody className="bg-white divide-y divide-gray-200">
-          {users.map((user) => (
-            <UserTableRow
-              key={user.id}
-              user={user}
-              formatDate={formatDate}
-              getNumericValue={getNumericValue}
-              onDelete={handleDeleteUser}
-              onChangePassword={setSelectedUserId}
-              onUpdateUser={handleUpdateUser}
-            />
-          ))}
-        </tbody>
-      </table>
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-200">
+          <UserTableHeader />
+          <tbody className="bg-white divide-y divide-gray-200">
+            {users.map((user) => (
+              <UserTableRow
+                key={user.id}
+                user={user}
+                formatDate={formatDate}
+                getNumericValue={getNumericValue}
+                onDelete={handleDeleteUser}
+                onChangePassword={setSelectedUserId}
+                onUpdateUser={handleUpdateUser}
+              />
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };

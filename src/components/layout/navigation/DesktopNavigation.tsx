@@ -20,12 +20,6 @@ const DesktopNavigation = ({ isAdmin, onLogout }: DesktopNavigationProps) => {
         <Search className="h-4 w-4 mr-2" />
         Bulk Search
       </Button>
-      {isAdmin && (
-        <Button variant="outline" onClick={() => navigate('/users')}>
-          <Users className="h-4 w-4 mr-2" />
-          Manage Users
-        </Button>
-      )}
       <Button 
         variant="outline" 
         onClick={() => navigate('/prospects')}
@@ -34,6 +28,12 @@ const DesktopNavigation = ({ isAdmin, onLogout }: DesktopNavigationProps) => {
         <Plus className="h-4 w-4" />
         Prospect Now
       </Button>
+      {isAdmin && (
+        <Button variant="outline" onClick={() => navigate('/users')}>
+          <Users className="h-4 w-4 mr-2" />
+          Manage Users
+        </Button>
+      )}
       <Button variant="outline" onClick={() => navigate('/profile')}>
         Profile
       </Button>

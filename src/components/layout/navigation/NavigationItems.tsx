@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Home, Search, Plus } from "lucide-react";
+import { Home, Search, Plus, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface NavigationItemsProps {
@@ -28,15 +28,6 @@ const NavigationItems = ({ isAdmin, onLogout }: NavigationItemsProps) => {
         <Search className="h-4 w-4 mr-2" />
         Bulk Search
       </Button>
-      {isAdmin && (
-        <Button 
-          variant="outline" 
-          onClick={() => navigate('/users')}
-          className="w-full justify-start"
-        >
-          Manage Users
-        </Button>
-      )}
       <Button 
         variant="outline" 
         onClick={() => navigate('/prospects')}
@@ -45,6 +36,16 @@ const NavigationItems = ({ isAdmin, onLogout }: NavigationItemsProps) => {
         <Plus className="h-4 w-4 mr-2" />
         Prospect Now
       </Button>
+      {isAdmin && (
+        <Button 
+          variant="outline" 
+          onClick={() => navigate('/users')}
+          className="w-full justify-start"
+        >
+          <Users className="h-4 w-4 mr-2" />
+          Manage Users
+        </Button>
+      )}
       <Button 
         variant="outline" 
         onClick={() => navigate('/profile')}
