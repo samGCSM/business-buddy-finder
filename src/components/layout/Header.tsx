@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, Plus } from "lucide-react";
+import { Menu, Plus, Home, Search } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -14,6 +14,22 @@ const Header = ({ isAdmin, onLogout }: { isAdmin: boolean; onLogout: () => void 
 
   const NavigationItems = () => (
     <div className="flex flex-col space-y-4">
+      <Button 
+        variant="outline" 
+        onClick={() => navigate('/')}
+        className="w-full justify-start"
+      >
+        <Home className="h-4 w-4 mr-2" />
+        Home
+      </Button>
+      <Button 
+        variant="outline" 
+        onClick={() => navigate('/bulk-search')}
+        className="w-full justify-start"
+      >
+        <Search className="h-4 w-4 mr-2" />
+        Bulk Search
+      </Button>
       {isAdmin && (
         <Button 
           variant="outline" 
@@ -28,6 +44,7 @@ const Header = ({ isAdmin, onLogout }: { isAdmin: boolean; onLogout: () => void 
         onClick={() => navigate('/prospects')}
         className="w-full justify-start"
       >
+        <Plus className="h-4 w-4 mr-2" />
         Prospect Now
       </Button>
       <Button 
@@ -61,6 +78,14 @@ const Header = ({ isAdmin, onLogout }: { isAdmin: boolean; onLogout: () => void 
 
         {/* Desktop Navigation */}
         <div className="hidden md:flex space-x-4">
+          <Button variant="outline" onClick={() => navigate('/')}>
+            <Home className="h-4 w-4 mr-2" />
+            Home
+          </Button>
+          <Button variant="outline" onClick={() => navigate('/bulk-search')}>
+            <Search className="h-4 w-4 mr-2" />
+            Bulk Search
+          </Button>
           {isAdmin && (
             <Button variant="outline" onClick={() => navigate('/users')}>
               Manage Users

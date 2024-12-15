@@ -6,6 +6,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { SessionContextProvider } from '@supabase/auth-helpers-react';
 import { supabase } from "@/integrations/supabase/client";
 import Index from "./pages/Index";
+import Home from "./pages/Home";
+import BulkSearch from "./pages/BulkSearch";
 import Users from "./pages/Users";
 import Profile from "./pages/Profile";
 import Prospects from "./pages/Prospects";
@@ -21,6 +23,8 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/home" element={<Home />} />
+            <Route path="/bulk-search" element={<BulkSearch />} />
             <Route path="/users" element={<Users />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/prospects" element={<Prospects />} />
