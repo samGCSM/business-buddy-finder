@@ -39,7 +39,6 @@ const AddProspectForm = ({ onClose, onSuccess, userRole }: AddProspectFormProps)
         throw new Error("Please log in to add prospects");
       }
 
-      // Get user data directly from the session
       const { data: userData, error: userError } = await supabase
         .from('users')
         .select('id')
@@ -98,12 +97,31 @@ const AddProspectForm = ({ onClose, onSuccess, userRole }: AddProspectFormProps)
     }));
   };
 
+  const handleStatusChange = (value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      status: value
+    }));
+  };
+
+  const handlePriorityChange = (value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      priority: value
+    }));
+  };
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[100]">
       <div className="bg-background rounded-lg p-6 max-w-2xl w-full shadow-lg border border-border">
         <h3 className="text-lg font-semibold mb-4">Add New Prospect</h3>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <ProspectFormFields formData={formData} handleChange={handleChange} />
+          <ProspectFormFields 
+            formData={formData} 
+            handleChange={handleChange}
+            onStatusChange={handleStatusChange}
+            onPriorityChange={handlePriorityChange}
+          />
           <div className="flex justify-end space-x-4">
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
