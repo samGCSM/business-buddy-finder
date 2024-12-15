@@ -30,33 +30,34 @@ const AddProspectForm = ({ onClose, onSuccess }: AddProspectFormProps) => {
     e.preventDefault();
     
     try {
-      console.log("Current user email:", session?.user?.email);
-      
-      if (!session?.user?.email) {
-        throw new Error("User email not found");
+      // First check if we have a session
+      if (!session?.user?.id) {
+        console.error("No session or user ID found");
+        throw new Error("Please log in to add prospects");
       }
 
+      console.log("Current session:", session);
+      console.log("Attempting to add prospect with user ID:", session.user.id);
+
       // Get the numeric user ID from the users table
-      const { data: userIdData, error: userIdError } = await supabase
+      const { data: userData, error: userError } = await supabase
         .from('users')
         .select('id')
         .eq('email', session.user.email)
         .single();
 
-      console.log("User ID lookup result:", { userIdData, userIdError });
-
-      if (userIdError || !userIdData) {
-        console.error("Failed to get user ID:", userIdError);
-        throw new Error("Failed to get user ID");
+      if (userError || !userData) {
+        console.error("Error fetching user data:", userError);
+        throw new Error("Failed to get user data");
       }
 
-      console.log("Inserting prospect with user ID:", userIdData.id);
+      console.log("Found user data:", userData);
 
       const { error: insertError } = await supabase
         .from('prospects')
         .insert({
           ...formData,
-          user_id: userIdData.id,
+          user_id: userData.id
         });
 
       if (insertError) {
