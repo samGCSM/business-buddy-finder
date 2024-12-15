@@ -12,17 +12,59 @@ const Prospects = () => {
   const [prospects, setProspects] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [userRole, setUserRole] = useState<'admin' | 'supervisor' | 'user' | null>(null);
 
   useEffect(() => {
-    fetchProspects();
-  }, []);
+    if (session?.user?.id) {
+      fetchUserRole();
+      fetchProspects();
+    }
+  }, [session?.user?.id]);
+
+  const fetchUserRole = async () => {
+    try {
+      const { data: userData, error } = await supabase
+        .from('users')
+        .select('type')
+        .eq('id', session?.user?.id)
+        .single();
+
+      if (error) throw error;
+      setUserRole(userData?.type as 'admin' | 'supervisor' | 'user' | null);
+    } catch (error) {
+      console.error('Error fetching user role:', error);
+    }
+  };
 
   const fetchProspects = async () => {
     try {
-      const { data, error } = await supabase
-        .from('prospects')
-        .select('*')
-        .order('created_at', { ascending: false });
+      let query = supabase.from('prospects').select(`
+        *,
+        users!prospects_user_id_fkey (
+          id,
+          email,
+          supervisor_id
+        )
+      `);
+
+      // Filter prospects based on user role
+      if (userRole === 'supervisor') {
+        const { data: supervisedUsers } = await supabase
+          .from('users')
+          .select('id')
+          .eq('supervisor_id', session?.user?.id);
+
+        if (supervisedUsers) {
+          const userIds = supervisedUsers.map(user => user.id);
+          query = query.in('user_id', userIds);
+        }
+      } else if (userRole === 'user') {
+        query = query.eq('user_id', session?.user?.id);
+      }
+
+      query = query.order('created_at', { ascending: false });
+
+      const { data, error } = await query;
 
       if (error) throw error;
       console.log('Fetched prospects:', data);
@@ -63,13 +105,14 @@ const Prospects = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header isAdmin={false} onLogout={handleLogout} />
+      <Header isAdmin={userRole === 'admin'} onLogout={handleLogout} />
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         <ProspectContent
           prospects={prospects}
           showAddForm={showAddForm}
           onAddFormClose={() => setShowAddForm(false)}
           onProspectAdded={fetchProspects}
+          userRole={userRole}
         />
       </div>
     </div>

@@ -2,35 +2,22 @@ import { useState } from "react";
 import ProspectsTable from "./ProspectsTable";
 import AddProspectForm from "./AddProspectForm";
 import ProspectHeader from "./ProspectHeader";
-
-interface Prospect {
-  id: string;
-  business_name: string;
-  notes: string;
-  website: string;
-  email: string;
-  business_address: string;
-  phone_number: string;
-  owner_name: string;
-  status: string;
-  priority: string;
-  owner_phone: string;
-  owner_email: string;
-  last_contact: string;
-}
+import type { Prospect } from "@/types/prospects";
 
 interface ProspectContentProps {
   prospects: Prospect[];
   showAddForm: boolean;
   onAddFormClose: () => void;
   onProspectAdded: () => void;
+  userRole: 'admin' | 'supervisor' | 'user' | null;
 }
 
 const ProspectContent = ({ 
   prospects, 
   showAddForm, 
   onAddFormClose, 
-  onProspectAdded 
+  onProspectAdded,
+  userRole 
 }: ProspectContentProps) => {
   const [isAddFormVisible, setIsAddFormVisible] = useState(showAddForm);
 
@@ -38,12 +25,15 @@ const ProspectContent = ({
     setIsAddFormVisible(true);
   };
 
+  const canAddProspects = userRole === 'admin' || userRole === 'supervisor';
+
   return (
     <div className="space-y-6">
       <ProspectHeader 
         onAddClick={handleAddClick}
         onBulkUploadSuccess={onProspectAdded}
         prospects={prospects}
+        showAddButton={canAddProspects}
       />
       {isAddFormVisible && (
         <AddProspectForm
@@ -55,6 +45,7 @@ const ProspectContent = ({
             setIsAddFormVisible(false);
             onProspectAdded();
           }}
+          userRole={userRole}
         />
       )}
       <ProspectsTable 

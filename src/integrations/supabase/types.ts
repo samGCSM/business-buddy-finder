@@ -141,6 +141,7 @@ export type Database = {
           lastLogin: string | null
           password: string | null
           savedSearches: number | null
+          supervisor_id: number | null
           totalSearches: number | null
           type: string | null
         }
@@ -151,6 +152,7 @@ export type Database = {
           lastLogin?: string | null
           password?: string | null
           savedSearches?: number | null
+          supervisor_id?: number | null
           totalSearches?: number | null
           type?: string | null
         }
@@ -161,10 +163,19 @@ export type Database = {
           lastLogin?: string | null
           password?: string | null
           savedSearches?: number | null
+          supervisor_id?: number | null
           totalSearches?: number | null
           type?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "users_supervisor_id_fkey"
+            columns: ["supervisor_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
