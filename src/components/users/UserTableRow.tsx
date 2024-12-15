@@ -11,6 +11,7 @@ import { useState } from "react";
 
 interface UserTableRowProps {
   user: User;
+  users: User[];
   formatDate: (date: string | null) => string;
   getNumericValue: (value: number | null | undefined) => number;
   onDelete: (id: number) => void;
@@ -20,6 +21,7 @@ interface UserTableRowProps {
 
 export const UserTableRow = ({ 
   user, 
+  users,
   formatDate, 
   getNumericValue, 
   onDelete, 
@@ -35,6 +37,22 @@ export const UserTableRow = ({
       console.error('Error updating user role:', error);
     }
   };
+
+  const handleSupervisorChange = async (supervisorId: string) => {
+    try {
+      await onUpdateUser(user.id, { supervisor_id: parseInt(supervisorId) });
+    } catch (error) {
+      console.error('Error updating supervisor:', error);
+    }
+  };
+
+  const getSupervisorEmail = () => {
+    if (!user.supervisor_id) return 'None';
+    const supervisor = users.find(u => u.id === user.supervisor_id);
+    return supervisor ? supervisor.email : 'Unknown';
+  };
+
+  const supervisors = users.filter(u => u.type === 'supervisor' || u.type === 'admin');
 
   return (
     <tr key={user.id}>
@@ -55,6 +73,28 @@ export const UserTableRow = ({
           </Select>
         ) : (
           user.type
+        )}
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+        {isEditing ? (
+          <Select 
+            defaultValue={user.supervisor_id?.toString() || ''} 
+            onValueChange={handleSupervisorChange}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Select supervisor" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">None</SelectItem>
+              {supervisors.map((supervisor) => (
+                <SelectItem key={supervisor.id} value={supervisor.id.toString()}>
+                  {supervisor.email}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : (
+          getSupervisorEmail()
         )}
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">

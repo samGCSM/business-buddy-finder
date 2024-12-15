@@ -128,6 +128,7 @@ export const UserTable = ({ users, setUsers, setSelectedUserId }: UserTableProps
               <UserTableRow
                 key={user.id}
                 user={user}
+                users={users}
                 formatDate={formatDate}
                 getNumericValue={getNumericValue}
                 onDelete={handleDeleteUser}
