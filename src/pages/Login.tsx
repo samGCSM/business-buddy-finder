@@ -15,22 +15,16 @@ const Login = () => {
     const checkAuth = async () => {
       try {
         console.log("Login - Starting auth check");
-        if (session?.user) {
-          console.log("Login - Session exists, checking user");
-          const currentUser = await getCurrentUser();
-          console.log("Login - Current user data:", currentUser);
-          
-          if (currentUser) {
-            console.log("Login - Valid user found, setting states");
-            setIsLoggedIn(true);
-            setIsAdmin(currentUser.type === 'admin');
-            navigate('/', { replace: true });
-          } else {
-            console.log("Login - No user data found");
-            setIsLoggedIn(false);
-          }
+        const currentUser = await getCurrentUser();
+        console.log("Login - Current user data:", currentUser);
+        
+        if (currentUser) {
+          console.log("Login - Valid user found, redirecting to home");
+          setIsLoggedIn(true);
+          setIsAdmin(currentUser.type === 'admin');
+          navigate('/', { replace: true });
         } else {
-          console.log("Login - No session found");
+          console.log("Login - No user data found");
           setIsLoggedIn(false);
         }
       } catch (error) {
@@ -42,12 +36,13 @@ const Login = () => {
     };
     
     checkAuth();
-  }, [session, navigate]);
+  }, [navigate]);
 
   const handleLogin = async (isLoggedIn: boolean, userType: 'admin' | 'user') => {
     console.log("Login - Login handler:", { isLoggedIn, userType });
     setIsLoggedIn(isLoggedIn);
     setIsAdmin(userType === 'admin');
+    
     if (isLoggedIn) {
       console.log("Login - Successfully logged in, redirecting to home");
       navigate('/', { replace: true });
