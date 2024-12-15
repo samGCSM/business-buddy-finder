@@ -30,7 +30,6 @@ const AddProspectForm = ({ onClose, onSuccess }: AddProspectFormProps) => {
     e.preventDefault();
     
     try {
-      // First check if we have a session
       if (!session?.user?.email) {
         console.error("No user email found in session");
         throw new Error("Please log in to add prospects");
@@ -39,7 +38,6 @@ const AddProspectForm = ({ onClose, onSuccess }: AddProspectFormProps) => {
       console.log("Current session:", session);
       console.log("Attempting to add prospect for email:", session.user.email);
 
-      // Get the numeric user ID from the users table
       const { data: userData, error: userError } = await supabase
         .from('users')
         .select('id')
