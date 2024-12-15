@@ -29,8 +29,12 @@ const DesktopNavigation = ({ isAdmin, onLogout }: DesktopNavigationProps) => {
         Prospect Now
       </Button>
       {isAdmin && (
-        <Button variant="outline" onClick={() => navigate('/users')}>
-          <Users className="h-4 w-4 mr-2" />
+        <Button 
+          variant="outline" 
+          onClick={() => navigate('/users')}
+          className="flex items-center gap-2"
+        >
+          <Users className="h-4 w-4" />
           Manage Users
         </Button>
       )}
