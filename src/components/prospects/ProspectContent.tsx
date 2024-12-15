@@ -32,17 +32,29 @@ const ProspectContent = ({
   onAddFormClose, 
   onProspectAdded 
 }: ProspectContentProps) => {
+  const [isAddFormVisible, setIsAddFormVisible] = useState(showAddForm);
+
+  const handleAddClick = () => {
+    setIsAddFormVisible(true);
+  };
+
   return (
     <div className="space-y-6">
       <ProspectHeader 
-        onAddClick={() => showAddForm}
+        onAddClick={handleAddClick}
         onBulkUploadSuccess={onProspectAdded}
         prospects={prospects}
       />
-      {showAddForm && (
+      {isAddFormVisible && (
         <AddProspectForm
-          onClose={onAddFormClose}
-          onSuccess={onProspectAdded}
+          onClose={() => {
+            setIsAddFormVisible(false);
+            onAddFormClose();
+          }}
+          onSuccess={() => {
+            setIsAddFormVisible(false);
+            onProspectAdded();
+          }}
         />
       )}
       <ProspectsTable 

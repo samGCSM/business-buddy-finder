@@ -42,19 +42,18 @@ const StatusBadge = ({ status, onStatusChange }: StatusBadgeProps) => {
   };
 
   return (
-    <div className="flex items-center gap-2 w-full">
+    <div className="flex items-stretch h-full w-full">
       <Popover>
         <PopoverTrigger asChild>
-          <Badge
-            className="cursor-pointer w-full px-4 py-1 text-sm font-medium rounded-none"
+          <div
+            className="cursor-pointer w-full flex items-center justify-center px-4 text-sm font-medium"
             style={{
               backgroundColor: customColor,
               color: '#000000',
-              border: 'none'
             }}
           >
             {status}
-          </Badge>
+          </div>
         </PopoverTrigger>
         <PopoverContent className="w-80">
           <div className="space-y-4">
