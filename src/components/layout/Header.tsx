@@ -45,6 +45,8 @@ const Header = ({ isAdmin, onLogout }: { isAdmin: boolean; onLogout: () => void 
             src="/lovable-uploads/a39fe416-87d2-481d-bf99-5a86c104e18e.png" 
             alt="Sales Storm Logo" 
             className="w-12 h-12"
+            onClick={() => navigate('/')}
+            style={{ cursor: 'pointer' }}
           />
           <span className="text-xl font-semibold">Sales Storm Prospecting</span>
         </div>

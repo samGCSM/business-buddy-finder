@@ -8,6 +8,7 @@ import type { User } from "@/types/user";
 import PasswordChangeForm from "@/components/auth/PasswordChangeForm";
 import { UserTable } from "@/components/users/UserTable";
 import { AddUserForm } from "@/components/users/AddUserForm";
+import Header from "@/components/layout/Header";
 
 const Users = () => {
   const navigate = useNavigate();
@@ -58,20 +59,10 @@ const Users = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <Header isAdmin={true} onLogout={handleLogout} />
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         <div className="space-y-6">
-          <div className="flex justify-between items-center">
-            <h2 className="text-2xl font-bold">Manage Users</h2>
-            <div className="space-x-4">
-              <Button variant="outline" onClick={() => navigate("/", { replace: true })}>
-                Back to Search
-              </Button>
-              <Button variant="destructive" onClick={handleLogout}>
-                Logout
-              </Button>
-            </div>
-          </div>
-
+          <h2 className="text-2xl font-bold">Manage Users</h2>
           <AddUserForm users={users} setUsers={setUsers} />
           <UserTable 
             users={users} 
