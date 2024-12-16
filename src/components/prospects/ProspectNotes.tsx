@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { MessageSquare } from "lucide-react";
+import { MessageSquare, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -61,8 +61,7 @@ const ProspectNotes = ({ prospectId, existingNotes, onNotesUpdated }: ProspectNo
   };
 
   const getNoteCount = () => {
-    if (!existingNotes) return 0;
-    return existingNotes.split('[').length - 1;
+    return activityLog.length;
   };
 
   return (
@@ -72,11 +71,13 @@ const ProspectNotes = ({ prospectId, existingNotes, onNotesUpdated }: ProspectNo
           variant="ghost"
           size="icon"
           onClick={() => setIsOpen(true)}
-          className="h-8 w-8"
+          className="h-8 w-8 relative"
         >
           <MessageSquare className="h-4 w-4" />
           {hasNewNotification && (
-            <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full" />
+            <div className="absolute -top-1 -right-1">
+              <Bell className="h-3 w-3 text-red-500" />
+            </div>
           )}
         </Button>
         {getNoteCount() > 0 && (
@@ -102,7 +103,7 @@ const ProspectNotes = ({ prospectId, existingNotes, onNotesUpdated }: ProspectNo
                 <TabsTrigger value="activity">Activity Log</TabsTrigger>
               </TabsList>
               
-              <TabsContent value="notes">
+              <TabsContent value="notes" className="flex-1">
                 <NotesTabContent
                   existingNotes={existingNotes}
                   newNote={newNote}
@@ -110,6 +111,7 @@ const ProspectNotes = ({ prospectId, existingNotes, onNotesUpdated }: ProspectNo
                   onNoteChange={(e) => setNewNote(e.target.value)}
                   onNoteSave={handleSaveNote}
                   onFileUpload={handleFileUpload}
+                  activityLog={activityLog}
                 />
               </TabsContent>
               
