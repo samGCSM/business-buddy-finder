@@ -1,94 +1,13 @@
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { Bell } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import MobileNavigation from "./navigation/MobileNavigation";
 import DesktopNavigation from "./navigation/DesktopNavigation";
-import { useState, useEffect } from "react";
+import NotificationIndicator from "./notifications/NotificationIndicator";
+import Logo from "./Logo";
 
 const Header = ({ isAdmin, onLogout }: { isAdmin: boolean; onLogout: () => void }) => {
   const navigate = useNavigate();
-  const [notificationCount, setNotificationCount] = useState(0);
-  const [hasNewNotifications, setHasNewNotifications] = useState(false);
-
-  useEffect(() => {
-    const checkNotifications = async () => {
-      try {
-        const currentUserStr = localStorage.getItem('currentUser');
-        if (currentUserStr) {
-          const currentUser = JSON.parse(currentUserStr);
-          
-          // Get all notifications for the user
-          const { data: notificationsData, error } = await supabase
-            .from('notifications')
-            .select('*')
-            .eq('user_id', currentUser.id);
-
-          if (error) {
-            console.error('Error fetching notifications:', error);
-            return;
-          }
-
-          // If no notifications exist, create one
-          if (!notificationsData || notificationsData.length === 0) {
-            console.log('Creating new notifications record for user:', currentUser.id);
-            const { data: newNotification, error: insertError } = await supabase
-              .from('notifications')
-              .insert([{ 
-                user_id: currentUser.id,
-                notifications: []
-              }]);
-
-            if (insertError) {
-              console.error('Error creating notifications record:', insertError);
-              return;
-            }
-            
-            setNotificationCount(0);
-            setHasNewNotifications(false);
-            return;
-          }
-
-          // Get the most recent notification record
-          const latestNotification = notificationsData.reduce((latest, current) => {
-            if (!latest || new Date(current.updated_at) > new Date(latest.updated_at)) {
-              return current;
-            }
-            return latest;
-          });
-
-          if (latestNotification) {
-            setNotificationCount(latestNotification.notifications?.length || 0);
-            // Check if there are any unread notifications
-            const hasUnread = latestNotification.notifications?.some((n: any) => !n.read) || false;
-            setHasNewNotifications(hasUnread);
-          }
-        }
-      } catch (error) {
-        console.error('Error in checkNotifications:', error);
-      }
-    };
-
-    checkNotifications();
-    
-    // Set up real-time subscription for notifications
-    const subscription = supabase
-      .channel('notifications')
-      .on('postgres_changes', { 
-        event: '*', 
-        schema: 'public', 
-        table: 'notifications' 
-      }, () => {
-        checkNotifications();
-      })
-      .subscribe();
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
 
   const handleLogout = async () => {
     try {
@@ -115,37 +34,9 @@ const Header = ({ isAdmin, onLogout }: { isAdmin: boolean; onLogout: () => void 
   return (
     <header className="bg-white shadow-sm py-4 px-6 mb-8">
       <div className="max-w-7xl mx-auto flex justify-between items-center">
+        <Logo />
         <div className="flex items-center space-x-4">
-          <img 
-            src="/lovable-uploads/a39fe416-87d2-481d-bf99-5a86c104e18e.png" 
-            alt="Sales Storm Logo" 
-            className="w-12 h-12"
-            onClick={() => navigate('/')}
-            style={{ cursor: 'pointer' }}
-          />
-          <span className="text-xl font-semibold">Sales Storm Prospecting</span>
-        </div>
-
-        <div className="flex items-center space-x-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="relative"
-            onClick={() => navigate('/notifications')}
-          >
-            <Bell className="h-5 w-5" />
-            {hasNewNotifications && (
-              <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full" />
-            )}
-            {notificationCount > 0 && (
-              <Badge 
-                variant="secondary" 
-                className="absolute -top-2 -right-2 h-4 w-4 p-0 flex items-center justify-center rounded-full text-xs"
-              >
-                {notificationCount}
-              </Badge>
-            )}
-          </Button>
+          <NotificationIndicator />
           <DesktopNavigation isAdmin={isAdmin} onLogout={handleLogout} />
           <MobileNavigation isAdmin={isAdmin} onLogout={handleLogout} />
         </div>
