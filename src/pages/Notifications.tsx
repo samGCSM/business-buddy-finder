@@ -33,34 +33,32 @@ const Notifications = () => {
         throw error;
       }
 
-      // Get the most recent notification record
-      const latestNotification = notificationsData?.reduce((latest, current) => {
-        if (!latest || new Date(current.updated_at) > new Date(latest.updated_at)) {
-          return current;
-        }
-        return latest;
-      });
-      
-      if (latestNotification?.notifications) {
-        setNotifications(latestNotification.notifications);
-        
-        // Mark all notifications as read
-        const updatedNotifications = latestNotification.notifications.map((n: any) => ({
+      // Combine and sort all notifications from all records
+      const allNotifications = notificationsData.reduce((acc: any[], record: any) => {
+        return [...acc, ...(record.notifications || [])];
+      }, []);
+
+      // Sort notifications by timestamp, newest first
+      allNotifications.sort((a: any, b: any) => 
+        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+      );
+
+      setNotifications(allNotifications);
+
+      // Mark all notifications as read
+      const updatePromises = notificationsData.map(record => {
+        const updatedNotifications = record.notifications.map((n: any) => ({
           ...n,
           read: true
         }));
 
-        console.log('Marking notifications as read:', updatedNotifications);
-        const { error: updateError } = await supabase
+        return supabase
           .from('notifications')
           .update({ notifications: updatedNotifications })
-          .eq('id', latestNotification.id);
+          .eq('id', record.id);
+      });
 
-        if (updateError) {
-          console.error('Error updating notifications:', updateError);
-          throw updateError;
-        }
-      }
+      await Promise.all(updatePromises);
     } catch (error) {
       console.error('Error in fetchNotifications:', error);
       toast({
@@ -92,7 +90,6 @@ const Notifications = () => {
   };
 
   const formatNotificationMessage = (notification: any) => {
-    // Extract the note content from the message
     const noteMatch = notification.message.match(/New note from (.*?) on prospect/);
     if (noteMatch) {
       const userType = noteMatch[1];

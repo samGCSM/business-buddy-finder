@@ -22,6 +22,7 @@ const NotificationIndicator = () => {
         const currentUser = JSON.parse(currentUserStr);
         console.log('Checking notifications for user:', currentUser.id);
         
+        // Get all notification records for the user
         const { data: notificationsData, error } = await supabase
           .from('notifications')
           .select('*')
@@ -32,35 +33,17 @@ const NotificationIndicator = () => {
           return;
         }
 
-        // Find the most recent notification record
-        const latestNotification = notificationsData?.reduce((latest, current) => {
-          if (!latest || new Date(current.updated_at) > new Date(latest.updated_at)) {
-            return current;
-          }
-          return latest;
-        }, null);
+        console.log('Fetched notifications:', notificationsData);
 
-        if (!latestNotification) {
-          console.log('No notifications found, creating new record');
-          const { error: insertError } = await supabase
-            .from('notifications')
-            .insert([{ 
-              user_id: currentUser.id,
-              notifications: []
-            }]);
+        // Calculate total unread notifications across all records
+        let totalUnread = 0;
+        notificationsData?.forEach(record => {
+          const unreadCount = record.notifications?.filter((n: any) => !n.read)?.length || 0;
+          totalUnread += unreadCount;
+        });
 
-          if (insertError) {
-            console.error('Error creating notifications record:', insertError);
-          }
-          
-          setNotificationCount(0);
-          setHasNewNotifications(false);
-          return;
-        }
-
-        const unreadCount = latestNotification.notifications?.filter((n: any) => !n.read)?.length || 0;
-        setNotificationCount(unreadCount);
-        setHasNewNotifications(unreadCount > 0);
+        setNotificationCount(totalUnread);
+        setHasNewNotifications(totalUnread > 0);
       } catch (error) {
         console.error('Error in checkNotifications:', error);
       }
