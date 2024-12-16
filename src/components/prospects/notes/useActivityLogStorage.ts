@@ -76,14 +76,15 @@ export const addActivityLogItem = async (
 
     if (error) throw error;
 
-    // Send notifications based on user roles
+    // Send notifications with the actual note content
     if (currentUser.type === 'user') {
       // User added note - notify supervisor and admin
       if (prospectData?.users?.supervisor_id) {
         await sendNotification(
           prospectData.users.supervisor_id,
           `New note from ${currentUser.email} on prospect ${prospectId}`,
-          prospectId
+          prospectId,
+          item.content
         );
       }
       
@@ -91,14 +92,16 @@ export const addActivityLogItem = async (
       await sendNotification(
         1, // Admin ID
         `New note from ${currentUser.email} on prospect ${prospectId}`,
-        prospectId
+        prospectId,
+        item.content
       );
     } else {
       // Admin or supervisor added note - notify the user
       await sendNotification(
         prospectData?.user_id,
         `New note from ${currentUser.type} on prospect ${prospectId}`,
-        prospectId
+        prospectId,
+        item.content
       );
     }
 

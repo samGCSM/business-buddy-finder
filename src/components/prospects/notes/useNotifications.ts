@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 
-export const sendNotification = async (recipientId: number, message: string, prospectId: string) => {
+export const sendNotification = async (recipientId: number, message: string, prospectId: string, content: string) => {
   try {
     console.log('Sending notification to user:', recipientId);
     const { data: existingNotifications } = await supabase
@@ -12,6 +12,7 @@ export const sendNotification = async (recipientId: number, message: string, pro
     const notifications = existingNotifications?.notifications || [];
     notifications.push({
       message,
+      content, // Add the actual note content
       timestamp: new Date().toISOString(),
       read: false,
       prospectId

@@ -22,6 +22,7 @@ const Notifications = () => {
         return;
       }
 
+      console.log('Fetching notifications for user:', currentUser.id);
       const { data: notificationsData, error } = await supabase
         .from('notifications')
         .select('*')
@@ -40,22 +41,28 @@ const Notifications = () => {
         return latest;
       });
       
-      setNotifications(latestNotification?.notifications || []);
-      
-      // Mark all notifications as read
       if (latestNotification?.notifications) {
+        setNotifications(latestNotification.notifications);
+        
+        // Mark all notifications as read
         const updatedNotifications = latestNotification.notifications.map((n: any) => ({
           ...n,
           read: true
         }));
 
-        await supabase
+        console.log('Marking notifications as read:', updatedNotifications);
+        const { error: updateError } = await supabase
           .from('notifications')
           .update({ notifications: updatedNotifications })
           .eq('id', latestNotification.id);
+
+        if (updateError) {
+          console.error('Error updating notifications:', updateError);
+          throw updateError;
+        }
       }
     } catch (error) {
-      console.error('Error fetching notifications:', error);
+      console.error('Error in fetchNotifications:', error);
       toast({
         title: "Error",
         description: "Failed to load notifications",
@@ -84,6 +91,21 @@ const Notifications = () => {
     }
   };
 
+  const formatNotificationMessage = (notification: any) => {
+    // Extract the note content from the message
+    const noteMatch = notification.message.match(/New note from (.*?) on prospect/);
+    if (noteMatch) {
+      const userType = noteMatch[1];
+      return (
+        <div>
+          <p className="font-medium">New note from {userType}</p>
+          <p className="text-sm text-gray-600 mt-1">{notification.content}</p>
+        </div>
+      );
+    }
+    return notification.message;
+  };
+
   if (isLoading) {
     return <div>Loading...</div>;
   }
@@ -102,8 +124,8 @@ const Notifications = () => {
                 key={index}
                 className="bg-white rounded-lg shadow p-4"
               >
-                <p className="text-sm text-gray-600">{notification.message}</p>
-                <span className="text-xs text-gray-400">
+                {formatNotificationMessage(notification)}
+                <span className="text-xs text-gray-400 block mt-2">
                   {new Date(notification.timestamp).toLocaleString()}
                 </span>
               </div>
