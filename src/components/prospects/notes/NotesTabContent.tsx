@@ -15,7 +15,8 @@ interface NotesTabContentProps {
   onNoteSave: () => void;
   onFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
   activityLog: ActivityLogItemData[];
-  onReply?: (parentItem: ActivityLogItemData) => void;
+  onReply: (parentItem: ActivityLogItemData) => void;
+  prospectId: string;
 }
 
 const NotesTabContent = ({
@@ -26,7 +27,8 @@ const NotesTabContent = ({
   onNoteSave,
   onFileUpload,
   activityLog,
-  onReply
+  onReply,
+  prospectId
 }: NotesTabContentProps) => {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -47,7 +49,7 @@ const NotesTabContent = ({
   }, [activityLog]);
 
   return (
-    <div className="flex flex-col h-[calc(100vh-200px)]">
+    <div className="flex flex-col h-[calc(100vh-250px)]">
       <ScrollArea className="flex-1 pr-4" ref={scrollAreaRef}>
         <div className="space-y-4">
           {activityLog.map((item, index) => (
@@ -78,7 +80,7 @@ const NotesTabContent = ({
                   variant="ghost" 
                   size="sm" 
                   className="text-xs"
-                  onClick={() => onReply?.(item)}
+                  onClick={() => onReply(item)}
                 >
                   Reply
                 </Button>

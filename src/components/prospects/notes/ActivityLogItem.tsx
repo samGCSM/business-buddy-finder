@@ -1,9 +1,10 @@
-import { MessageSquare, FileText, Image as ImageIcon, ThumbsUp } from "lucide-react";
+import { MessageSquare, FileText, Image as ImageIcon, ThumbsUp } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
-import { format } from "date-fns";
-import { useState } from "react";
+import { format } from 'date-fns';
+import { useState } from 'react';
 import { supabase } from "@/integrations/supabase/client";
+import { Json } from '@/integrations/supabase/types';
 
 export type ActivityLogItemType = 'note' | 'file' | 'image';
 
@@ -36,7 +37,6 @@ const ActivityLogItem = ({ item, prospectId, onReply }: ActivityLogItemProps) =>
       setLikes(newLikeCount);
       setIsLiked(!isLiked);
 
-      // Update the activity log item with the new like count
       const { data: prospect } = await supabase
         .from('prospects')
         .select('activity_log')
@@ -44,9 +44,10 @@ const ActivityLogItem = ({ item, prospectId, onReply }: ActivityLogItemProps) =>
         .single();
 
       if (prospect && prospect.activity_log) {
-        const updatedLog = prospect.activity_log.map((logItem: ActivityLogItemData) => {
-          if (logItem.timestamp === item.timestamp && logItem.content === item.content) {
-            return { ...logItem, likes: newLikeCount };
+        const updatedLog = (prospect.activity_log as Json[]).map((logItem) => {
+          const typedLogItem = logItem as unknown as ActivityLogItemData;
+          if (typedLogItem.timestamp === item.timestamp && typedLogItem.content === item.content) {
+            return { ...typedLogItem, likes: newLikeCount };
           }
           return logItem;
         });

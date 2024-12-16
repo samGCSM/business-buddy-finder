@@ -57,15 +57,7 @@ const ProspectNotes = ({ prospectId, existingNotes, onNotesUpdated }: ProspectNo
   const handleSaveNote = async () => {
     if (!newNote.trim()) return;
 
-    const success = await addNote(
-      newNote, 
-      existingNotes,
-      replyingTo ? {
-        parentTimestamp: replyingTo.timestamp,
-        parentContent: replyingTo.content
-      } : undefined
-    );
-
+    const success = await addNote(newNote, existingNotes);
     if (success) {
       setNewNote("");
       setReplyingTo(null);
@@ -131,11 +123,16 @@ const ProspectNotes = ({ prospectId, existingNotes, onNotesUpdated }: ProspectNo
                   onFileUpload={handleFileUpload}
                   activityLog={activityLog}
                   onReply={handleReply}
+                  prospectId={prospectId}
                 />
               </TabsContent>
               
               <TabsContent value="activity" className="flex-1">
-                <ActivityLog items={activityLog} />
+                <ActivityLog 
+                  items={activityLog} 
+                  prospectId={prospectId}
+                  onReply={handleReply}
+                />
               </TabsContent>
             </Tabs>
           </div>

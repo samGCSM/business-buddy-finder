@@ -3,6 +3,7 @@ import { ActivityLogItemData } from "./ActivityLogItem";
 import { toast } from "@/hooks/use-toast";
 import { sendNotification } from "./useNotifications";
 import { getCurrentUser } from "@/services/userService";
+import { Json } from "@/integrations/supabase/types";
 
 export const getActivityLog = async (prospectId: string): Promise<ActivityLogItemData[]> => {
   try {
@@ -19,17 +20,19 @@ export const getActivityLog = async (prospectId: string): Promise<ActivityLogIte
       throw error;
     }
 
-    return (data.activity_log || []).map((item) => {
-      const jsonItem = item as { [key: string]: any };
+    return (data.activity_log || []).map((item: Json) => {
+      const typedItem = item as unknown as ActivityLogItemData;
       return {
-        type: jsonItem.type as ActivityLogItemData['type'],
-        content: jsonItem.content as string,
-        timestamp: jsonItem.timestamp as string,
-        fileUrl: jsonItem.fileUrl as string | undefined,
-        fileName: jsonItem.fileName as string | undefined,
-        userId: jsonItem.userId as number | undefined,
-        userEmail: jsonItem.userEmail as string | undefined,
-        userType: jsonItem.userType as string | undefined,
+        type: typedItem.type,
+        content: typedItem.content,
+        timestamp: typedItem.timestamp,
+        fileUrl: typedItem.fileUrl,
+        fileName: typedItem.fileName,
+        userId: typedItem.userId,
+        userEmail: typedItem.userEmail,
+        userType: typedItem.userType,
+        likes: typedItem.likes,
+        replies: typedItem.replies,
       };
     });
   } catch (error) {
@@ -51,12 +54,14 @@ export const addActivityLogItem = async (
     const newNote = `[${timestamp}] ${item.content}\n`;
     const updatedNotes = existingNotes ? `${existingNotes}${newNote}` : newNote;
 
-    const newActivity = {
+    const newActivity: Json = {
       ...item,
       timestamp,
       userId: currentUser.id,
       userEmail: currentUser.email,
-      userType: currentUser.type
+      userType: currentUser.type,
+      likes: 0,
+      replies: []
     };
 
     const { data: prospectData } = await supabase
@@ -84,7 +89,6 @@ export const addActivityLogItem = async (
 
     if (error) throw error;
 
-    // Send notification based on user type
     if (currentUser.type === 'user' && prospectData?.users?.supervisor_id) {
       await sendNotification(
         prospectData.users.supervisor_id,

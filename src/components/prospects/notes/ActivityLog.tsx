@@ -3,9 +3,11 @@ import ActivityLogItem, { ActivityLogItemData } from "./ActivityLogItem";
 
 interface ActivityLogProps {
   items: ActivityLogItemData[];
+  prospectId: string;
+  onReply: (parentItem: ActivityLogItemData) => void;
 }
 
-const ActivityLog = ({ items }: ActivityLogProps) => {
+const ActivityLog = ({ items, prospectId, onReply }: ActivityLogProps) => {
   return (
     <ScrollArea className="flex-grow h-[calc(100vh-250px)]">
       <div className="space-y-4 pr-4">
@@ -14,7 +16,12 @@ const ActivityLog = ({ items }: ActivityLogProps) => {
         ) : (
           <div className="space-y-2">
             {items.map((item, index) => (
-              <ActivityLogItem key={index} item={item} />
+              <ActivityLogItem 
+                key={index} 
+                item={item} 
+                prospectId={prospectId}
+                onReply={onReply}
+              />
             ))}
           </div>
         )}
