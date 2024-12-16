@@ -6,8 +6,9 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ActivityLog from "./notes/ActivityLog";
 import NotesTabContent from "./notes/NotesTabContent";
-import { useActivityLog } from "./notes/useActivityLog";
+import { useActivityLog, setupNotificationListener } from "./notes/useActivityLog";
 import { ActivityLogItemData } from "./notes/ActivityLogItem";
+import { getCurrentUser } from "@/services/userService";
 
 interface ProspectNotesProps {
   prospectId: string;
@@ -19,20 +20,43 @@ const ProspectNotes = ({ prospectId, existingNotes, onNotesUpdated }: ProspectNo
   const [isOpen, setIsOpen] = useState(false);
   const [newNote, setNewNote] = useState("");
   const [activityLog, setActivityLog] = useState<ActivityLogItemData[]>([]);
+  const [hasNewNotification, setHasNewNotification] = useState(false);
   const { handleFileUpload, addNote, isUploading, getActivityLog } = useActivityLog(prospectId, onNotesUpdated);
 
   useEffect(() => {
+    const initializeNotifications = async () => {
+      const currentUser = await getCurrentUser();
+      if (currentUser) {
+        const cleanup = setupNotificationListener(currentUser.id, () => {
+          setHasNewNotification(true);
+          if (isOpen) {
+            refreshActivityLog();
+          }
+        });
+        return cleanup;
+      }
+    };
+
+    initializeNotifications();
+  }, [prospectId]);
+
+  useEffect(() => {
     if (isOpen) {
-      getActivityLog().then(setActivityLog);
+      refreshActivityLog();
     }
   }, [isOpen]);
+
+  const refreshActivityLog = async () => {
+    const updatedLog = await getActivityLog();
+    setActivityLog(updatedLog);
+    setHasNewNotification(false);
+  };
 
   const handleSaveNote = async () => {
     const success = await addNote(newNote, existingNotes);
     if (success) {
       setNewNote("");
-      const updatedLog = await getActivityLog();
-      setActivityLog(updatedLog);
+      refreshActivityLog();
     }
   };
 
@@ -51,6 +75,9 @@ const ProspectNotes = ({ prospectId, existingNotes, onNotesUpdated }: ProspectNo
           className="h-8 w-8"
         >
           <MessageSquare className="h-4 w-4" />
+          {hasNewNotification && (
+            <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full" />
+          )}
         </Button>
         {getNoteCount() > 0 && (
           <Badge 
