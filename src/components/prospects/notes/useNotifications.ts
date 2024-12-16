@@ -1,5 +1,4 @@
 import { supabase } from "@/integrations/supabase/client";
-import { getCurrentUser } from "@/services/userService";
 
 export const sendNotification = async (recipientId: number, message: string, prospectId: string) => {
   try {

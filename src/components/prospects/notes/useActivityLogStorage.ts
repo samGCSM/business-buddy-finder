@@ -1,33 +1,40 @@
 import { supabase } from "@/integrations/supabase/client";
 import { ActivityLogItemData } from "./ActivityLogItem";
-import { getCurrentUser } from "@/services/userService";
 import { toast } from "@/hooks/use-toast";
+import { sendNotification } from "./useNotifications";
 
 export const getActivityLog = async (prospectId: string): Promise<ActivityLogItemData[]> => {
-  const { data, error } = await supabase
-    .from('prospects')
-    .select('activity_log, user_id, users!prospects_user_id_fkey (email, type, supervisor_id)')
-    .eq('id', prospectId)
-    .single();
+  try {
+    console.log('Fetching activity log for prospect:', prospectId);
+    
+    const { data, error } = await supabase
+      .from('prospects')
+      .select('activity_log, user_id, users!prospects_user_id_fkey (email, type, supervisor_id)')
+      .eq('id', prospectId)
+      .single();
 
-  if (error || !data) {
+    if (error) {
+      console.error('Error fetching activity log:', error);
+      throw error;
+    }
+
+    return (data.activity_log || []).map((item) => {
+      const jsonItem = item as { [key: string]: any };
+      return {
+        type: jsonItem.type as ActivityLogItemData['type'],
+        content: jsonItem.content as string,
+        timestamp: jsonItem.timestamp as string,
+        fileUrl: jsonItem.fileUrl as string | undefined,
+        fileName: jsonItem.fileName as string | undefined,
+        userId: jsonItem.userId as number | undefined,
+        userEmail: jsonItem.userEmail as string | undefined,
+        userType: jsonItem.userType as string | undefined,
+      };
+    });
+  } catch (error) {
     console.error('Error fetching activity log:', error);
     return [];
   }
-
-  return (data.activity_log || []).map((item) => {
-    const jsonItem = item as { [key: string]: any };
-    return {
-      type: jsonItem.type as ActivityLogItemData['type'],
-      content: jsonItem.content as string,
-      timestamp: jsonItem.timestamp as string,
-      fileUrl: jsonItem.fileUrl as string | undefined,
-      fileName: jsonItem.fileName as string | undefined,
-      userId: jsonItem.userId as number | undefined,
-      userEmail: jsonItem.userEmail as string | undefined,
-      userType: jsonItem.userType as string | undefined,
-    };
-  });
 };
 
 export const addActivityLogItem = async (

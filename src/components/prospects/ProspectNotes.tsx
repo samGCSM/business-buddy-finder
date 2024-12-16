@@ -47,7 +47,7 @@ const ProspectNotes = ({ prospectId, existingNotes, onNotesUpdated }: ProspectNo
   }, [isOpen]);
 
   const refreshActivityLog = async () => {
-    const updatedLog = await getActivityLog();
+    const updatedLog = await getActivityLog(prospectId);
     setActivityLog(updatedLog);
     setHasNewNotification(false);
   };
