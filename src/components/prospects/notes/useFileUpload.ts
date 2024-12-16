@@ -28,7 +28,8 @@ export const useFileUpload = (prospectId: string, onSuccess: () => void) => {
         content: 'File uploaded',
         timestamp: new Date().toISOString(),
         fileUrl: publicUrl,
-        fileName: file.name
+        fileName: file.name,
+        likes: 0
       };
 
       const success = await addActivityLogItem(prospectId, newActivity, '');

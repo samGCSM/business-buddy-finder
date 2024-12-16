@@ -21,6 +21,7 @@ export const useActivityLog = (prospectId: string, onSuccess: () => void) => {
       type: 'note',
       content: note,
       timestamp: new Date().toISOString(),
+      likes: 0
     };
 
     return addActivityLogItem(prospectId, newActivity, existingNotes);
