@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Home, Search, Plus, Users } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 interface DesktopNavigationProps {
   isAdmin: boolean;
@@ -9,6 +9,7 @@ interface DesktopNavigationProps {
 
 const DesktopNavigation = ({ isAdmin, onLogout }: DesktopNavigationProps) => {
   const navigate = useNavigate();
+  const location = useLocation();
 
   return (
     <div className="hidden md:flex space-x-4">

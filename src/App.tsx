@@ -11,6 +11,7 @@ import BulkSearch from "./pages/BulkSearch";
 import Users from "./pages/Users";
 import Profile from "./pages/Profile";
 import Prospects from "./pages/Prospects";
+import Notifications from "./pages/Notifications";
 
 const queryClient = new QueryClient();
 
@@ -28,6 +29,7 @@ const App = () => (
             <Route path="/users" element={<Users />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/prospects" element={<Prospects />} />
+            <Route path="/notifications" element={<Notifications />} />
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
