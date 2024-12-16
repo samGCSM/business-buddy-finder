@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSession } from "@supabase/auth-helpers-react";
 import SavedSearchesList from "@/components/business/SavedSearchesList";
@@ -15,6 +15,18 @@ const BulkSearch = () => {
   const [showSavedSearches, setShowSavedSearches] = useState(false);
   const [savedSearches, setSavedSearches] = useState<SavedSearch[]>([]);
   const [currentResults, setCurrentResults] = useState<SavedSearch | null>(null);
+  const [userRole, setUserRole] = useState<'admin' | 'supervisor' | 'user' | null>(null);
+
+  useEffect(() => {
+    const initializePage = async () => {
+      const currentUser = await getCurrentUser();
+      if (currentUser) {
+        setUserRole(currentUser.type as 'admin' | 'supervisor' | 'user');
+      }
+    };
+
+    initializePage();
+  }, []);
 
   const loadSavedSearches = async () => {
     try {
@@ -68,7 +80,7 @@ const BulkSearch = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header isAdmin={false} onLogout={handleLogout} />
+      <Header isAdmin={userRole === 'admin'} onLogout={handleLogout} />
       <div className="container mx-auto px-4">
         {showSavedSearches ? (
           <SavedSearchesList

@@ -4,6 +4,7 @@ import Header from "@/components/layout/Header";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { User, Calendar, TrendingUp, BarChart } from "lucide-react";
+import { getCurrentUser } from "@/services/userService";
 
 interface DashboardMetrics {
   totalProspects: number;
@@ -20,9 +21,18 @@ const Home = () => {
     weeklyMeetings: 0,
     conversionRate: 0,
   });
+  const [userRole, setUserRole] = useState<'admin' | 'supervisor' | 'user' | null>(null);
 
   useEffect(() => {
-    fetchDashboardMetrics();
+    const initializePage = async () => {
+      const currentUser = await getCurrentUser();
+      if (currentUser) {
+        setUserRole(currentUser.type as 'admin' | 'supervisor' | 'user');
+      }
+      fetchDashboardMetrics();
+    };
+
+    initializePage();
   }, []);
 
   const fetchDashboardMetrics = async () => {
@@ -135,7 +145,7 @@ const Home = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header isAdmin={false} onLogout={handleLogout} />
+      <Header isAdmin={userRole === 'admin'} onLogout={handleLogout} />
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
