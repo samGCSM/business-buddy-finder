@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useMetrics } from "@/hooks/useMetrics";
 import DashboardMetrics from "@/components/dashboard/DashboardMetrics";
+import AIInsights from "@/components/dashboard/AIInsights";
 
 const Home = () => {
   const navigate = useNavigate();
@@ -36,7 +37,10 @@ const Home = () => {
           <p className="text-gray-600 mt-1">Overview of your prospecting activities</p>
         </div>
         
-        <DashboardMetrics {...metrics} />
+        <div className="space-y-8">
+          <DashboardMetrics {...metrics} />
+          <AIInsights />
+        </div>
       </div>
     </div>
   );
