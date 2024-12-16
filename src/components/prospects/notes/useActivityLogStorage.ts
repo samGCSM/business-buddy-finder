@@ -2,6 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ActivityLogItemData } from "./ActivityLogItem";
 import { toast } from "@/hooks/use-toast";
 import { sendNotification } from "./useNotifications";
+import { getCurrentUser } from "@/services/userService";
 
 export const getActivityLog = async (prospectId: string): Promise<ActivityLogItemData[]> => {
   try {
