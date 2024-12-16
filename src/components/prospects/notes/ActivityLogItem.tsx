@@ -2,6 +2,8 @@ import { MessageSquare, FileText, Image as ImageIcon, ThumbsUp } from "lucide-re
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
 import { format } from "date-fns";
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 export type ActivityLogItemType = 'note' | 'file' | 'image';
 
@@ -14,13 +16,51 @@ export interface ActivityLogItemData {
   userId?: number;
   userEmail?: string;
   userType?: string;
+  likes?: number;
+  replies?: ActivityLogItemData[];
 }
 
 interface ActivityLogItemProps {
   item: ActivityLogItemData;
+  prospectId: string;
+  onReply: (parentItem: ActivityLogItemData) => void;
 }
 
-const ActivityLogItem = ({ item }: ActivityLogItemProps) => {
+const ActivityLogItem = ({ item, prospectId, onReply }: ActivityLogItemProps) => {
+  const [likes, setLikes] = useState(item.likes || 0);
+  const [isLiked, setIsLiked] = useState(false);
+
+  const handleLike = async () => {
+    try {
+      const newLikeCount = isLiked ? likes - 1 : likes + 1;
+      setLikes(newLikeCount);
+      setIsLiked(!isLiked);
+
+      // Update the activity log item with the new like count
+      const { data: prospect } = await supabase
+        .from('prospects')
+        .select('activity_log')
+        .eq('id', prospectId)
+        .single();
+
+      if (prospect && prospect.activity_log) {
+        const updatedLog = prospect.activity_log.map((logItem: ActivityLogItemData) => {
+          if (logItem.timestamp === item.timestamp && logItem.content === item.content) {
+            return { ...logItem, likes: newLikeCount };
+          }
+          return logItem;
+        });
+
+        await supabase
+          .from('prospects')
+          .update({ activity_log: updatedLog })
+          .eq('id', prospectId);
+      }
+    } catch (error) {
+      console.error('Error updating likes:', error);
+    }
+  };
+
   const getIcon = () => {
     switch (item.type) {
       case 'note':
@@ -65,15 +105,30 @@ const ActivityLogItem = ({ item }: ActivityLogItemProps) => {
           </span>
         </div>
         <div className="flex items-center gap-2 mt-2">
-          <Button variant="ghost" size="sm" className="h-7 px-2 text-xs">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className={`h-7 px-2 text-xs ${isLiked ? 'text-blue-600' : ''}`}
+            onClick={handleLike}
+          >
             <ThumbsUp className="h-3 w-3 mr-1" />
-            Like
+            Like {likes > 0 && `(${likes})`}
           </Button>
-          <Button variant="ghost" size="sm" className="h-7 px-2 text-xs">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-7 px-2 text-xs"
+            onClick={() => onReply(item)}
+          >
             <MessageSquare className="h-3 w-3 mr-1" />
             Reply
           </Button>
         </div>
+        {item.replies?.map((reply, index) => (
+          <div key={index} className="ml-8 mt-2 bg-white p-3 rounded-lg">
+            <ActivityLogItem item={reply} prospectId={prospectId} onReply={onReply} />
+          </div>
+        ))}
       </div>
     </div>
   );

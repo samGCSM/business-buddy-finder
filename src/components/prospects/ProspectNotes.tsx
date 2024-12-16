@@ -22,6 +22,7 @@ const ProspectNotes = ({ prospectId, existingNotes, onNotesUpdated }: ProspectNo
   const [newNote, setNewNote] = useState("");
   const [activityLog, setActivityLog] = useState<ActivityLogItemData[]>([]);
   const [hasNewNotification, setHasNewNotification] = useState(false);
+  const [replyingTo, setReplyingTo] = useState<ActivityLogItemData | null>(null);
   const { handleFileUpload, addNote, isUploading, getActivityLog } = useActivityLog(prospectId, onNotesUpdated);
 
   useEffect(() => {
@@ -54,11 +55,27 @@ const ProspectNotes = ({ prospectId, existingNotes, onNotesUpdated }: ProspectNo
   };
 
   const handleSaveNote = async () => {
-    const success = await addNote(newNote, existingNotes);
+    if (!newNote.trim()) return;
+
+    const success = await addNote(
+      newNote, 
+      existingNotes,
+      replyingTo ? {
+        parentTimestamp: replyingTo.timestamp,
+        parentContent: replyingTo.content
+      } : undefined
+    );
+
     if (success) {
       setNewNote("");
+      setReplyingTo(null);
       refreshActivityLog();
     }
+  };
+
+  const handleReply = (parentItem: ActivityLogItemData) => {
+    setReplyingTo(parentItem);
+    setNewNote(`@${parentItem.userEmail} `);
   };
 
   return (
@@ -82,6 +99,22 @@ const ProspectNotes = ({ prospectId, existingNotes, onNotesUpdated }: ProspectNo
         <SheetContent side="right" className="w-[400px] sm:w-[540px]">
           <SheetHeader>
             <SheetTitle>Notes & Activity</SheetTitle>
+            {replyingTo && (
+              <div className="text-sm text-gray-500">
+                Replying to {replyingTo.userEmail}'s note
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => {
+                    setReplyingTo(null);
+                    setNewNote("");
+                  }}
+                  className="ml-2"
+                >
+                  Cancel
+                </Button>
+              </div>
+            )}
           </SheetHeader>
           
           <div className="flex flex-col h-full gap-4 mt-4">
@@ -97,6 +130,7 @@ const ProspectNotes = ({ prospectId, existingNotes, onNotesUpdated }: ProspectNo
                   onNoteSave={handleSaveNote}
                   onFileUpload={handleFileUpload}
                   activityLog={activityLog}
+                  onReply={handleReply}
                 />
               </TabsContent>
               
