@@ -26,7 +26,10 @@ const Header = ({ isAdmin, onLogout }: { isAdmin: boolean; onLogout: () => void 
             .select('*')
             .eq('user_id', currentUser.id);
 
-          if (error) throw error;
+          if (error) {
+            console.error('Error fetching notifications:', error);
+            return;
+          }
 
           // If no notifications exist, create one
           if (!notificationsData || notificationsData.length === 0) {
@@ -37,18 +40,23 @@ const Header = ({ isAdmin, onLogout }: { isAdmin: boolean; onLogout: () => void 
                 user_id: currentUser.id,
                 notifications: []
               }])
-              .select()
-              .single();
+              .select();
 
             if (insertError) {
               console.error('Error creating notifications record:', insertError);
               return;
             }
-            notificationsData = [newNotification];
+            notificationsData = newNotification;
           }
 
-          // Use the most recent notification record
-          const latestNotification = notificationsData[0];
+          // Get the most recent notification record
+          const latestNotification = notificationsData.reduce((latest: any, current: any) => {
+            if (!latest || new Date(current.updated_at) > new Date(latest.updated_at)) {
+              return current;
+            }
+            return latest;
+          }, null);
+
           if (latestNotification) {
             setNotificationCount(latestNotification.notifications?.length || 0);
             // Check if there are any unread notifications
@@ -57,7 +65,7 @@ const Header = ({ isAdmin, onLogout }: { isAdmin: boolean; onLogout: () => void 
           }
         }
       } catch (error) {
-        console.error('Error fetching notifications:', error);
+        console.error('Error in checkNotifications:', error);
       }
     };
 
