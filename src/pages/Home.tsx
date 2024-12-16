@@ -3,87 +3,90 @@ import { useNavigate } from "react-router-dom";
 import Header from "@/components/layout/Header";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { User, Calendar, TrendingUp, BarChart } from "lucide-react";
+import { Users, Mail, PhoneCall, UserPlus } from "lucide-react";
 import { getCurrentUser } from "@/services/userService";
 
 interface DashboardMetrics {
   totalProspects: number;
-  activeDeals: number;
-  weeklyMeetings: number;
-  conversionRate: number;
+  newProspects: number;
+  emailsSent: number;
+  callsMade: number;
 }
 
 const Home = () => {
   const navigate = useNavigate();
   const [metrics, setMetrics] = useState<DashboardMetrics>({
     totalProspects: 0,
-    activeDeals: 0,
-    weeklyMeetings: 0,
-    conversionRate: 0,
+    newProspects: 0,
+    emailsSent: 0,
+    callsMade: 0,
   });
   const [userRole, setUserRole] = useState<'admin' | 'supervisor' | 'user' | null>(null);
+  const [userId, setUserId] = useState<number | null>(null);
 
   useEffect(() => {
     const initializePage = async () => {
       const currentUser = await getCurrentUser();
       if (currentUser) {
         setUserRole(currentUser.type as 'admin' | 'supervisor' | 'user');
+        setUserId(currentUser.id);
       }
-      fetchDashboardMetrics();
+      fetchDashboardMetrics(currentUser);
     };
 
     initializePage();
   }, []);
 
-  const fetchDashboardMetrics = async () => {
+  const fetchDashboardMetrics = async (currentUser: any) => {
     try {
+      let query = supabase.from('prospects').select('*');
+      
+      // Filter based on user role
+      if (currentUser.type === 'user') {
+        query = query.eq('user_id', currentUser.id);
+      } else if (currentUser.type === 'supervisor') {
+        const { data: supervisedUsers } = await supabase
+          .from('users')
+          .select('id')
+          .eq('supervisor_id', currentUser.id);
+        
+        const userIds = supervisedUsers?.map(user => user.id) || [];
+        userIds.push(currentUser.id); // Include supervisor's own prospects
+        query = query.in('user_id', userIds);
+      }
+      // For admin, fetch all prospects (no additional filter needed)
+
       // Get total prospects
-      const { data: prospectsData } = await supabase
-        .from('prospects')
-        .select('count', { count: 'exact' });
+      const { data: prospectsData, error: prospectsError } = await query;
       
-      // Get active deals (prospects with status 'Meeting' or 'Proposal')
-      const { data: activeDealsData } = await supabase
-        .from('prospects')
-        .select('count', { count: 'exact' })
-        .in('status', ['Meeting', 'Proposal']);
+      if (prospectsError) throw prospectsError;
 
-      // Get meetings this week (prospects with status 'Meeting' and last_contact within this week)
-      const startOfWeek = new Date();
-      startOfWeek.setHours(0, 0, 0, 0);
-      startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
+      // Get new prospects (last 30 days)
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
       
-      const endOfWeek = new Date(startOfWeek);
-      endOfWeek.setDate(endOfWeek.getDate() + 6);
-      endOfWeek.setHours(23, 59, 59, 999);
+      const newProspectsCount = prospectsData?.filter(
+        prospect => new Date(prospect.created_at) > thirtyDaysAgo
+      ).length || 0;
 
-      const { data: meetingsData } = await supabase
-        .from('prospects')
-        .select('count', { count: 'exact' })
-        .eq('status', 'Meeting')
-        .gte('last_contact', startOfWeek.toISOString())
-        .lte('last_contact', endOfWeek.toISOString());
+      // Count emails and calls from activity_log
+      let emailCount = 0;
+      let callCount = 0;
 
-      // Calculate conversion rate (Won deals / Total prospects)
-      const { data: wonDealsData } = await supabase
-        .from('prospects')
-        .select('count', { count: 'exact' })
-        .eq('status', 'Won');
-
-      const totalProspects = prospectsData?.[0]?.count || 0;
-      const activeDeals = activeDealsData?.[0]?.count || 0;
-      const weeklyMeetings = meetingsData?.[0]?.count || 0;
-      const wonDeals = wonDealsData?.[0]?.count || 0;
-      
-      const conversionRate = totalProspects > 0 
-        ? Math.round((wonDeals / totalProspects) * 100) 
-        : 0;
+      prospectsData?.forEach(prospect => {
+        if (prospect.activity_log) {
+          prospect.activity_log.forEach((activity: any) => {
+            if (activity.type === 'Email') emailCount++;
+            if (activity.type === 'Phone Call') callCount++;
+          });
+        }
+      });
 
       setMetrics({
-        totalProspects,
-        activeDeals,
-        weeklyMeetings,
-        conversionRate,
+        totalProspects: prospectsData?.length || 0,
+        newProspects: newProspectsCount,
+        emailsSent: emailCount,
+        callsMade: callCount,
       });
 
     } catch (error) {
@@ -117,13 +120,11 @@ const Home = () => {
   const MetricCard = ({ 
     title, 
     value, 
-    change, 
     icon: Icon 
   }: { 
     title: string; 
-    value: number | string; 
-    change: string; 
-    icon: any 
+    value: number; 
+    icon: any;
   }) => (
     <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-100">
       <div className="flex items-center justify-between">
@@ -131,9 +132,6 @@ const Home = () => {
           <p className="text-sm font-medium text-gray-600">{title}</p>
           <div className="flex items-baseline mt-1">
             <p className="text-2xl font-semibold">{value}</p>
-            <p className={`ml-2 text-sm ${change.startsWith('+') ? 'text-green-600' : 'text-red-600'}`}>
-              {change}
-            </p>
           </div>
         </div>
         <div className="p-2 bg-gray-50 rounded-lg">
@@ -156,26 +154,22 @@ const Home = () => {
           <MetricCard
             title="Total Prospects"
             value={metrics.totalProspects}
-            change="+12%"
-            icon={User}
+            icon={Users}
           />
           <MetricCard
-            title="Active Deals"
-            value={metrics.activeDeals}
-            change="+8%"
-            icon={TrendingUp}
+            title="New Prospects (30d)"
+            value={metrics.newProspects}
+            icon={UserPlus}
           />
           <MetricCard
-            title="Meetings This Week"
-            value={metrics.weeklyMeetings}
-            change="+2"
-            icon={Calendar}
+            title="Emails Sent"
+            value={metrics.emailsSent}
+            icon={Mail}
           />
           <MetricCard
-            title="Conversion Rate"
-            value={`${metrics.conversionRate}%`}
-            change="+4%"
-            icon={BarChart}
+            title="Calls Made"
+            value={metrics.callsMade}
+            icon={PhoneCall}
           />
         </div>
       </div>
