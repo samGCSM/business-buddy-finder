@@ -1,5 +1,6 @@
 import { MessageSquare, FileText, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { format } from "date-fns";
 
 export type ActivityLogItemType = 'note' | 'file' | 'image';
 
@@ -9,6 +10,9 @@ export interface ActivityLogItemData {
   timestamp: string;
   fileUrl?: string;
   fileName?: string;
+  userId?: number;
+  userEmail?: string;
+  userType?: string;
 }
 
 interface ActivityLogItemProps {
@@ -35,6 +39,11 @@ const ActivityLogItem = ({ item }: ActivityLogItemProps) => {
         {getIcon()}
       </div>
       <div className="flex-1">
+        {item.userEmail && (
+          <p className="text-xs font-medium text-blue-600 mb-1">
+            {item.userEmail} ({item.userType})
+          </p>
+        )}
         {item.fileUrl ? (
           <a 
             href={item.fileUrl} 
@@ -48,7 +57,7 @@ const ActivityLogItem = ({ item }: ActivityLogItemProps) => {
           <p className="text-gray-600">{item.content}</p>
         )}
         <p className="text-xs text-gray-400">
-          {new Date(item.timestamp).toLocaleString()}
+          {format(new Date(item.timestamp), 'MMM d, yyyy h:mm a')}
         </p>
       </div>
     </div>
