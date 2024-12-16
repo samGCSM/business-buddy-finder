@@ -22,19 +22,29 @@ const Notifications = () => {
         return;
       }
 
-      const { data, error } = await supabase
+      const { data: notificationsData, error } = await supabase
         .from('notifications')
         .select('*')
-        .eq('user_id', currentUser.id)
-        .single();
+        .eq('user_id', currentUser.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching notifications:', error);
+        throw error;
+      }
 
-      setNotifications(data?.notifications || []);
+      // Get the most recent notification record
+      const latestNotification = notificationsData?.reduce((latest, current) => {
+        if (!latest || new Date(current.updated_at) > new Date(latest.updated_at)) {
+          return current;
+        }
+        return latest;
+      });
+      
+      setNotifications(latestNotification?.notifications || []);
       
       // Mark all notifications as read
-      if (data?.notifications) {
-        const updatedNotifications = data.notifications.map((n: any) => ({
+      if (latestNotification?.notifications) {
+        const updatedNotifications = latestNotification.notifications.map((n: any) => ({
           ...n,
           read: true
         }));
@@ -42,7 +52,7 @@ const Notifications = () => {
         await supabase
           .from('notifications')
           .update({ notifications: updatedNotifications })
-          .eq('user_id', currentUser.id);
+          .eq('id', latestNotification.id);
       }
     } catch (error) {
       console.error('Error fetching notifications:', error);

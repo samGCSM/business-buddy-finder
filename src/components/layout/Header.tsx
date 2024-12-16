@@ -21,7 +21,7 @@ const Header = ({ isAdmin, onLogout }: { isAdmin: boolean; onLogout: () => void 
           const currentUser = JSON.parse(currentUserStr);
           
           // Get all notifications for the user
-          let { data: notificationsData, error } = await supabase
+          const { data: notificationsData, error } = await supabase
             .from('notifications')
             .select('*')
             .eq('user_id', currentUser.id);
@@ -39,23 +39,25 @@ const Header = ({ isAdmin, onLogout }: { isAdmin: boolean; onLogout: () => void 
               .insert([{ 
                 user_id: currentUser.id,
                 notifications: []
-              }])
-              .select();
+              }]);
 
             if (insertError) {
               console.error('Error creating notifications record:', insertError);
               return;
             }
-            notificationsData = newNotification;
+            
+            setNotificationCount(0);
+            setHasNewNotifications(false);
+            return;
           }
 
           // Get the most recent notification record
-          const latestNotification = notificationsData.reduce((latest: any, current: any) => {
+          const latestNotification = notificationsData.reduce((latest, current) => {
             if (!latest || new Date(current.updated_at) > new Date(latest.updated_at)) {
               return current;
             }
             return latest;
-          }, null);
+          });
 
           if (latestNotification) {
             setNotificationCount(latestNotification.notifications?.length || 0);
