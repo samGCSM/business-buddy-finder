@@ -48,15 +48,15 @@ const StatusBadge = ({ status, onStatusChange }: StatusBadgeProps) => {
     <div className="h-full w-full">
       <Popover>
         <PopoverTrigger asChild>
-          <div
-            className="h-full w-full cursor-pointer flex items-center justify-center px-4 text-sm font-medium"
+          <button
+            className="w-full h-9 px-4 rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             style={{
               backgroundColor: customColor,
               color: '#000000',
             }}
           >
             {currentStatus}
-          </div>
+          </button>
         </PopoverTrigger>
         <PopoverContent className="w-80">
           <div className="space-y-4">

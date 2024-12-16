@@ -101,7 +101,7 @@ const Prospects = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header isAdmin={userRole === 'admin'} onLogout={handleLogout} />
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
+      <div className="w-full px-4 py-8">
         <ProspectContent
           prospects={prospects}
           showAddForm={showAddForm}
