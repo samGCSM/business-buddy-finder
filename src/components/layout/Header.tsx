@@ -19,11 +19,32 @@ const Header = ({ isAdmin, onLogout }: { isAdmin: boolean; onLogout: () => void 
         const currentUserStr = localStorage.getItem('currentUser');
         if (currentUserStr) {
           const currentUser = JSON.parse(currentUserStr);
-          const { data: notifications } = await supabase
+          
+          // First, try to get existing notifications
+          let { data: notifications } = await supabase
             .from('notifications')
             .select('notifications')
             .eq('user_id', currentUser.id)
-            .single();
+            .maybeSingle(); // Use maybeSingle instead of single to handle no results
+
+          // If no notifications record exists, create one
+          if (!notifications) {
+            console.log('Creating new notifications record for user:', currentUser.id);
+            const { data: newNotification, error: insertError } = await supabase
+              .from('notifications')
+              .insert([{ 
+                user_id: currentUser.id,
+                notifications: []
+              }])
+              .select('notifications')
+              .single();
+
+            if (insertError) {
+              console.error('Error creating notifications record:', insertError);
+              return;
+            }
+            notifications = newNotification;
+          }
 
           if (notifications) {
             setNotificationCount(notifications.notifications?.length || 0);
