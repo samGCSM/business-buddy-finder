@@ -30,7 +30,7 @@ const ProspectTableRow = ({ prospect, onEdit, onDelete, onUpdate }: ProspectTabl
         {prospect.business_name}
       </TableCell>
       <TableCell>
-        <div className="flex items-center gap-1">
+        <div className="relative inline-flex">
           <ProspectNotes
             prospectId={prospect.id}
             existingNotes={prospect.notes}
@@ -39,7 +39,7 @@ const ProspectTableRow = ({ prospect, onEdit, onDelete, onUpdate }: ProspectTabl
           {noteCount > 0 && (
             <Badge 
               variant="secondary" 
-              className="h-5 min-w-[20px] flex items-center justify-center rounded-full text-xs"
+              className="absolute -top-2 -right-2 h-4 w-4 p-0 flex items-center justify-center rounded-full text-xs"
             >
               {noteCount}
             </Badge>
