@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { ActivityLogItemData } from "./ActivityLogItem";
+import { ActivityLogItemData, convertJsonToActivityLogItem, convertActivityLogItemToJson } from "./ActivityLogItem";
 import { toast } from "@/hooks/use-toast";
 import { sendNotification } from "./useNotifications";
 import { getCurrentUser } from "@/services/userService";
@@ -20,21 +20,7 @@ export const getActivityLog = async (prospectId: string): Promise<ActivityLogIte
       throw error;
     }
 
-    return (data.activity_log || []).map((item: Json) => {
-      const typedItem = item as unknown as ActivityLogItemData;
-      return {
-        type: typedItem.type,
-        content: typedItem.content,
-        timestamp: typedItem.timestamp,
-        fileUrl: typedItem.fileUrl,
-        fileName: typedItem.fileName,
-        userId: typedItem.userId,
-        userEmail: typedItem.userEmail,
-        userType: typedItem.userType,
-        likes: typedItem.likes,
-        replies: typedItem.replies,
-      };
-    });
+    return (data.activity_log || []).map((item: Json) => convertJsonToActivityLogItem(item));
   } catch (error) {
     console.error('Error fetching activity log:', error);
     return [];
@@ -43,7 +29,7 @@ export const getActivityLog = async (prospectId: string): Promise<ActivityLogIte
 
 export const addActivityLogItem = async (
   prospectId: string,
-  item: Omit<ActivityLogItemData, 'userId' | 'userEmail' | 'userType'>,
+  item: Omit<ActivityLogItemData, 'userId' | 'userEmail' | 'userType' | 'likes'>,
   existingNotes: string
 ): Promise<boolean> => {
   try {
@@ -54,7 +40,7 @@ export const addActivityLogItem = async (
     const newNote = `[${timestamp}] ${item.content}\n`;
     const updatedNotes = existingNotes ? `${existingNotes}${newNote}` : newNote;
 
-    const newActivity: Json = {
+    const newActivity: ActivityLogItemData = {
       ...item,
       timestamp,
       userId: currentUser.id,
@@ -76,7 +62,7 @@ export const addActivityLogItem = async (
       .eq('id', prospectId)
       .single();
 
-    const updatedLog = [...(currentData?.activity_log || []), newActivity];
+    const updatedLog = [...(currentData?.activity_log || []), convertActivityLogItemToJson(newActivity)];
 
     const { error } = await supabase
       .from('prospects')

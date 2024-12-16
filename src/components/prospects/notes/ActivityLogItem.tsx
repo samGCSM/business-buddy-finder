@@ -17,9 +17,42 @@ export interface ActivityLogItemData {
   userId?: number;
   userEmail?: string;
   userType?: string;
-  likes?: number;
+  likes: number;
   replies?: ActivityLogItemData[];
 }
+
+// Helper function to convert Json to ActivityLogItemData
+export const convertJsonToActivityLogItem = (json: Json): ActivityLogItemData => {
+  const item = json as any;
+  return {
+    type: item.type as ActivityLogItemType,
+    content: item.content as string,
+    timestamp: item.timestamp as string,
+    fileUrl: item.fileUrl as string | undefined,
+    fileName: item.fileName as string | undefined,
+    userId: item.userId as number | undefined,
+    userEmail: item.userEmail as string | undefined,
+    userType: item.userType as string | undefined,
+    likes: item.likes as number || 0,
+    replies: item.replies ? item.replies.map((reply: Json) => convertJsonToActivityLogItem(reply)) : undefined
+  };
+};
+
+// Helper function to convert ActivityLogItemData to Json
+export const convertActivityLogItemToJson = (item: ActivityLogItemData): Json => {
+  return {
+    type: item.type,
+    content: item.content,
+    timestamp: item.timestamp,
+    fileUrl: item.fileUrl,
+    fileName: item.fileName,
+    userId: item.userId,
+    userEmail: item.userEmail,
+    userType: item.userType,
+    likes: item.likes,
+    replies: item.replies?.map(reply => convertActivityLogItemToJson(reply))
+  };
+};
 
 interface ActivityLogItemProps {
   item: ActivityLogItemData;
@@ -45,9 +78,12 @@ const ActivityLogItem = ({ item, prospectId, onReply }: ActivityLogItemProps) =>
 
       if (prospect && prospect.activity_log) {
         const updatedLog = (prospect.activity_log as Json[]).map((logItem) => {
-          const typedLogItem = logItem as unknown as ActivityLogItemData;
+          const typedLogItem = convertJsonToActivityLogItem(logItem);
           if (typedLogItem.timestamp === item.timestamp && typedLogItem.content === item.content) {
-            return { ...typedLogItem, likes: newLikeCount };
+            return convertActivityLogItemToJson({
+              ...typedLogItem,
+              likes: newLikeCount
+            });
           }
           return logItem;
         });
