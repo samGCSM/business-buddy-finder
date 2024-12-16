@@ -14,52 +14,53 @@ const NotificationIndicator = () => {
     const checkNotifications = async () => {
       try {
         const currentUserStr = localStorage.getItem('currentUser');
-        if (currentUserStr) {
-          const currentUser = JSON.parse(currentUserStr);
-          
-          console.log('Fetching notifications for user:', currentUser.id);
-          const { data: notificationsData, error } = await supabase
-            .from('notifications')
-            .select('*')
-            .eq('user_id', currentUser.id);
-
-          if (error) {
-            console.error('Error fetching notifications:', error);
-            return;
-          }
-
-          if (!notificationsData || notificationsData.length === 0) {
-            console.log('Creating new notifications record for user:', currentUser.id);
-            const { error: insertError } = await supabase
-              .from('notifications')
-              .insert([{ 
-                user_id: currentUser.id,
-                notifications: []
-              }]);
-
-            if (insertError) {
-              console.error('Error creating notifications record:', insertError);
-              return;
-            }
-            
-            setNotificationCount(0);
-            setHasNewNotifications(false);
-            return;
-          }
-
-          const latestNotification = notificationsData.reduce((latest, current) => {
-            if (!latest || new Date(current.updated_at) > new Date(latest.updated_at)) {
-              return current;
-            }
-            return latest;
-          });
-
-          if (latestNotification) {
-            setNotificationCount(latestNotification.notifications?.length || 0);
-            const hasUnread = latestNotification.notifications?.some((n: any) => !n.read) || false;
-            setHasNewNotifications(hasUnread);
-          }
+        if (!currentUserStr) {
+          console.log('No current user found in localStorage');
+          return;
         }
+
+        const currentUser = JSON.parse(currentUserStr);
+        console.log('Checking notifications for user:', currentUser.id);
+        
+        const { data: notificationsData, error } = await supabase
+          .from('notifications')
+          .select('*')
+          .eq('user_id', currentUser.id);
+
+        if (error) {
+          console.error('Error fetching notifications:', error);
+          return;
+        }
+
+        // Find the most recent notification record
+        const latestNotification = notificationsData?.reduce((latest, current) => {
+          if (!latest || new Date(current.updated_at) > new Date(latest.updated_at)) {
+            return current;
+          }
+          return latest;
+        }, null);
+
+        if (!latestNotification) {
+          console.log('No notifications found, creating new record');
+          const { error: insertError } = await supabase
+            .from('notifications')
+            .insert([{ 
+              user_id: currentUser.id,
+              notifications: []
+            }]);
+
+          if (insertError) {
+            console.error('Error creating notifications record:', insertError);
+          }
+          
+          setNotificationCount(0);
+          setHasNewNotifications(false);
+          return;
+        }
+
+        const unreadCount = latestNotification.notifications?.filter((n: any) => !n.read)?.length || 0;
+        setNotificationCount(unreadCount);
+        setHasNewNotifications(unreadCount > 0);
       } catch (error) {
         console.error('Error in checkNotifications:', error);
       }
@@ -67,6 +68,7 @@ const NotificationIndicator = () => {
 
     checkNotifications();
     
+    // Set up real-time subscription
     const subscription = supabase
       .channel('notifications')
       .on('postgres_changes', { 
