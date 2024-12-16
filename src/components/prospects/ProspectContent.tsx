@@ -2,7 +2,9 @@ import { useState } from "react";
 import ProspectsTable from "./ProspectsTable";
 import AddProspectForm from "./AddProspectForm";
 import ProspectHeader from "./ProspectHeader";
+import UserProspectFilter from "./UserProspectFilter";
 import type { Prospect } from "@/types/prospects";
+import type { User } from "@/types/user";
 
 interface ProspectContentProps {
   prospects: Prospect[];
@@ -10,6 +12,9 @@ interface ProspectContentProps {
   onAddFormClose: () => void;
   onProspectAdded: () => void;
   userRole: 'admin' | 'supervisor' | 'user' | null;
+  currentUser: User | null;
+  onUserSelect?: (userId: number) => void;
+  supervisedUsers?: User[];
 }
 
 const ProspectContent = ({ 
@@ -17,7 +22,10 @@ const ProspectContent = ({
   showAddForm, 
   onAddFormClose, 
   onProspectAdded,
-  userRole 
+  userRole,
+  currentUser,
+  onUserSelect,
+  supervisedUsers = []
 }: ProspectContentProps) => {
   const [isAddFormVisible, setIsAddFormVisible] = useState(showAddForm);
 
@@ -30,6 +38,13 @@ const ProspectContent = ({
 
   return (
     <div className="space-y-6">
+      {(userRole === 'admin' || userRole === 'supervisor') && supervisedUsers.length > 0 && (
+        <UserProspectFilter 
+          users={supervisedUsers}
+          onUserSelect={onUserSelect}
+          currentUser={currentUser}
+        />
+      )}
       <ProspectHeader 
         onAddClick={handleAddClick}
         onBulkUploadSuccess={onProspectAdded}

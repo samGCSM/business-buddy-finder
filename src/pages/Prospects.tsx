@@ -6,6 +6,7 @@ import { useSession } from '@supabase/auth-helpers-react';
 import Header from "@/components/layout/Header";
 import ProspectContent from "@/components/prospects/ProspectContent";
 import { getCurrentUser } from "@/services/userService";
+import type { User } from "@/types/user";
 
 const Prospects = () => {
   const navigate = useNavigate();
@@ -14,45 +15,59 @@ const Prospects = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
   const [userRole, setUserRole] = useState<'admin' | 'supervisor' | 'user' | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [supervisedUsers, setSupervisedUsers] = useState<User[]>([]);
+  const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
 
   useEffect(() => {
     const initializePage = async () => {
-      const currentUser = await getCurrentUser();
-      console.log("Prospects - Checking current user:", currentUser);
+      const user = await getCurrentUser();
+      console.log("Prospects - Checking current user:", user);
       
-      if (!currentUser) {
+      if (!user) {
         console.log("Prospects - No user found, redirecting to login");
         navigate('/login');
         return;
       }
 
-      console.log("Prospects - User found, setting role:", currentUser.type);
-      setUserRole(currentUser.type as 'admin' | 'supervisor' | 'user');
-      await fetchProspects(currentUser);
+      console.log("Prospects - User found, setting role:", user.type);
+      setUserRole(user.type as 'admin' | 'supervisor' | 'user');
+      setCurrentUser(user);
+      setSelectedUserId(user.id);
+
+      if (user.type === 'admin') {
+        // Fetch all users for admin
+        const { data: allUsers } = await supabase
+          .from('users')
+          .select('*')
+          .neq('id', user.id);
+        setSupervisedUsers(allUsers || []);
+      } else if (user.type === 'supervisor') {
+        // Fetch users under this supervisor
+        const { data: supervisedUsersData } = await supabase
+          .from('users')
+          .select('*')
+          .eq('supervisor_id', user.id);
+        setSupervisedUsers(supervisedUsersData || []);
+      }
+
+      await fetchProspects(user, user.id);
     };
 
     initializePage();
   }, [navigate]);
 
-  const fetchProspects = async (currentUser: any) => {
+  const fetchProspects = async (currentUser: any, userId: number) => {
     try {
-      console.log('Fetching prospects for user:', currentUser);
+      console.log('Fetching prospects for user:', userId);
       let query = supabase
         .from('prospects')
         .select('*, users!prospects_user_id_fkey (id, email, supervisor_id)');
 
-      if (currentUser.type === 'supervisor') {
-        const { data: supervisedUsers } = await supabase
-          .from('users')
-          .select('id')
-          .eq('supervisor_id', currentUser.id);
-
-        if (supervisedUsers) {
-          const userIds = supervisedUsers.map(user => user.id);
-          query = query.in('user_id', userIds);
-        }
-      } else if (currentUser.type === 'user') {
+      if (currentUser.type === 'user') {
         query = query.eq('user_id', currentUser.id);
+      } else {
+        query = query.eq('user_id', userId);
       }
 
       const { data, error } = await query.order('created_at', { ascending: false });
@@ -73,6 +88,13 @@ const Prospects = () => {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleUserSelect = async (userId: number) => {
+    setSelectedUserId(userId);
+    if (currentUser) {
+      await fetchProspects(currentUser, userId);
     }
   };
 
@@ -106,8 +128,11 @@ const Prospects = () => {
           prospects={prospects}
           showAddForm={showAddForm}
           onAddFormClose={() => setShowAddForm(false)}
-          onProspectAdded={() => fetchProspects(getCurrentUser())}
+          onProspectAdded={() => currentUser && selectedUserId && fetchProspects(currentUser, selectedUserId)}
           userRole={userRole}
+          currentUser={currentUser}
+          onUserSelect={handleUserSelect}
+          supervisedUsers={supervisedUsers}
         />
       </div>
     </div>
