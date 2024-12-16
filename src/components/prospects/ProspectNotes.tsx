@@ -10,6 +10,7 @@ import NotificationIndicator from "./notes/NotificationIndicator";
 import { useActivityLog, setupNotificationListener } from "./notes/useActivityLog";
 import { ActivityLogItemData } from "./notes/ActivityLogItem";
 import { getCurrentUser } from "@/services/userService";
+import { Badge } from "@/components/ui/badge";
 
 interface ProspectNotesProps {
   prospectId: string;
@@ -80,10 +81,14 @@ const ProspectNotes = ({ prospectId, existingNotes, onNotesUpdated }: ProspectNo
           className="h-8 w-8 relative"
         >
           <MessageSquare className="h-4 w-4" />
-          <NotificationIndicator 
-            hasNewNotification={hasNewNotification} 
-            noteCount={activityLog.length} 
-          />
+          {activityLog.length > 0 && (
+            <Badge 
+              variant="secondary" 
+              className="absolute -top-2 -right-2 h-4 w-4 p-0 flex items-center justify-center rounded-full text-xs"
+            >
+              {activityLog.length}
+            </Badge>
+          )}
         </Button>
       </div>
 

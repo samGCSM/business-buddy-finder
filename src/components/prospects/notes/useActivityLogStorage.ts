@@ -50,9 +50,10 @@ export const addActivityLogItem = async (
       replies: []
     };
 
+    // Get prospect and user information
     const { data: prospectData } = await supabase
       .from('prospects')
-      .select('user_id, users!prospects_user_id_fkey (supervisor_id, email)')
+      .select('user_id, users!prospects_user_id_fkey (supervisor_id, email, type)')
       .eq('id', prospectId)
       .single();
 
@@ -75,16 +76,28 @@ export const addActivityLogItem = async (
 
     if (error) throw error;
 
-    if (currentUser.type === 'user' && prospectData?.users?.supervisor_id) {
+    // Send notifications based on user roles
+    if (currentUser.type === 'user') {
+      // User added note - notify supervisor and admin
+      if (prospectData?.users?.supervisor_id) {
+        await sendNotification(
+          prospectData.users.supervisor_id,
+          `New note from ${currentUser.email} on prospect ${prospectId}`,
+          prospectId
+        );
+      }
+      
+      // Notify admin (assuming admin has ID 1)
       await sendNotification(
-        prospectData.users.supervisor_id,
+        1, // Admin ID
         `New note from ${currentUser.email} on prospect ${prospectId}`,
         prospectId
       );
-    } else if (currentUser.type === 'supervisor') {
+    } else {
+      // Admin or supervisor added note - notify the user
       await sendNotification(
         prospectData?.user_id,
-        `New note from supervisor on prospect ${prospectId}`,
+        `New note from ${currentUser.type} on prospect ${prospectId}`,
         prospectId
       );
     }
@@ -101,6 +114,44 @@ export const addActivityLogItem = async (
       description: "Failed to add note",
       variant: "destructive",
     });
+    return false;
+  }
+};
+
+export const updateActivityLogLikes = async (
+  prospectId: string,
+  activityTimestamp: string,
+  newLikeCount: number
+): Promise<boolean> => {
+  try {
+    const { data: currentData } = await supabase
+      .from('prospects')
+      .select('activity_log')
+      .eq('id', prospectId)
+      .single();
+
+    if (!currentData?.activity_log) return false;
+
+    const updatedLog = currentData.activity_log.map((item: Json) => {
+      const typedItem = convertJsonToActivityLogItem(item);
+      if (typedItem.timestamp === activityTimestamp) {
+        return convertActivityLogItemToJson({
+          ...typedItem,
+          likes: newLikeCount
+        });
+      }
+      return item;
+    });
+
+    const { error } = await supabase
+      .from('prospects')
+      .update({ activity_log: updatedLog })
+      .eq('id', prospectId);
+
+    if (error) throw error;
+    return true;
+  } catch (error) {
+    console.error('Error updating likes:', error);
     return false;
   }
 };

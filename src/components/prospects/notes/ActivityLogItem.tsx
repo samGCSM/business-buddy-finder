@@ -5,6 +5,7 @@ import { format } from 'date-fns';
 import { useState } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { Json } from '@/integrations/supabase/types';
+import { updateActivityLogLikes } from "./useActivityLogStorage";
 
 export type ActivityLogItemType = 'note' | 'file' | 'image';
 
@@ -67,31 +68,11 @@ const ActivityLogItem = ({ item, prospectId, onReply }: ActivityLogItemProps) =>
   const handleLike = async () => {
     try {
       const newLikeCount = isLiked ? likes - 1 : likes + 1;
-      setLikes(newLikeCount);
-      setIsLiked(!isLiked);
-
-      const { data: prospect } = await supabase
-        .from('prospects')
-        .select('activity_log')
-        .eq('id', prospectId)
-        .single();
-
-      if (prospect && prospect.activity_log) {
-        const updatedLog = (prospect.activity_log as Json[]).map((logItem) => {
-          const typedLogItem = convertJsonToActivityLogItem(logItem);
-          if (typedLogItem.timestamp === item.timestamp && typedLogItem.content === item.content) {
-            return convertActivityLogItemToJson({
-              ...typedLogItem,
-              likes: newLikeCount
-            });
-          }
-          return logItem;
-        });
-
-        await supabase
-          .from('prospects')
-          .update({ activity_log: updatedLog })
-          .eq('id', prospectId);
+      const success = await updateActivityLogLikes(prospectId, item.timestamp, newLikeCount);
+      
+      if (success) {
+        setLikes(newLikeCount);
+        setIsLiked(!isLiked);
       }
     } catch (error) {
       console.error('Error updating likes:', error);
