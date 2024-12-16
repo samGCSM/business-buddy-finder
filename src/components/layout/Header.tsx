@@ -20,15 +20,16 @@ const Header = ({ isAdmin, onLogout }: { isAdmin: boolean; onLogout: () => void 
         if (currentUserStr) {
           const currentUser = JSON.parse(currentUserStr);
           
-          // First, try to get existing notifications
-          let { data: notifications } = await supabase
+          // Get all notifications for the user
+          let { data: notificationsData, error } = await supabase
             .from('notifications')
-            .select('notifications')
-            .eq('user_id', currentUser.id)
-            .maybeSingle(); // Use maybeSingle instead of single to handle no results
+            .select('*')
+            .eq('user_id', currentUser.id);
 
-          // If no notifications record exists, create one
-          if (!notifications) {
+          if (error) throw error;
+
+          // If no notifications exist, create one
+          if (!notificationsData || notificationsData.length === 0) {
             console.log('Creating new notifications record for user:', currentUser.id);
             const { data: newNotification, error: insertError } = await supabase
               .from('notifications')
@@ -36,20 +37,22 @@ const Header = ({ isAdmin, onLogout }: { isAdmin: boolean; onLogout: () => void 
                 user_id: currentUser.id,
                 notifications: []
               }])
-              .select('notifications')
+              .select()
               .single();
 
             if (insertError) {
               console.error('Error creating notifications record:', insertError);
               return;
             }
-            notifications = newNotification;
+            notificationsData = [newNotification];
           }
 
-          if (notifications) {
-            setNotificationCount(notifications.notifications?.length || 0);
+          // Use the most recent notification record
+          const latestNotification = notificationsData[0];
+          if (latestNotification) {
+            setNotificationCount(latestNotification.notifications?.length || 0);
             // Check if there are any unread notifications
-            const hasUnread = notifications.notifications?.some((n: any) => !n.read) || false;
+            const hasUnread = latestNotification.notifications?.some((n: any) => !n.read) || false;
             setHasNewNotifications(hasUnread);
           }
         }
