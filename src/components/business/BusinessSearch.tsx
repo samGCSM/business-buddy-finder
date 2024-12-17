@@ -18,6 +18,8 @@ const BusinessSearch = ({ onShowSavedSearches, initialSearch }: BusinessSearchPr
   const [isLoading, setIsLoading] = useState(false);
   const [currentLocation, setCurrentLocation] = useState("");
   const [currentKeyword, setCurrentKeyword] = useState("");
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
 
   useEffect(() => {
     if (initialSearch) {
@@ -32,7 +34,6 @@ const BusinessSearch = ({ onShowSavedSearches, initialSearch }: BusinessSearchPr
     console.log('Updating search count for user:', userId);
     
     try {
-      // First get the current search count
       const { data: userData, error: fetchError } = await supabase
         .from('users')
         .select('totalSearches')
@@ -47,7 +48,6 @@ const BusinessSearch = ({ onShowSavedSearches, initialSearch }: BusinessSearchPr
       const currentSearches = (userData?.totalSearches || 0) + 1;
       console.log('New search count:', currentSearches);
 
-      // Update the search count
       const { error: updateError } = await supabase
         .from('users')
         .update({ totalSearches: currentSearches })
@@ -65,12 +65,14 @@ const BusinessSearch = ({ onShowSavedSearches, initialSearch }: BusinessSearchPr
     setIsLoading(true);
     setCurrentLocation(location);
     setCurrentKeyword(keyword);
+    setPage(1); // Reset page when new search is performed
     
     try {
       console.log('Searching businesses:', { location, keyword });
       const businesses = await searchBusinesses(location, keyword);
       console.log('Search results:', businesses);
-      setResults(businesses);
+      setResults(businesses.slice(0, 20)); // Only show first 20 results
+      setHasMore(businesses.length > 20); // Set hasMore if there are more than 20 results
 
       // Get the current user from localStorage
       const currentUserStr = localStorage.getItem('currentUser');
@@ -85,6 +87,28 @@ const BusinessSearch = ({ onShowSavedSearches, initialSearch }: BusinessSearchPr
       toast({
         title: "Error",
         description: "Failed to fetch results. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleLoadMore = async () => {
+    if (isLoading || !hasMore || results.length >= 40) return;
+    
+    setIsLoading(true);
+    try {
+      const businesses = await searchBusinesses(currentLocation, currentKeyword);
+      const nextPageResults = businesses.slice(20, 40);
+      setResults(prev => [...prev, ...nextPageResults]);
+      setHasMore(false); // No more results after this
+      setPage(2);
+    } catch (error) {
+      console.error('Load more error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load more results. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -109,11 +133,24 @@ const BusinessSearch = ({ onShowSavedSearches, initialSearch }: BusinessSearchPr
       />
       
       {results.length > 0 && (
-        <BusinessResultsTable 
-          results={results}
-          location={currentLocation}
-          keyword={currentKeyword}
-        />
+        <div className="space-y-4">
+          <BusinessResultsTable 
+            results={results}
+            location={currentLocation}
+            keyword={currentKeyword}
+          />
+          {hasMore && results.length < 40 && (
+            <div className="flex justify-center mt-4">
+              <Button 
+                onClick={handleLoadMore} 
+                disabled={isLoading}
+                className="w-full md:w-auto"
+              >
+                {isLoading ? "Loading..." : "Load More"}
+              </Button>
+            </div>
+          )}
+        </div>
       )}
     </div>
   );
