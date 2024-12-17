@@ -14,6 +14,11 @@ const AIInsights = () => {
   useEffect(() => {
     const checkUser = async () => {
       try {
+        if (!session) {
+          console.log('AIInsights - No session found');
+          return;
+        }
+        
         const user = await getCurrentUser();
         console.log('AIInsights - Current user:', user);
         setCurrentUser(user);
@@ -22,12 +27,10 @@ const AIInsights = () => {
       }
     };
     
-    if (session) {
-      checkUser();
-    }
+    checkUser();
   }, [session]);
 
-  if (!session) {
+  if (!session || !currentUser) {
     return (
       <Card className="p-4">
         <p className="text-sm text-gray-500">Please log in to view insights</p>
