@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSession } from '@supabase/auth-helpers-react';
 import * as XLSX from 'xlsx';
 import { Upload } from "lucide-react";
+import { getCurrentUser } from "@/services/userService";
 
 interface BulkUploadProspectsProps {
   onSuccess: () => void;
@@ -21,49 +22,45 @@ const BulkUploadProspects = ({ onSuccess }: BulkUploadProspectsProps) => {
       
       reader.onload = async (e) => {
         try {
+          const currentUser = await getCurrentUser();
+          if (!currentUser?.id) {
+            throw new Error("Please log in to upload prospects");
+          }
+
           const data = e.target?.result;
           const workbook = XLSX.read(data, { type: 'binary' });
           const sheetName = workbook.SheetNames[0];
           const sheet = workbook.Sheets[sheetName];
-          const prospects = XLSX.utils.sheet_to_json(sheet);
+          const rawProspects = XLSX.utils.sheet_to_json(sheet);
 
-          if (!session?.user?.id) {
-            throw new Error("Please log in to upload prospects");
-          }
+          console.log("Raw prospects data:", rawProspects);
 
-          console.log("Processing prospects:", prospects);
-
-          const { data: userData, error: userError } = await supabase
-            .from('users')
-            .select('id')
-            .eq('id', session.user.id)
-            .single();
-
-          if (userError || !userData) {
-            throw new Error("Failed to get user data");
-          }
-
-          const formattedProspects = prospects.map((prospect: any) => ({
-            business_name: prospect.business_name || "Unknown Business",
-            notes: prospect.notes || "",
-            website: prospect.website || "",
-            email: prospect.email || "",
-            business_address: prospect.business_address || "",
-            phone_number: prospect.phone_number || "",
-            owner_name: prospect.owner_name || "",
-            status: prospect.status || "New",
-            priority: prospect.priority || "Medium",
-            owner_phone: prospect.owner_phone || "",
-            owner_email: prospect.owner_email || "",
-            user_id: userData.id,
-            last_contact: new Date().toISOString()
+          const formattedProspects = rawProspects.map((prospect: any) => ({
+            business_name: prospect['Business Name'] || prospect.business_name || "Unknown Business",
+            website: prospect['Website'] || prospect.website || "",
+            email: prospect['Email'] || prospect.email || "",
+            business_address: prospect['Address'] || prospect.business_address || "",
+            phone_number: prospect['Phone'] || prospect.phone_number || "",
+            rating: parseFloat(prospect['Rating'] || prospect.rating || "0.0"),
+            review_count: parseInt(prospect['Review Count'] || prospect.review_count || "0"),
+            user_id: currentUser.id,
+            status: "New",
+            priority: "Medium",
+            last_contact: new Date().toISOString(),
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
           }));
+
+          console.log("Formatted prospects:", formattedProspects);
 
           const { error: insertError } = await supabase
             .from('prospects')
             .insert(formattedProspects);
 
-          if (insertError) throw insertError;
+          if (insertError) {
+            console.error('Error inserting prospects:', insertError);
+            throw insertError;
+          }
 
           toast({
             title: "Success",
@@ -74,13 +71,16 @@ const BulkUploadProspects = ({ onSuccess }: BulkUploadProspectsProps) => {
           console.error('Error processing file:', error);
           toast({
             title: "Error",
-            description: "Failed to process file. Please check the format and try again.",
+            description: error.message || "Failed to process file. Please check the format and try again.",
             variant: "destructive",
           });
+        } finally {
+          setIsUploading(false);
         }
       };
 
       reader.onerror = () => {
+        setIsUploading(false);
         toast({
           title: "Error",
           description: "Failed to read file",
@@ -91,13 +91,12 @@ const BulkUploadProspects = ({ onSuccess }: BulkUploadProspectsProps) => {
       reader.readAsBinaryString(file);
     } catch (error) {
       console.error('Error uploading prospects:', error);
+      setIsUploading(false);
       toast({
         title: "Error",
         description: "Failed to upload prospects",
         variant: "destructive",
       });
-    } finally {
-      setIsUploading(false);
     }
   };
 
