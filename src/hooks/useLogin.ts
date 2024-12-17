@@ -16,6 +16,7 @@ export const useLogin = (onLogin: (isLoggedIn: boolean, userType: 'admin' | 'use
         .from('users')
         .select('*')
         .eq('email', email)
+        .eq('password', password)
         .maybeSingle();
 
       if (userError) {
@@ -25,24 +26,18 @@ export const useLogin = (onLogin: (isLoggedIn: boolean, userType: 'admin' | 'use
 
       if (!userRecord) {
         console.error('User not found in users table');
-        throw new Error('User not found in application database');
+        throw new Error('Invalid credentials');
       }
 
       console.log('Found user in users table:', userRecord);
 
-      // Then attempt Supabase Auth signin
-      const { data: authData, error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (signInError) {
-        console.error('Auth sign in error:', signInError);
-        throw signInError;
-      }
-
-      console.log('Successfully authenticated with Supabase Auth');
-
+      // Store user data in localStorage
+      localStorage.setItem('currentUser', JSON.stringify(userRecord));
+      
+      // Properly handle admin type
+      const userType = userRecord.type === 'admin' ? 'admin' : 'user';
+      onLogin(true, userType);
+      
       // Update the lastLogin timestamp
       const { error: updateError } = await supabase
         .from('users')
@@ -55,13 +50,6 @@ export const useLogin = (onLogin: (isLoggedIn: boolean, userType: 'admin' | 'use
         console.error('Error updating last login:', updateError);
       }
 
-      // Store user data in localStorage
-      localStorage.setItem('currentUser', JSON.stringify(userRecord));
-      
-      // Properly handle admin type
-      const userType = userRecord.type === 'admin' ? 'admin' : 'user';
-      onLogin(true, userType);
-      
       toast({
         title: "Success",
         description: `Logged in successfully${userType === 'admin' ? ' as admin' : ''}`,
