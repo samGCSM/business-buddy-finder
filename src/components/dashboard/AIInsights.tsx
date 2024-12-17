@@ -14,17 +14,44 @@ interface AIInsight {
 const AIInsights = () => {
   const [insights, setInsights] = useState<AIInsight[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const session = useSession();
 
   useEffect(() => {
     const fetchInsights = async () => {
-      if (!session?.user?.id) return;
+      if (!session?.user?.id) {
+        console.log('No user session found, skipping insights fetch');
+        setIsLoading(false);
+        return;
+      }
 
       try {
-        console.log('Fetching insights for user:', session.user.id);
+        console.log('Fetching insights for auth user:', session.user.id);
+        
+        // First, get the public.users id that matches the auth.users email
+        const { data: userData, error: userError } = await supabase
+          .from('users')
+          .select('id')
+          .eq('email', session.user.email)
+          .single();
+
+        if (userError) {
+          console.error('Error fetching user:', userError);
+          throw userError;
+        }
+
+        if (!userData) {
+          console.log('No matching user found in public.users table');
+          setIsLoading(false);
+          return;
+        }
+
+        console.log('Found matching user in public.users:', userData);
+
         const { data, error } = await supabase
           .from('ai_insights')
           .select('*')
+          .eq('user_id', userData.id)
           .order('created_at', { ascending: false })
           .limit(5);
 
@@ -36,14 +63,29 @@ const AIInsights = () => {
         console.log('Fetched insights:', data);
         setInsights(data || []);
       } catch (error) {
-        console.error('Error fetching insights:', error);
+        console.error('Error in fetchInsights:', error);
+        setError(error instanceof Error ? error.message : 'Failed to fetch insights');
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchInsights();
-  }, [session?.user?.id]);
+  }, [session?.user?.id, session?.user?.email]);
+
+  if (error) {
+    return (
+      <div className="space-y-4">
+        <h2 className="text-xl font-semibold flex items-center gap-2">
+          <Lightbulb className="w-5 h-5" />
+          AI Insights
+        </h2>
+        <Card className="p-4 bg-red-50">
+          <p className="text-sm text-red-600">Error loading insights: {error}</p>
+        </Card>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -80,7 +122,9 @@ const AIInsights = () => {
           </Card>
         ))}
         {insights.length === 0 && (
-          <p className="text-sm text-gray-500">No insights available yet.</p>
+          <Card className="p-4">
+            <p className="text-sm text-gray-500">No insights available yet. They will appear here as you interact with prospects.</p>
+          </Card>
         )}
       </div>
     </div>
