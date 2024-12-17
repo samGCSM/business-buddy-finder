@@ -11,12 +11,24 @@ export const useLogin = (onLogin: (isLoggedIn: boolean, userType: 'admin' | 'use
     try {
       console.log('Attempting login with email:', email);
       
-      // First get user data from users table to verify the user exists in our system
+      // First authenticate with Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (authError) {
+        console.error('Supabase Auth error:', authError);
+        throw authError;
+      }
+
+      console.log('Successfully authenticated with Supabase Auth');
+
+      // Then get user data from users table
       const { data: userRecord, error: userError } = await supabase
         .from('users')
         .select('*')
         .eq('email', email)
-        .eq('password', password)
         .maybeSingle();
 
       if (userError) {
@@ -26,7 +38,7 @@ export const useLogin = (onLogin: (isLoggedIn: boolean, userType: 'admin' | 'use
 
       if (!userRecord) {
         console.error('User not found in users table');
-        throw new Error('Invalid credentials');
+        throw new Error('User not found');
       }
 
       console.log('Found user in users table:', userRecord);
@@ -34,7 +46,7 @@ export const useLogin = (onLogin: (isLoggedIn: boolean, userType: 'admin' | 'use
       // Store user data in localStorage
       localStorage.setItem('currentUser', JSON.stringify(userRecord));
       
-      // Properly handle admin type
+      // Handle user type
       const userType = userRecord.type === 'admin' ? 'admin' : 'user';
       onLogin(true, userType);
       

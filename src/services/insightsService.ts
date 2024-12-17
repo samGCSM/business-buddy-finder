@@ -49,18 +49,31 @@ export const getInsights = async (userId: number, userType: string) => {
 
     // Only try to store the insight if we successfully generated one
     if (insightData?.content) {
-      // Ensure we're setting the user_id when inserting
+      // Get the current session to ensure we're authenticated
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error('Error getting session:', sessionError);
+        throw sessionError;
+      }
+
+      if (!session) {
+        console.error('No active session found');
+        throw new Error('Authentication required');
+      }
+
+      // Insert the insight with explicit user_id
       const { error: insertError } = await supabase
         .from('ai_insights')
         .insert({
-          user_id: userId, // Make sure this is set
+          user_id: userId,
           content_type: 'daily_insight',
           content: insightData.content
         });
 
       if (insertError) {
         console.error('Error storing insight:', insertError);
-        // Don't throw here, just log the error since we still have the insight to return
+        // Log the error but don't throw since we still have the insight to return
       }
 
       return { dailyInsight: insightData.content };
