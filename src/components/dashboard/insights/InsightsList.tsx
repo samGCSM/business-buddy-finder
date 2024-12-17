@@ -5,9 +5,18 @@ import type { AIInsight } from "./types";
 interface InsightsListProps {
   insights: AIInsight[];
   isLoading: boolean;
+  error?: string | null;
 }
 
-const InsightsList = ({ insights, isLoading }: InsightsListProps) => {
+const InsightsList = ({ insights, isLoading, error }: InsightsListProps) => {
+  if (error) {
+    return (
+      <Card className="p-4 bg-red-50">
+        <p className="text-sm text-red-600">Error: {error}</p>
+      </Card>
+    );
+  }
+
   if (isLoading) {
     return (
       <Card className="p-4">

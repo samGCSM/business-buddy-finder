@@ -13,18 +13,35 @@ export const useInsights = () => {
   useEffect(() => {
     const fetchInsights = async () => {
       try {
-        if (!session?.user?.email) {
+        if (!session?.user?.id) {
           console.log('No user session found');
+          setError('No user session found');
           setIsLoading(false);
           return;
         }
 
-        console.log('Fetching insights for user email:', session.user.email);
+        console.log('Current auth user ID:', session.user.id);
         
+        // First, get the user's email from auth
+        const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
+        
+        if (authError) {
+          console.error('Error fetching auth user:', authError);
+          throw new Error('Could not fetch auth user');
+        }
+
+        if (!authUser?.email) {
+          console.error('No email found for auth user');
+          throw new Error('User email not found');
+        }
+
+        console.log('Fetching insights for user email:', authUser.email);
+        
+        // Then get the public.users record
         const { data: userData, error: userError } = await supabase
           .from('users')
           .select('id')
-          .eq('email', session.user.email)
+          .eq('email', authUser.email)
           .single();
 
         if (userError) {
@@ -37,10 +54,12 @@ export const useInsights = () => {
           throw new Error('User account not properly set up');
         }
 
-        console.log('Found user ID:', userData.id);
+        console.log('Found user ID in public.users:', userData.id);
 
+        // Generate insights if needed
         await generateDailyInsights(userData.id);
 
+        // Fetch insights
         const { data: insightsData, error: insightsError } = await supabase
           .from('ai_insights')
           .select('*')
@@ -64,7 +83,7 @@ export const useInsights = () => {
     };
 
     fetchInsights();
-  }, [session?.user?.email]);
+  }, [session?.user?.id]);
 
   return { insights, isLoading, error };
 };

@@ -2,7 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const generateDailyInsights = async (userId: number) => {
   try {
-    console.log('Checking daily insights for user:', userId);
+    console.log('Starting daily insights generation for user:', userId);
     
     const today = new Date().toISOString().split('T')[0];
     
@@ -15,8 +15,10 @@ export const generateDailyInsights = async (userId: number) => {
     
     if (trackingError && trackingError.code !== 'PGRST116') {
       console.error('Error checking insight tracking:', trackingError);
-      return;
+      throw new Error('Failed to check insight tracking');
     }
+
+    console.log('Current tracking data:', tracking);
 
     const needsPepTalk = !tracking?.last_pep_talk_date || 
       new Date(tracking.last_pep_talk_date).toISOString().split('T')[0] !== today;
@@ -40,7 +42,7 @@ export const generateDailyInsights = async (userId: number) => {
 
       if (insertError) {
         console.error('Error inserting pep talk:', insertError);
-        return;
+        throw new Error('Failed to insert pep talk');
       }
     }
 
@@ -57,7 +59,7 @@ export const generateDailyInsights = async (userId: number) => {
 
       if (insertError) {
         console.error('Error inserting recommendations:', insertError);
-        return;
+        throw new Error('Failed to insert recommendations');
       }
     }
 
@@ -72,10 +74,14 @@ export const generateDailyInsights = async (userId: number) => {
 
     if (upsertError) {
       console.error('Error updating tracking:', upsertError);
+      throw new Error('Failed to update tracking');
     }
+
+    console.log('Successfully completed insights generation');
 
   } catch (error) {
     console.error('Error generating daily insights:', error);
+    throw error;
   }
 };
 
