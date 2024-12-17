@@ -5,8 +5,8 @@ export const generateDailyInsights = async (userId: number) => {
     console.log('Starting daily insights generation for user:', userId);
     
     // First check if we have an active session
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    if (sessionError || !session) {
+    const { data: { user }, error: sessionError } = await supabase.auth.getUser();
+    if (sessionError || !user) {
       console.error('No active session found:', sessionError);
       throw new Error('Authentication required');
     }
