@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { Lightbulb } from "lucide-react";
 import { useSession } from '@supabase/auth-helpers-react';
+import { generateDailyInsights } from "@/utils/insightsGenerator";
 
 interface AIInsight {
   id: string;
@@ -46,8 +47,10 @@ const AIInsights = () => {
           return;
         }
 
-        console.log('Found matching user in public.users:', userData);
+        // Generate new insights if needed
+        await generateDailyInsights(userData.id);
 
+        // Fetch all insights for the user
         const { data, error } = await supabase
           .from('ai_insights')
           .select('*')
@@ -72,6 +75,26 @@ const AIInsights = () => {
 
     fetchInsights();
   }, [session?.user?.id, session?.user?.email]);
+
+  const renderInsightCard = (insight: AIInsight) => {
+    const isMotivation = insight.content_type === 'daily_motivation';
+    const bgColor = isMotivation ? 'bg-blue-50' : 'bg-green-50';
+    const icon = isMotivation ? '🌟' : '📋';
+    
+    return (
+      <Card key={insight.id} className={`p-4 ${bgColor}`}>
+        <div className="flex items-start gap-2">
+          <span className="text-xl">{icon}</span>
+          <div>
+            <p className="text-sm text-gray-600">{insight.content}</p>
+            <span className="text-xs text-gray-400 mt-2 block">
+              {new Date(insight.created_at).toLocaleDateString()}
+            </span>
+          </div>
+        </div>
+      </Card>
+    );
+  };
 
   if (error) {
     return (
@@ -113,17 +136,12 @@ const AIInsights = () => {
         AI Insights
       </h2>
       <div className="grid gap-4">
-        {insights.map((insight) => (
-          <Card key={insight.id} className="p-4">
-            <p className="text-sm text-gray-600">{insight.content}</p>
-            <span className="text-xs text-gray-400 mt-2 block">
-              {new Date(insight.created_at).toLocaleDateString()}
-            </span>
-          </Card>
-        ))}
+        {insights.map(renderInsightCard)}
         {insights.length === 0 && (
           <Card className="p-4">
-            <p className="text-sm text-gray-500">No insights available yet. They will appear here as you interact with prospects.</p>
+            <p className="text-sm text-gray-500">
+              Generating your daily insights... Check back in a moment!
+            </p>
           </Card>
         )}
       </div>

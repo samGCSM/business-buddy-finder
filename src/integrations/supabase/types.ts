@@ -225,6 +225,39 @@ export type Database = {
           },
         ]
       }
+      user_insights_tracking: {
+        Row: {
+          last_pep_talk_date: string | null
+          last_recommendations_date: string | null
+          user_id: number
+        }
+        Insert: {
+          last_pep_talk_date?: string | null
+          last_recommendations_date?: string | null
+          user_id: number
+        }
+        Update: {
+          last_pep_talk_date?: string | null
+          last_recommendations_date?: string | null
+          user_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_insights_tracking_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "user_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_insights_tracking_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       users: {
         Row: {
           created_at: string | null
