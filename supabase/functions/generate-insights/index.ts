@@ -1,6 +1,8 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
+
+const openAIApiKey = Deno.env.get('OPEN_AI_NEW_KEY');
+console.log('OpenAI API Key present:', !!openAIApiKey);
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -16,6 +18,10 @@ serve(async (req) => {
   try {
     const { userId, userType, insightType } = await req.json();
     console.log(`Generating ${insightType} for user ${userId} (${userType})`);
+
+    if (!openAIApiKey) {
+      throw new Error('OpenAI API key not configured');
+    }
 
     let prompt = '';
     if (insightType === 'pep_talk') {
@@ -36,11 +42,13 @@ serve(async (req) => {
       }
     }
 
+    console.log('Sending prompt to OpenAI:', prompt);
+
     // Call OpenAI API
     const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
+        'Authorization': `Bearer ${openAIApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -60,32 +68,15 @@ serve(async (req) => {
     }
 
     const openAIData = await openAIResponse.json();
-    console.log('OpenAI response:', openAIData);
+    console.log('OpenAI response received:', openAIData);
 
-    if (!openAIData.choices || !openAIData.choices[0] || !openAIData.choices[0].message) {
+    if (!openAIData.choices?.[0]?.message?.content) {
+      console.error('Invalid OpenAI response structure:', openAIData);
       throw new Error('Invalid response from OpenAI');
     }
 
     const generatedContent = openAIData.choices[0].message.content;
-
-    // Initialize Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
-    // Store the generated insight
-    const { error: insertError } = await supabase
-      .from('ai_insights')
-      .insert({
-        user_id: userId,
-        content_type: insightType,
-        content: generatedContent,
-      });
-
-    if (insertError) {
-      console.error('Error storing insight:', insertError);
-      throw insertError;
-    }
+    console.log('Generated content:', generatedContent);
 
     return new Response(JSON.stringify({ content: generatedContent }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
