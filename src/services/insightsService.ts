@@ -35,6 +35,18 @@ export const getInsights = async (userId: number, userType: string) => {
 
     if (insightError) {
       console.error('Error generating insight:', insightError);
+      
+      // Handle rate limit error specifically
+      if (insightError.status === 429) {
+        const fallbackMessage = "Today's insight is not available right now due to high demand. Please try again in a few minutes.";
+        toast({
+          title: "Rate Limit Reached",
+          description: "Please try again in a few minutes",
+          variant: "destructive",
+        });
+        return { dailyInsight: fallbackMessage };
+      }
+      
       throw insightError;
     }
 
