@@ -4,15 +4,6 @@ export const generateDailyInsights = async (userId: number) => {
   try {
     console.log('Starting daily insights generation for user:', userId);
     
-    // First check if we have an active session
-    const { data: { user }, error: sessionError } = await supabase.auth.getUser();
-    if (sessionError || !user) {
-      console.error('No active session found:', sessionError);
-      throw new Error('Authentication required');
-    }
-    
-    const today = new Date().toISOString().split('T')[0];
-    
     // Check if user exists
     const { data: userData, error: userError } = await supabase
       .from('users')
@@ -25,6 +16,8 @@ export const generateDailyInsights = async (userId: number) => {
       throw new Error('User not found');
     }
 
+    const today = new Date().toISOString().split('T')[0];
+    
     // Check tracking record
     const { data: tracking, error: trackingError } = await supabase
       .from('user_insights_tracking')
@@ -71,11 +64,8 @@ export const generateDailyInsights = async (userId: number) => {
         .insert({
           user_id: userId,
           content_type: 'daily_motivation',
-          content: pepTalk,
-          created_at: new Date().toISOString()
-        })
-        .select()
-        .single();
+          content: pepTalk
+        });
 
       if (pepTalkError) {
         console.error('Error inserting pep talk:', pepTalkError);
@@ -101,11 +91,8 @@ export const generateDailyInsights = async (userId: number) => {
         .insert({
           user_id: userId,
           content_type: 'contact_recommendations',
-          content: recommendations,
-          created_at: new Date().toISOString()
-        })
-        .select()
-        .single();
+          content: recommendations
+        });
 
       if (recommendationsError) {
         console.error('Error inserting recommendations:', recommendationsError);
