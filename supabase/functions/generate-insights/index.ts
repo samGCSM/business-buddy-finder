@@ -47,6 +47,11 @@ async function generateWithRetry(prompt: string, maxRetries = 3) {
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
       console.log(`Attempt ${attempt + 1} to generate content with prompt: ${prompt}`);
+      
+      if (!openAIApiKey) {
+        throw new Error('OpenAI API key not configured');
+      }
+
       const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
