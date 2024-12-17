@@ -13,8 +13,8 @@ export const getInsights = async (userId: number, userType: string) => {
       .select('*')
       .eq('user_id', userId)
       .in('content_type', ['pep_talk', 'recommendations'])
-      .order('created_at', { ascending: false })
-      .limit(2);
+      .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+      .order('created_at', { ascending: false });
 
     if (fetchError) {
       console.error('Error fetching existing insights:', fetchError);
@@ -23,29 +23,22 @@ export const getInsights = async (userId: number, userType: string) => {
 
     console.log('Existing insights:', existingInsights);
 
-    // Check if we have recent insights (less than 24 hours old)
-    const recentPepTalk = existingInsights?.find(i => 
-      i.content_type === 'pep_talk' && 
-      new Date(i.created_at) > new Date(Date.now() - 24 * 60 * 60 * 1000)
-    );
-    
-    const recentRecommendations = existingInsights?.find(i => 
-      i.content_type === 'recommendations' && 
-      new Date(i.created_at) > new Date(Date.now() - 24 * 60 * 60 * 1000)
-    );
+    // Check if we have insights from today
+    const todayPepTalk = existingInsights?.find(i => i.content_type === 'pep_talk');
+    const todayRecommendations = existingInsights?.find(i => i.content_type === 'recommendations');
 
-    // Initialize results object
+    // Initialize results object with existing insights
     let insights = {
-      pepTalk: recentPepTalk?.content || '',
-      recommendations: recentRecommendations?.content || ''
+      pepTalk: todayPepTalk?.content || '',
+      recommendations: todayRecommendations?.content || ''
     };
 
-    // Generate new insights if needed
-    if (!recentPepTalk || !recentRecommendations) {
+    // Generate new insights only if we don't have today's insights
+    if (!todayPepTalk || !todayRecommendations) {
       console.log('Generating new insights via edge function');
       
       // Generate pep talk if needed
-      if (!recentPepTalk) {
+      if (!todayPepTalk) {
         try {
           const { data: pepTalkData, error: pepTalkError } = await supabase.functions.invoke('generate-insights', {
             body: { userId, userType, insightType: 'pep_talk' }
@@ -61,6 +54,19 @@ export const getInsights = async (userId: number, userType: string) => {
           } else {
             console.log('Generated pep talk:', pepTalkData);
             insights.pepTalk = pepTalkData.content;
+
+            // Store the new pep talk
+            const { error: insertError } = await supabase
+              .from('ai_insights')
+              .insert({
+                user_id: userId,
+                content_type: 'pep_talk',
+                content: pepTalkData.content
+              });
+
+            if (insertError) {
+              console.error('Error storing pep talk:', insertError);
+            }
           }
         } catch (error) {
           console.error('Error invoking generate-insights for pep talk:', error);
@@ -71,7 +77,7 @@ export const getInsights = async (userId: number, userType: string) => {
       await delay(2000);
 
       // Generate recommendations if needed
-      if (!recentRecommendations) {
+      if (!todayRecommendations) {
         try {
           const { data: recommendationsData, error: recommendationsError } = await supabase.functions.invoke('generate-insights', {
             body: { userId, userType, insightType: 'recommendations' }
@@ -87,6 +93,19 @@ export const getInsights = async (userId: number, userType: string) => {
           } else {
             console.log('Generated recommendations:', recommendationsData);
             insights.recommendations = recommendationsData.content;
+
+            // Store the new recommendations
+            const { error: insertError } = await supabase
+              .from('ai_insights')
+              .insert({
+                user_id: userId,
+                content_type: 'recommendations',
+                content: recommendationsData.content
+              });
+
+            if (insertError) {
+              console.error('Error storing recommendations:', insertError);
+            }
           }
         } catch (error) {
           console.error('Error invoking generate-insights for recommendations:', error);
