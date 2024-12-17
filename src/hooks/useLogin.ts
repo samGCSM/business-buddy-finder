@@ -11,33 +11,37 @@ export const useLogin = (onLogin: (isLoggedIn: boolean, userType: 'admin' | 'use
     try {
       console.log('Attempting login with email:', email);
       
-      // First check if user exists in our users table
-      const { data: userRecord, error: userError } = await supabase
-        .from('users')
-        .select('*')
-        .eq('email', email)
-        .eq('password', password)
-        .single();
-
-      if (userError || !userRecord) {
-        console.error('User not found in users table:', userError);
-        throw new Error('Invalid credentials');
-      }
-
-      console.log('Found user in users table:', userRecord);
-
-      // Then attempt Supabase Auth signin
+      // First attempt Supabase Auth signin
       const { data: authData, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (signInError || !authData.user) {
+      if (signInError) {
         console.error('Auth sign in error:', signInError);
         throw signInError;
       }
 
       console.log('Successfully authenticated with Supabase Auth');
+
+      // Then get user data from users table
+      const { data: userRecord, error: userError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('email', email)
+        .maybeSingle(); // Use maybeSingle instead of single to avoid 406 error
+
+      if (userError) {
+        console.error('Error fetching user from users table:', userError);
+        throw userError;
+      }
+
+      if (!userRecord) {
+        console.error('User not found in users table');
+        throw new Error('User not found in application database');
+      }
+
+      console.log('Found user in users table:', userRecord);
 
       // Update the lastLogin timestamp
       const { error: updateError } = await supabase
