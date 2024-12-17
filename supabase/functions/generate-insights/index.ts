@@ -18,7 +18,7 @@ async function sleep(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function generateWithRetry(prompt: string, maxRetries = 3) {
+async function generateWithRetry(prompt: string, maxRetries = 3, initialDelay = 1000) {
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
       console.log(`Attempt ${attempt + 1} to generate content with prompt: ${prompt}`);
@@ -46,6 +46,15 @@ async function generateWithRetry(prompt: string, maxRetries = 3) {
       if (!openAIResponse.ok) {
         const error = await openAIResponse.text();
         console.error('OpenAI API error:', error);
+        
+        // If it's a rate limit error, wait longer before retrying
+        if (error.includes('rate_limit_exceeded')) {
+          const waitTime = initialDelay * Math.pow(2, attempt);
+          console.log(`Rate limit hit, waiting ${waitTime}ms before retry`);
+          await sleep(waitTime);
+          continue;
+        }
+        
         throw new Error(`OpenAI API error: ${error}`);
       }
 
@@ -55,7 +64,10 @@ async function generateWithRetry(prompt: string, maxRetries = 3) {
     } catch (error) {
       console.error(`Attempt ${attempt + 1} failed:`, error);
       if (attempt === maxRetries - 1) throw error;
-      await sleep(1000 * Math.pow(2, attempt));
+      
+      const waitTime = initialDelay * Math.pow(2, attempt);
+      console.log(`Waiting ${waitTime}ms before retry`);
+      await sleep(waitTime);
     }
   }
   throw new Error('Max retries reached');
@@ -69,10 +81,6 @@ serve(async (req) => {
   try {
     const { userId, userType, insightType } = await req.json();
     console.log(`Generating ${insightType} for user ${userId} (${userType})`);
-
-    if (!openAIApiKey) {
-      throw new Error('OpenAI API key not configured');
-    }
 
     let prompt = '';
     if (insightType === 'pep_talk') {
@@ -108,7 +116,6 @@ serve(async (req) => {
 
     if (insertError) {
       console.error('Error storing insight:', insertError);
-      // Continue anyway - we can still return the content even if storing fails
     }
 
     // Update the tracking record

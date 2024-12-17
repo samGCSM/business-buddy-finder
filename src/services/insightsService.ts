@@ -1,6 +1,8 @@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
 export const getInsights = async (userId: number, userType: string) => {
   console.log('Getting insights for user:', userId, 'type:', userType);
   
@@ -64,6 +66,9 @@ export const getInsights = async (userId: number, userType: string) => {
           console.error('Error invoking generate-insights for pep talk:', error);
         }
       }
+
+      // Add delay between requests to avoid rate limits
+      await delay(2000);
 
       // Generate recommendations if needed
       if (!recentRecommendations) {
