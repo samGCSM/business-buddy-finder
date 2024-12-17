@@ -59,6 +59,8 @@ export const generateDailyInsights = async (userId: number) => {
     if (needsPepTalk) {
       console.log('Generating new pep talk');
       const pepTalk = generatePepTalk();
+      
+      // Insert pep talk with single insert operation
       const { error: pepTalkError } = await supabase
         .from('ai_insights')
         .insert({
@@ -72,7 +74,7 @@ export const generateDailyInsights = async (userId: number) => {
         throw new Error('Failed to insert pep talk');
       }
 
-      // Update tracking
+      // Update tracking in a separate operation
       const { error: updateError } = await supabase
         .from('user_insights_tracking')
         .update({ last_pep_talk_date: today })
@@ -86,6 +88,8 @@ export const generateDailyInsights = async (userId: number) => {
     if (needsRecommendations) {
       console.log('Generating new recommendations');
       const recommendations = generateRecommendations();
+      
+      // Insert recommendations with single insert operation
       const { error: recommendationsError } = await supabase
         .from('ai_insights')
         .insert({
@@ -99,7 +103,7 @@ export const generateDailyInsights = async (userId: number) => {
         throw new Error('Failed to insert recommendations');
       }
 
-      // Update tracking
+      // Update tracking in a separate operation
       const { error: updateError } = await supabase
         .from('user_insights_tracking')
         .update({ last_recommendations_date: today })
