@@ -23,7 +23,7 @@ export const getInsights = async (userId: number, userType: string) => {
     // If no tracking record exists, create one
     if (!tracking) {
       console.log('Creating new tracking record for user:', userId);
-      const { error: createError } = await supabase
+      const { error: insertError } = await supabase
         .from('user_insights_tracking')
         .insert([{
           user_id: userId,
@@ -31,9 +31,9 @@ export const getInsights = async (userId: number, userType: string) => {
           last_recommendations_date: null
         }]);
 
-      if (createError) {
-        console.error('Error creating tracking record:', createError);
-        throw createError;
+      if (insertError) {
+        console.error('Error creating tracking record:', insertError);
+        throw insertError;
       }
     }
 
@@ -51,81 +51,75 @@ export const getInsights = async (userId: number, userType: string) => {
       throw insightsError;
     }
 
-    const insights = {
-      pepTalk: '',
-      recommendations: ''
-    };
+    console.log('Existing insights:', existingInsights);
+
+    let pepTalk = existingInsights?.find(i => i.content_type === 'pep_talk')?.content || '';
+    let recommendations = existingInsights?.find(i => i.content_type === 'recommendations')?.content || '';
 
     // Generate new insights if needed
     if (needsPepTalk) {
       console.log('Generating new pep talk');
-      const { data, error } = await supabase.functions.invoke('generate-insights', {
-        body: {
-          userId,
-          userType,
-          insightType: 'pep_talk'
-        }
-      });
-
-      if (error) {
-        console.error('Error generating pep talk:', error);
-        throw error;
-      }
-
-      insights.pepTalk = data.content;
-
-      // Update tracking record
-      const { error: upsertError } = await supabase
-        .from('user_insights_tracking')
-        .upsert({
-          user_id: userId,
-          last_pep_talk_date: today
+      try {
+        const { data, error } = await supabase.functions.invoke('generate-insights', {
+          body: {
+            userId,
+            userType,
+            insightType: 'pep_talk'
+          }
         });
 
-      if (upsertError) {
-        console.error('Error updating tracking:', upsertError);
-        throw upsertError;
+        if (error) throw error;
+        pepTalk = data.content;
+
+        // Update tracking record
+        await supabase
+          .from('user_insights_tracking')
+          .upsert({
+            user_id: userId,
+            last_pep_talk_date: today
+          });
+      } catch (error) {
+        console.error('Error generating pep talk:', error);
+        pepTalk = 'Unable to generate pep talk at this time. Please try again later.';
       }
-    } else {
-      insights.pepTalk = existingInsights?.find(i => i.content_type === 'pep_talk')?.content || 'Loading pep talk...';
     }
 
     if (needsRecommendations) {
       console.log('Generating new recommendations');
-      const { data, error } = await supabase.functions.invoke('generate-insights', {
-        body: {
-          userId,
-          userType,
-          insightType: 'recommendations'
-        }
-      });
-
-      if (error) {
-        console.error('Error generating recommendations:', error);
-        throw error;
-      }
-
-      insights.recommendations = data.content;
-
-      // Update tracking record
-      const { error: upsertError } = await supabase
-        .from('user_insights_tracking')
-        .upsert({
-          user_id: userId,
-          last_recommendations_date: today
+      try {
+        const { data, error } = await supabase.functions.invoke('generate-insights', {
+          body: {
+            userId,
+            userType,
+            insightType: 'recommendations'
+          }
         });
 
-      if (upsertError) {
-        console.error('Error updating tracking:', upsertError);
-        throw upsertError;
+        if (error) throw error;
+        recommendations = data.content;
+
+        // Update tracking record
+        await supabase
+          .from('user_insights_tracking')
+          .upsert({
+            user_id: userId,
+            last_recommendations_date: today
+          });
+      } catch (error) {
+        console.error('Error generating recommendations:', error);
+        recommendations = 'Unable to generate recommendations at this time. Please try again later.';
       }
-    } else {
-      insights.recommendations = existingInsights?.find(i => i.content_type === 'recommendations')?.content || 'Loading recommendations...';
     }
 
-    return insights;
+    return {
+      pepTalk,
+      recommendations
+    };
   } catch (error) {
     console.error('Error getting insights:', error);
-    throw error;
+    return {
+      pepTalk: 'Unable to load insights at this time. Please try again later.',
+      recommendations: 'Unable to load insights at this time. Please try again later.'
+    };
   }
 };

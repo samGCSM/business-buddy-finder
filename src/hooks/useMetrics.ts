@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getCurrentUser } from "@/services/userService";
+import { toast } from "@/hooks/use-toast";
 
 interface DashboardMetrics {
   totalProspects: number;
@@ -21,12 +22,31 @@ export const useMetrics = () => {
 
   useEffect(() => {
     const initializePage = async () => {
-      const currentUser = await getCurrentUser();
-      if (currentUser) {
+      try {
+        const currentUser = await getCurrentUser();
+        console.log('useMetrics - Current user:', currentUser);
+        
+        if (!currentUser) {
+          console.error('useMetrics - No user found');
+          toast({
+            title: "Error",
+            description: "Unable to load user data. Please try logging in again.",
+            variant: "destructive",
+          });
+          return;
+        }
+
         setUserRole(currentUser.type as 'admin' | 'supervisor' | 'user');
         setUserId(currentUser.id);
+        await fetchDashboardMetrics(currentUser);
+      } catch (error) {
+        console.error('useMetrics - Error initializing:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load dashboard metrics",
+          variant: "destructive",
+        });
       }
-      fetchDashboardMetrics(currentUser);
     };
 
     initializePage();
@@ -34,6 +54,8 @@ export const useMetrics = () => {
 
   const fetchDashboardMetrics = async (currentUser: any) => {
     try {
+      console.log('Fetching metrics for user:', currentUser.id);
+      
       let query = supabase.from('prospects').select('*');
       
       if (currentUser.type === 'user') {
@@ -44,14 +66,24 @@ export const useMetrics = () => {
           .select('id')
           .eq('supervisor_id', currentUser.id);
         
-        const userIds = supervisedUsers?.map(user => user.id) || [];
+        if (!supervisedUsers) {
+          console.log('No supervised users found for supervisor:', currentUser.id);
+          return;
+        }
+
+        const userIds = supervisedUsers.map(user => user.id);
         userIds.push(currentUser.id);
         query = query.in('user_id', userIds);
       }
 
       const { data: prospectsData, error: prospectsError } = await query;
       
-      if (prospectsError) throw prospectsError;
+      if (prospectsError) {
+        console.error('Error fetching prospects:', prospectsError);
+        throw prospectsError;
+      }
+
+      console.log('Fetched prospects data:', prospectsData);
 
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -72,6 +104,13 @@ export const useMetrics = () => {
         }
       });
 
+      console.log('Setting metrics:', {
+        totalProspects: prospectsData?.length || 0,
+        newProspects: newProspectsCount,
+        emailsSent: emailCount,
+        callsMade: callCount,
+      });
+
       setMetrics({
         totalProspects: prospectsData?.length || 0,
         newProspects: newProspectsCount,
@@ -81,6 +120,11 @@ export const useMetrics = () => {
 
     } catch (error) {
       console.error('Error fetching dashboard metrics:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load dashboard metrics",
+        variant: "destructive",
+      });
     }
   };
 
