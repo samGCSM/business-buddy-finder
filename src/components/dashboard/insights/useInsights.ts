@@ -13,35 +13,20 @@ export const useInsights = () => {
   useEffect(() => {
     const fetchInsights = async () => {
       try {
-        if (!session?.user?.id) {
-          console.log('No user session found');
+        if (!session?.user?.email) {
+          console.log('No user email found in session:', session);
           setError('No user session found');
           setIsLoading(false);
           return;
         }
 
-        console.log('Current auth user ID:', session.user.id);
+        console.log('Fetching insights for session user:', session.user.email);
         
-        // First, get the user's email from auth
-        const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
-        
-        if (authError) {
-          console.error('Error fetching auth user:', authError);
-          throw new Error('Could not fetch auth user');
-        }
-
-        if (!authUser?.email) {
-          console.error('No email found for auth user');
-          throw new Error('User email not found');
-        }
-
-        console.log('Fetching insights for user email:', authUser.email);
-        
-        // Then get the public.users record
+        // Get the user ID from the users table using the email
         const { data: userData, error: userError } = await supabase
           .from('users')
           .select('id')
-          .eq('email', authUser.email)
+          .eq('email', session.user.email)
           .single();
 
         if (userError) {
@@ -50,11 +35,11 @@ export const useInsights = () => {
         }
 
         if (!userData?.id) {
-          console.error('No matching user found in public.users table');
-          throw new Error('User account not properly set up');
+          console.error('No user ID found for email:', session.user.email);
+          throw new Error('User account not found');
         }
 
-        console.log('Found user ID in public.users:', userData.id);
+        console.log('Found user ID:', userData.id);
 
         // Generate insights if needed
         await generateDailyInsights(userData.id);
@@ -74,6 +59,7 @@ export const useInsights = () => {
 
         console.log('Fetched insights:', insightsData);
         setInsights(insightsData || []);
+        setError(null);
       } catch (error) {
         console.error('Error in fetchInsights:', error);
         setError(error instanceof Error ? error.message : 'Failed to fetch insights');
@@ -83,7 +69,7 @@ export const useInsights = () => {
     };
 
     fetchInsights();
-  }, [session?.user?.id]);
+  }, [session?.user?.email]);
 
   return { insights, isLoading, error };
 };
