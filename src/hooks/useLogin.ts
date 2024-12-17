@@ -29,7 +29,7 @@ export const useLogin = (onLogin: (isLoggedIn: boolean, userType: 'admin' | 'use
         .from('users')
         .select('*')
         .eq('email', email)
-        .maybeSingle(); // Use maybeSingle instead of single to avoid 406 error
+        .maybeSingle();
 
       if (userError) {
         console.error('Error fetching user from users table:', userError);
@@ -58,11 +58,13 @@ export const useLogin = (onLogin: (isLoggedIn: boolean, userType: 'admin' | 'use
       // Store user data in localStorage
       localStorage.setItem('currentUser', JSON.stringify(userRecord));
       
-      onLogin(true, userRecord.type as 'admin' | 'user');
+      // Properly handle admin type
+      const userType = userRecord.type === 'admin' ? 'admin' : 'user';
+      onLogin(true, userType);
       
       toast({
         title: "Success",
-        description: `Logged in successfully${userRecord.type === 'admin' ? ' as admin' : ''}`,
+        description: `Logged in successfully${userType === 'admin' ? ' as admin' : ''}`,
       });
     } catch (error) {
       console.error('Login error:', error);
