@@ -3,15 +3,29 @@ import { Lightbulb } from "lucide-react";
 import InsightsList from "./insights/InsightsList";
 import { useInsights } from "./insights/useInsights";
 import { useSession } from '@supabase/auth-helpers-react';
+import { getCurrentUser } from "@/services/userService";
+import { useEffect, useState } from "react";
 
 const AIInsights = () => {
   const session = useSession();
+  const [currentUser, setCurrentUser] = useState(null);
   const { insights, isLoading, error } = useInsights();
 
-  if (!session) {
+  useEffect(() => {
+    const checkUser = async () => {
+      const user = await getCurrentUser();
+      console.log('AIInsights - Current user:', user);
+      setCurrentUser(user);
+    };
+    
+    checkUser();
+  }, []);
+
+  // Show loading state while checking user
+  if (!currentUser && !session) {
     return (
       <Card className="p-4">
-        <p className="text-sm text-gray-500">Please log in to view insights</p>
+        <p className="text-sm text-gray-500">Loading user session...</p>
       </Card>
     );
   }
