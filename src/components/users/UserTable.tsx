@@ -33,10 +33,24 @@ export const UserTable = ({ users, setUsers, setSelectedUserId }: UserTableProps
 
         if (statsError) throw statsError;
 
-        // Combine user data with stats
+        // Fetch saved searches counts
+        const { data: savedSearchesData, error: savedSearchesError } = await supabase
+          .from('saved_searches')
+          .select('user_id, id');
+
+        if (savedSearchesError) throw savedSearchesError;
+
+        // Calculate saved searches count per user
+        const savedSearchesCounts = savedSearchesData.reduce((acc: { [key: string]: number }, curr) => {
+          acc[curr.user_id] = (acc[curr.user_id] || 0) + 1;
+          return acc;
+        }, {});
+
+        // Combine user data with stats and saved searches count
         const enrichedUsers = userData.map(user => ({
           ...user,
-          stats: statsData.find(stat => stat.id === user.id)
+          stats: statsData.find(stat => stat.id === user.id),
+          savedSearches: savedSearchesCounts[user.id] || 0
         }));
 
         console.log('Enriched user data:', enrichedUsers);
@@ -132,7 +146,7 @@ export const UserTable = ({ users, setUsers, setSelectedUserId }: UserTableProps
                 formatDate={formatDate}
                 getNumericValue={getNumericValue}
                 onDelete={handleDeleteUser}
-                onChangePassword={setSelectedUserId}
+                onChangePassword={() => setSelectedUserId(user.id.toString())}
                 onUpdateUser={handleUpdateUser}
               />
             ))}

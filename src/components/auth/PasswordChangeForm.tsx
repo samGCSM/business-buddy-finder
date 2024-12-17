@@ -7,9 +7,10 @@ import { supabase } from "@/integrations/supabase/client";
 interface PasswordChangeFormProps {
   userId: string;
   onClose: () => void;
+  isAdmin?: boolean;
 }
 
-const PasswordChangeForm = ({ userId, onClose }: PasswordChangeFormProps) => {
+const PasswordChangeForm = ({ userId, onClose, isAdmin = false }: PasswordChangeFormProps) => {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -52,18 +53,20 @@ const PasswordChangeForm = ({ userId, onClose }: PasswordChangeFormProps) => {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700">
-          Current Password
-        </label>
-        <Input
-          id="currentPassword"
-          type="password"
-          value={currentPassword}
-          onChange={(e) => setCurrentPassword(e.target.value)}
-          required
-        />
-      </div>
+      {!isAdmin && (
+        <div>
+          <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700">
+            Current Password
+          </label>
+          <Input
+            id="currentPassword"
+            type="password"
+            value={currentPassword}
+            onChange={(e) => setCurrentPassword(e.target.value)}
+            required={!isAdmin}
+          />
+        </div>
+      )}
       <div>
         <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700">
           New Password

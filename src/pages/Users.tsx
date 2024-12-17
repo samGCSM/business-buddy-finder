@@ -77,6 +77,7 @@ const Users = () => {
                 <PasswordChangeForm
                   userId={selectedUserId}
                   onClose={() => setSelectedUserId(null)}
+                  isAdmin={true}
                 />
               </div>
             </div>
