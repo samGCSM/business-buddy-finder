@@ -11,35 +11,33 @@ export const useLogin = (onLogin: (isLoggedIn: boolean, userType: 'admin' | 'use
     try {
       console.log('Attempting login with email:', email);
       
-      // Sign in with Supabase Auth
-      const { error: signInError } = await supabase.auth.signInWithPassword({
+      // First check if user exists in our users table
+      const { data: userRecord, error: userError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('email', email)
+        .eq('password', password)
+        .single();
+
+      if (userError || !userRecord) {
+        console.error('User not found in users table:', userError);
+        throw new Error('Invalid credentials');
+      }
+
+      console.log('Found user in users table:', userRecord);
+
+      // Then attempt Supabase Auth signin
+      const { data: authData, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (signInError) {
+      if (signInError || !authData.user) {
         console.error('Auth sign in error:', signInError);
         throw signInError;
       }
 
-      // After successful auth, get the user type from users table
-      const { data: users, error: queryError } = await supabase
-        .from('users')
-        .select('type, id')
-        .eq('email', email)
-        .single();
-
-      if (queryError) {
-        console.error('Error fetching user type:', queryError);
-        throw queryError;
-      }
-
-      if (!users) {
-        console.error('No user found with provided credentials');
-        throw new Error('User not found');
-      }
-
-      console.log('Found user:', users);
+      console.log('Successfully authenticated with Supabase Auth');
 
       // Update the lastLogin timestamp
       const { error: updateError } = await supabase
@@ -47,20 +45,20 @@ export const useLogin = (onLogin: (isLoggedIn: boolean, userType: 'admin' | 'use
         .update({ 
           lastLogin: new Date().toISOString()
         })
-        .eq('id', users.id);
+        .eq('id', userRecord.id);
 
       if (updateError) {
         console.error('Error updating last login:', updateError);
       }
 
       // Store user data in localStorage
-      localStorage.setItem('currentUser', JSON.stringify(users));
+      localStorage.setItem('currentUser', JSON.stringify(userRecord));
       
-      onLogin(true, users.type as 'admin' | 'user');
+      onLogin(true, userRecord.type as 'admin' | 'user');
       
       toast({
         title: "Success",
-        description: `Logged in successfully${users.type === 'admin' ? ' as admin' : ''}`,
+        description: `Logged in successfully${userRecord.type === 'admin' ? ' as admin' : ''}`,
       });
     } catch (error) {
       console.error('Login error:', error);

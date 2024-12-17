@@ -11,6 +11,7 @@ const LoginForm = ({ onLogin }: { onLogin: (isLoggedIn: boolean, userType: 'admi
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isLoading) return;
     await handleLogin(email, password);
   };
 
@@ -35,6 +36,7 @@ const LoginForm = ({ onLogin }: { onLogin: (isLoggedIn: boolean, userType: 'admi
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Enter your email"
+            disabled={isLoading}
             required
           />
         </div>
@@ -48,10 +50,15 @@ const LoginForm = ({ onLogin }: { onLogin: (isLoggedIn: boolean, userType: 'admi
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Enter your password"
+            disabled={isLoading}
             required
           />
         </div>
-        <Button type="submit" className="w-full" disabled={isLoading}>
+        <Button 
+          type="submit" 
+          className="w-full" 
+          disabled={isLoading}
+        >
           {isLoading ? "Logging in..." : "Login"}
         </Button>
       </form>
