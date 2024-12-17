@@ -5,41 +5,8 @@ export const getInsights = async (userId: number, userType: string) => {
   console.log('Getting insights for user:', userId, 'type:', userType);
   
   try {
-    // First, ensure we have a tracking record
-    const { data: tracking, error: trackingError } = await supabase
-      .from('user_insights_tracking')
-      .select('*')
-      .eq('user_id', userId)
-      .maybeSingle();
-
-    if (trackingError) {
-      console.error('Error checking tracking:', trackingError);
-      throw trackingError;
-    }
-
-    const today = new Date().toISOString().split('T')[0];
-    const needsPepTalk = !tracking?.last_pep_talk_date || tracking.last_pep_talk_date < today;
-    const needsRecommendations = !tracking?.last_recommendations_date || tracking.last_recommendations_date < today;
-
-    // If no tracking record exists, create one
-    if (!tracking) {
-      console.log('Creating new tracking record for user:', userId);
-      const { error: insertError } = await supabase
-        .from('user_insights_tracking')
-        .insert([{
-          user_id: userId,
-          last_pep_talk_date: null,
-          last_recommendations_date: null
-        }]);
-
-      if (insertError) {
-        console.error('Error creating tracking record:', insertError);
-        throw insertError;
-      }
-    }
-
-    // Get existing insights
-    const { data: existingInsights, error: insightsError } = await supabase
+    // First check for existing recent insights
+    const { data: existingInsights, error: fetchError } = await supabase
       .from('ai_insights')
       .select('*')
       .eq('user_id', userId)
@@ -47,73 +14,68 @@ export const getInsights = async (userId: number, userType: string) => {
       .order('created_at', { ascending: false })
       .limit(2);
 
-    if (insightsError) {
-      console.error('Error fetching existing insights:', insightsError);
-      throw insightsError;
+    if (fetchError) {
+      console.error('Error fetching existing insights:', fetchError);
+      throw fetchError;
     }
 
     console.log('Existing insights:', existingInsights);
 
-    let pepTalk = existingInsights?.find(i => i.content_type === 'pep_talk')?.content || '';
-    let recommendations = existingInsights?.find(i => i.content_type === 'recommendations')?.content || '';
+    // Check if we have recent insights (less than 24 hours old)
+    const recentPepTalk = existingInsights?.find(i => 
+      i.content_type === 'pep_talk' && 
+      new Date(i.created_at) > new Date(Date.now() - 24 * 60 * 60 * 1000)
+    );
+    
+    const recentRecommendations = existingInsights?.find(i => 
+      i.content_type === 'recommendations' && 
+      new Date(i.created_at) > new Date(Date.now() - 24 * 60 * 60 * 1000)
+    );
+
+    // Initialize results object
+    let insights = {
+      pepTalk: recentPepTalk?.content || '',
+      recommendations: recentRecommendations?.content || ''
+    };
 
     // Generate new insights if needed
-    if (needsPepTalk) {
-      console.log('Generating new pep talk');
+    if (!recentPepTalk || !recentRecommendations) {
+      console.log('Generating new insights via edge function');
+      
       try {
         const { data, error } = await supabase.functions.invoke('generate-insights', {
-          body: {
-            userId,
-            userType,
-            insightType: 'pep_talk'
-          }
+          body: { userId, userType, insightType: !recentPepTalk ? 'pep_talk' : 'recommendations' }
         });
 
-        if (error) throw error;
-        pepTalk = data.content;
-
+        if (error) {
+          console.error('Error generating insights:', error);
+          toast({
+            title: "Error",
+            description: "Failed to generate new insights. Please try again later.",
+            variant: "destructive",
+          });
+        } else {
+          console.log('Generated insights:', data);
+          if (!recentPepTalk) {
+            insights.pepTalk = data.content;
+          }
+          if (!recentRecommendations) {
+            insights.recommendations = data.content;
+          }
+        }
       } catch (error) {
-        console.error('Error generating pep talk:', error);
+        console.error('Error invoking generate-insights function:', error);
         toast({
           title: "Error",
-          description: "Unable to generate daily motivation. Please try again later.",
+          description: "Failed to generate insights. Please try again later.",
           variant: "destructive",
         });
-        pepTalk = 'Unable to generate daily motivation at this time. Please try again later.';
       }
     }
 
-    if (needsRecommendations) {
-      console.log('Generating new recommendations');
-      try {
-        const { data, error } = await supabase.functions.invoke('generate-insights', {
-          body: {
-            userId,
-            userType,
-            insightType: 'recommendations'
-          }
-        });
-
-        if (error) throw error;
-        recommendations = data.content;
-
-      } catch (error) {
-        console.error('Error generating recommendations:', error);
-        toast({
-          title: "Error",
-          description: "Unable to generate recommendations. Please try again later.",
-          variant: "destructive",
-        });
-        recommendations = 'Unable to generate recommendations at this time. Please try again later.';
-      }
-    }
-
-    return {
-      pepTalk,
-      recommendations
-    };
+    return insights;
   } catch (error) {
-    console.error('Error getting insights:', error);
+    console.error('Error in getInsights:', error);
     toast({
       title: "Error",
       description: "Unable to load insights. Please try again later.",

@@ -17,7 +17,12 @@ const InsightCard = ({ title, content }: InsightCardProps) => {
       </CardHeader>
       <CardContent>
         <div className="text-sm text-muted-foreground">
-          {content || "Generating insights..."}
+          {content || (
+            <div className="flex items-center space-x-2">
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600"></div>
+              <span>Generating insights...</span>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>

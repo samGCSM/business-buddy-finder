@@ -18,31 +18,6 @@ async function sleep(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function getExistingInsight(userId: number, contentType: string) {
-  console.log(`Checking existing insight for user ${userId}, type ${contentType}`);
-  const { data, error } = await supabase
-    .from('ai_insights')
-    .select('*')
-    .eq('user_id', userId)
-    .eq('content_type', contentType)
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .single();
-
-  if (error) {
-    console.error('Error fetching existing insight:', error);
-    return null;
-  }
-
-  // If insight is less than 4 hours old, return it
-  if (data && new Date(data.created_at) > new Date(Date.now() - 4 * 60 * 60 * 1000)) {
-    console.log('Found recent insight:', data);
-    return data.content;
-  }
-
-  return null;
-}
-
 async function generateWithRetry(prompt: string, maxRetries = 3) {
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
@@ -71,14 +46,6 @@ async function generateWithRetry(prompt: string, maxRetries = 3) {
       if (!openAIResponse.ok) {
         const error = await openAIResponse.text();
         console.error('OpenAI API error:', error);
-        
-        if (openAIResponse.status === 429) {
-          const waitTime = Math.pow(2, attempt) * 1000;
-          console.log(`Rate limited. Waiting ${waitTime}ms before retry...`);
-          await sleep(waitTime);
-          continue;
-        }
-        
         throw new Error(`OpenAI API error: ${error}`);
       }
 
@@ -107,19 +74,10 @@ serve(async (req) => {
       throw new Error('OpenAI API key not configured');
     }
 
-    // Check for existing recent insight
-    const existingContent = await getExistingInsight(userId, insightType);
-    if (existingContent) {
-      console.log('Using existing insight');
-      return new Response(JSON.stringify({ content: existingContent }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
     let prompt = '';
     if (insightType === 'pep_talk') {
       if (userType === 'user') {
-        prompt = "You are a motivational speaker like Grant Cardone, Gary Vee, Tony Robbins, or Barbara Corcoran. Provide a 4-sentence pep talk to energize a salesperson.";
+        prompt = "As a motivational sales coach like Grant Cardone or Tony Robbins, provide a 4-sentence energizing pep talk for a salesperson to boost their confidence and drive.";
       } else if (userType === 'supervisor') {
         prompt = "As a sales leadership expert, provide 4 sentences of motivation and management advice for a sales team supervisor.";
       } else if (userType === 'admin') {
@@ -127,15 +85,15 @@ serve(async (req) => {
       }
     } else {
       if (userType === 'user') {
-        prompt = "Provide 3 actionable tips for a salesperson to improve their prospecting success rate.";
+        prompt = "Provide 3 specific, actionable tips for a salesperson to improve their prospecting success rate in the next week.";
       } else if (userType === 'supervisor') {
-        prompt = "Provide 3 specific strategies for a sales supervisor to better support and develop their team.";
+        prompt = "Provide 3 specific strategies for a sales supervisor to better support and develop their team in the coming week.";
       } else if (userType === 'admin') {
-        prompt = "Provide 3 data-driven insights for optimizing sales team performance and resource allocation.";
+        prompt = "Provide 3 data-driven insights for optimizing sales team performance and resource allocation in the next week.";
       }
     }
 
-    console.log('Generating new content with prompt:', prompt);
+    console.log('Generating content with prompt:', prompt);
     const generatedContent = await generateWithRetry(prompt);
     console.log('Generated content:', generatedContent);
 
