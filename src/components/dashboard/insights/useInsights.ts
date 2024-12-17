@@ -2,9 +2,8 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { generateDailyInsights } from "@/utils/insightsGenerator";
 import type { AIInsight } from "./types";
-import type { User } from "@/types/user";
 
-export const useInsights = (currentUser: User | null) => {
+export const useInsights = (userId: number | null) => {
   const [insights, setInsights] = useState<AIInsight[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -12,23 +11,23 @@ export const useInsights = (currentUser: User | null) => {
   useEffect(() => {
     const fetchInsights = async () => {
       try {
-        if (!currentUser?.id) {
-          console.log('useInsights - No user found:', currentUser);
+        if (!userId) {
+          console.log('useInsights - No user ID provided');
           setError('User not found');
           setIsLoading(false);
           return;
         }
 
-        console.log('useInsights - Fetching insights for user ID:', currentUser.id);
+        console.log('useInsights - Fetching insights for user ID:', userId);
 
         // Generate insights if needed
-        await generateDailyInsights(currentUser.id);
+        await generateDailyInsights(userId);
 
         // Fetch insights
         const { data: insightsData, error: insightsError } = await supabase
           .from('ai_insights')
           .select('*')
-          .eq('user_id', currentUser.id)
+          .eq('user_id', userId)
           .order('created_at', { ascending: false })
           .limit(5);
 
@@ -48,14 +47,14 @@ export const useInsights = (currentUser: User | null) => {
       }
     };
 
-    if (currentUser) {
-      console.log('useInsights - Current user found, fetching insights');
+    if (userId) {
+      console.log('useInsights - User ID found, fetching insights');
       fetchInsights();
     } else {
-      console.log('useInsights - No current user, skipping fetch');
+      console.log('useInsights - No user ID, skipping fetch');
       setIsLoading(false);
     }
-  }, [currentUser]);
+  }, [userId]);
 
   return { insights, isLoading, error };
 };

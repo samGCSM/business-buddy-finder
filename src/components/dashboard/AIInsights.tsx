@@ -3,32 +3,47 @@ import { Lightbulb } from "lucide-react";
 import InsightsList from "./insights/InsightsList";
 import { useInsights } from "./insights/useInsights";
 import { useSession } from '@supabase/auth-helpers-react';
-import { getCurrentUser } from "@/services/userService";
 import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const AIInsights = () => {
   const session = useSession();
-  const [currentUser, setCurrentUser] = useState(null);
-  const { insights, isLoading, error } = useInsights(currentUser);
+  const [userId, setUserId] = useState<number | null>(null);
+  const { insights, isLoading, error } = useInsights(userId);
 
   useEffect(() => {
-    const checkUser = async () => {
+    const getCurrentUserId = async () => {
+      if (!session) {
+        console.log('AIInsights - No session found');
+        setUserId(null);
+        return;
+      }
+
       try {
-        const user = await getCurrentUser();
-        console.log('AIInsights - Current user:', user);
-        setCurrentUser(user);
+        // Get the current user's ID directly from the users table
+        const { data: userData, error: userError } = await supabase
+          .from('users')
+          .select('id')
+          .eq('email', session.user.email)
+          .single();
+
+        if (userError) {
+          console.error('AIInsights - Error getting user:', userError);
+          setUserId(null);
+          return;
+        }
+
+        if (userData) {
+          console.log('AIInsights - Found user ID:', userData.id);
+          setUserId(userData.id);
+        }
       } catch (error) {
-        console.error('AIInsights - Error getting current user:', error);
+        console.error('AIInsights - Error in getCurrentUserId:', error);
+        setUserId(null);
       }
     };
-    
-    if (session) {
-      console.log('AIInsights - Session found, checking user');
-      checkUser();
-    } else {
-      console.log('AIInsights - No session found');
-      setCurrentUser(null);
-    }
+
+    getCurrentUserId();
   }, [session]);
 
   if (!session) {
