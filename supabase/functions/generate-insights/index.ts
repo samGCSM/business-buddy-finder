@@ -18,13 +18,20 @@ async function sleep(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function generateWithRetry(prompt: string, maxRetries = 3, initialDelay = 1000) {
+async function generateWithRetry(prompt: string, maxRetries = 5, initialDelay = 2000) {
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
       console.log(`Attempt ${attempt + 1} to generate content with prompt: ${prompt}`);
       
       if (!openAIApiKey) {
         throw new Error('OpenAI API key not configured');
+      }
+
+      // Add a small delay before each attempt to help avoid rate limits
+      if (attempt > 0) {
+        const waitTime = initialDelay * Math.pow(2, attempt - 1);
+        console.log(`Waiting ${waitTime}ms before attempt ${attempt + 1}`);
+        await sleep(waitTime);
       }
 
       const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -44,30 +51,33 @@ async function generateWithRetry(prompt: string, maxRetries = 3, initialDelay = 
       });
 
       if (!openAIResponse.ok) {
-        const error = await openAIResponse.text();
-        console.error('OpenAI API error:', error);
+        const errorText = await openAIResponse.text();
+        console.error('OpenAI API error response:', errorText);
         
-        // If it's a rate limit error, wait longer before retrying
-        if (error.includes('rate_limit_exceeded')) {
-          const waitTime = initialDelay * Math.pow(2, attempt);
-          console.log(`Rate limit hit, waiting ${waitTime}ms before retry`);
-          await sleep(waitTime);
-          continue;
+        // Parse the error response
+        try {
+          const errorJson = JSON.parse(errorText);
+          if (errorJson.error?.code === 'rate_limit_exceeded') {
+            console.log('Rate limit exceeded, will retry after delay');
+            continue; // This will trigger the retry with exponential backoff
+          }
+        } catch (parseError) {
+          console.error('Error parsing OpenAI error response:', parseError);
         }
         
-        throw new Error(`OpenAI API error: ${error}`);
+        throw new Error(`OpenAI API error: ${errorText}`);
       }
 
       const data = await openAIResponse.json();
-      console.log('Generated content successfully');
+      console.log('Successfully generated content');
       return data.choices[0].message.content;
     } catch (error) {
       console.error(`Attempt ${attempt + 1} failed:`, error);
-      if (attempt === maxRetries - 1) throw error;
       
-      const waitTime = initialDelay * Math.pow(2, attempt);
-      console.log(`Waiting ${waitTime}ms before retry`);
-      await sleep(waitTime);
+      // On last attempt, throw the error
+      if (attempt === maxRetries - 1) {
+        throw new Error(`Failed after ${maxRetries} attempts: ${error.message}`);
+      }
     }
   }
   throw new Error('Max retries reached');
