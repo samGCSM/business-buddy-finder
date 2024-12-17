@@ -7,24 +7,15 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface InsightRequest {
-  userId: number;
-  userType: string;
-  insightType: 'pep_talk' | 'recommendations';
-}
-
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { userId, userType, insightType } = await req.json() as InsightRequest;
-
-    // Initialize Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const { userId, userType, insightType } = await req.json();
+    console.log(`Generating ${insightType} for user ${userId} (${userType})`);
 
     let prompt = '';
     if (insightType === 'pep_talk') {
@@ -62,8 +53,25 @@ serve(async (req) => {
       }),
     });
 
+    if (!openAIResponse.ok) {
+      const error = await openAIResponse.text();
+      console.error('OpenAI API error:', error);
+      throw new Error(`OpenAI API error: ${error}`);
+    }
+
     const openAIData = await openAIResponse.json();
+    console.log('OpenAI response:', openAIData);
+
+    if (!openAIData.choices || !openAIData.choices[0] || !openAIData.choices[0].message) {
+      throw new Error('Invalid response from OpenAI');
+    }
+
     const generatedContent = openAIData.choices[0].message.content;
+
+    // Initialize Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Store the generated insight
     const { error: insertError } = await supabase
@@ -74,18 +82,10 @@ serve(async (req) => {
         content: generatedContent,
       });
 
-    if (insertError) throw insertError;
-
-    // Update tracking table
-    const trackingColumn = insightType === 'pep_talk' ? 'last_pep_talk_date' : 'last_recommendations_date';
-    const { error: trackingError } = await supabase
-      .from('user_insights_tracking')
-      .upsert({
-        user_id: userId,
-        [trackingColumn]: new Date().toISOString().split('T')[0],
-      });
-
-    if (trackingError) throw trackingError;
+    if (insertError) {
+      console.error('Error storing insight:', insertError);
+      throw insertError;
+    }
 
     return new Response(JSON.stringify({ content: generatedContent }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
