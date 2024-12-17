@@ -83,7 +83,7 @@ serve(async (req) => {
       } else if (userType === 'admin') {
         prompt = "As a business analytics expert, provide 4 sentences highlighting key areas to focus on for managing a sales organization effectively.";
       }
-    } else {
+    } else if (insightType === 'recommendations') {
       if (userType === 'user') {
         prompt = "Provide 3 specific, actionable tips for a salesperson to improve their prospecting success rate in the next week.";
       } else if (userType === 'supervisor') {

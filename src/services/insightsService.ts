@@ -42,34 +42,50 @@ export const getInsights = async (userId: number, userType: string) => {
     if (!recentPepTalk || !recentRecommendations) {
       console.log('Generating new insights via edge function');
       
-      try {
-        const { data, error } = await supabase.functions.invoke('generate-insights', {
-          body: { userId, userType, insightType: !recentPepTalk ? 'pep_talk' : 'recommendations' }
-        });
-
-        if (error) {
-          console.error('Error generating insights:', error);
-          toast({
-            title: "Error",
-            description: "Failed to generate new insights. Please try again later.",
-            variant: "destructive",
+      // Generate pep talk if needed
+      if (!recentPepTalk) {
+        try {
+          const { data: pepTalkData, error: pepTalkError } = await supabase.functions.invoke('generate-insights', {
+            body: { userId, userType, insightType: 'pep_talk' }
           });
-        } else {
-          console.log('Generated insights:', data);
-          if (!recentPepTalk) {
-            insights.pepTalk = data.content;
+
+          if (pepTalkError) {
+            console.error('Error generating pep talk:', pepTalkError);
+            toast({
+              title: "Error",
+              description: "Failed to generate pep talk. Please try again later.",
+              variant: "destructive",
+            });
+          } else {
+            console.log('Generated pep talk:', pepTalkData);
+            insights.pepTalk = pepTalkData.content;
           }
-          if (!recentRecommendations) {
-            insights.recommendations = data.content;
-          }
+        } catch (error) {
+          console.error('Error invoking generate-insights for pep talk:', error);
         }
-      } catch (error) {
-        console.error('Error invoking generate-insights function:', error);
-        toast({
-          title: "Error",
-          description: "Failed to generate insights. Please try again later.",
-          variant: "destructive",
-        });
+      }
+
+      // Generate recommendations if needed
+      if (!recentRecommendations) {
+        try {
+          const { data: recommendationsData, error: recommendationsError } = await supabase.functions.invoke('generate-insights', {
+            body: { userId, userType, insightType: 'recommendations' }
+          });
+
+          if (recommendationsError) {
+            console.error('Error generating recommendations:', recommendationsError);
+            toast({
+              title: "Error",
+              description: "Failed to generate recommendations. Please try again later.",
+              variant: "destructive",
+            });
+          } else {
+            console.log('Generated recommendations:', recommendationsData);
+            insights.recommendations = recommendationsData.content;
+          }
+        } catch (error) {
+          console.error('Error invoking generate-insights for recommendations:', error);
+        }
       }
     }
 
