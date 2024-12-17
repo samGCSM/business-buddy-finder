@@ -6,22 +6,32 @@ export const generateDailyInsights = async (userId: number) => {
     
     const today = new Date().toISOString().split('T')[0];
     
-    // First ensure a tracking record exists for this user
-    const { data: existingTracking, error: checkError } = await supabase
+    // First check if user exists
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', userId)
+      .single();
+
+    if (userError || !userData) {
+      console.error('Error checking user:', userError);
+      throw new Error('User not found');
+    }
+
+    // Then check tracking record
+    const { data: tracking, error: trackingError } = await supabase
       .from('user_insights_tracking')
       .select('*')
       .eq('user_id', userId)
-      .maybeSingle(); // Use maybeSingle() instead of single()
+      .maybeSingle();
 
-    console.log('Existing tracking:', existingTracking);
-    
-    if (checkError) {
-      console.error('Error checking tracking:', checkError);
+    if (trackingError) {
+      console.error('Error checking tracking:', trackingError);
       throw new Error('Failed to check insight tracking');
     }
 
     // If no tracking record exists, create one
-    if (!existingTracking) {
+    if (!tracking) {
       console.log('No tracking record found, creating one');
       const { error: insertError } = await supabase
         .from('user_insights_tracking')
@@ -37,20 +47,6 @@ export const generateDailyInsights = async (userId: number) => {
       }
     }
 
-    // Now get the tracking record (either existing or newly created)
-    const { data: tracking, error: trackingError } = await supabase
-      .from('user_insights_tracking')
-      .select('*')
-      .eq('user_id', userId)
-      .single();
-    
-    if (trackingError) {
-      console.error('Error getting tracking:', trackingError);
-      throw new Error('Failed to get insight tracking');
-    }
-
-    console.log('Current tracking data:', tracking);
-
     const needsPepTalk = !tracking?.last_pep_talk_date || 
       new Date(tracking.last_pep_talk_date).toISOString().split('T')[0] !== today;
     
@@ -63,52 +59,58 @@ export const generateDailyInsights = async (userId: number) => {
     if (needsPepTalk) {
       console.log('Generating new pep talk');
       const pepTalk = generatePepTalk();
-      const { error: insertError } = await supabase
+      const { error: pepTalkError } = await supabase
         .from('ai_insights')
         .insert({
           user_id: userId,
           content_type: 'daily_motivation',
-          content: pepTalk
+          content: pepTalk,
+          created_at: new Date().toISOString()
         });
 
-      if (insertError) {
-        console.error('Error inserting pep talk:', insertError);
+      if (pepTalkError) {
+        console.error('Error inserting pep talk:', pepTalkError);
         throw new Error('Failed to insert pep talk');
+      }
+
+      // Update tracking only if insert was successful
+      const { error: updateError } = await supabase
+        .from('user_insights_tracking')
+        .update({ last_pep_talk_date: today })
+        .eq('user_id', userId);
+
+      if (updateError) {
+        console.error('Error updating pep talk tracking:', updateError);
       }
     }
 
     if (needsRecommendations) {
       console.log('Generating new recommendations');
       const recommendations = generateRecommendations();
-      const { error: insertError } = await supabase
+      const { error: recommendationsError } = await supabase
         .from('ai_insights')
         .insert({
           user_id: userId,
           content_type: 'contact_recommendations',
-          content: recommendations
+          content: recommendations,
+          created_at: new Date().toISOString()
         });
 
-      if (insertError) {
-        console.error('Error inserting recommendations:', insertError);
+      if (recommendationsError) {
+        console.error('Error inserting recommendations:', recommendationsError);
         throw new Error('Failed to insert recommendations');
       }
+
+      // Update tracking only if insert was successful
+      const { error: updateError } = await supabase
+        .from('user_insights_tracking')
+        .update({ last_recommendations_date: today })
+        .eq('user_id', userId);
+
+      if (updateError) {
+        console.error('Error updating recommendations tracking:', updateError);
+      }
     }
-
-    // Update tracking
-    const { error: upsertError } = await supabase
-      .from('user_insights_tracking')
-      .upsert({
-        user_id: userId,
-        last_pep_talk_date: needsPepTalk ? today : tracking?.last_pep_talk_date,
-        last_recommendations_date: needsRecommendations ? today : tracking?.last_recommendations_date
-      });
-
-    if (upsertError) {
-      console.error('Error updating tracking:', upsertError);
-      throw new Error('Failed to update tracking');
-    }
-
-    console.log('Successfully completed insights generation');
 
   } catch (error) {
     console.error('Error generating daily insights:', error);
