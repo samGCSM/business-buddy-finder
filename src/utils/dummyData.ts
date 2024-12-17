@@ -31,6 +31,51 @@ export const insertDummyProspects = async (userId: number) => {
       owner_email: "sarah@digitalmarketingpro.com",
       user_id: userId,
       last_contact: new Date().toISOString()
+    },
+    {
+      business_name: "Cafe Delights",
+      notes: "Looking to expand locations",
+      website: "www.cafedelights.com",
+      email: "info@cafedelights.com",
+      business_address: "789 Coffee Lane, Seattle, WA",
+      phone_number: "555-0127",
+      owner_name: "Mike Brown",
+      status: "Contacted",
+      priority: "High",
+      owner_phone: "555-0128",
+      owner_email: "mike@cafedelights.com",
+      user_id: userId,
+      last_contact: new Date().toISOString()
+    },
+    {
+      business_name: "Fitness First Gym",
+      notes: "Interested in new equipment",
+      website: "www.fitnessfirst.com",
+      email: "contact@fitnessfirst.com",
+      business_address: "321 Health Blvd, Los Angeles, CA",
+      phone_number: "555-0129",
+      owner_name: "Lisa Chen",
+      status: "New",
+      priority: "Low",
+      owner_phone: "555-0130",
+      owner_email: "lisa@fitnessfirst.com",
+      user_id: userId,
+      last_contact: new Date().toISOString()
+    },
+    {
+      business_name: "Green Gardens Landscaping",
+      notes: "Seasonal contract discussion",
+      website: "www.greengardens.com",
+      email: "info@greengardens.com",
+      business_address: "567 Nature Way, Portland, OR",
+      phone_number: "555-0131",
+      owner_name: "David Wilson",
+      status: "In Progress",
+      priority: "Medium",
+      owner_phone: "555-0132",
+      owner_email: "david@greengardens.com",
+      user_id: userId,
+      last_contact: new Date().toISOString()
     }
   ];
 
