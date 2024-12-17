@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useSession } from "@supabase/auth-helpers-react";
 import LoginForm from "@/components/auth/LoginForm";
 import { getCurrentUser } from "@/services/userService";
+import { supabase } from "@/integrations/supabase/client";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -12,13 +13,17 @@ const Login = () => {
 
   useEffect(() => {
     const checkAuth = async () => {
+      // Check Supabase session
+      const { data: { session } } = await supabase.auth.getSession();
       const currentUser = await getCurrentUser();
+      console.log("Login - Current session:", session);
       console.log("Login - Current user:", currentUser);
-      if (currentUser) {
+      
+      if (session && currentUser) {
         console.log("Login - User found, redirecting to home");
         setIsLoggedIn(true);
         setIsAdmin(currentUser.type === 'admin');
-        navigate('/'); // Redirect to home after login
+        navigate('/');
       }
     };
     
