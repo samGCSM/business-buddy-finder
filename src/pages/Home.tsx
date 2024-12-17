@@ -13,10 +13,7 @@ import { getCurrentUser } from "@/services/userService";
 const Home = () => {
   const navigate = useNavigate();
   const { metrics, userRole } = useMetrics();
-  const [insights, setInsights] = useState<{ pepTalk: string; recommendations: string }>({ 
-    pepTalk: "", 
-    recommendations: "" 
-  });
+  const [insight, setInsight] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
   const [userId, setUserId] = useState<number | null>(null);
 
@@ -30,8 +27,8 @@ const Home = () => {
         }
 
         setUserId(currentUser.id);
-        const userInsights = await getInsights(currentUser.id, currentUser.type);
-        setInsights(userInsights);
+        const userInsight = await getInsights(currentUser.id, currentUser.type);
+        setInsight(userInsight.dailyInsight);
       } catch (error) {
         console.error('Error loading insights:', error);
         toast({
@@ -80,14 +77,10 @@ const Home = () => {
           <MetricsGraph userId={userId} userRole={userRole} />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+        <div className="mt-8">
           <InsightCard 
-            title="Daily Motivation" 
-            content={insights.pepTalk} 
-          />
-          <InsightCard 
-            title="Recommendations" 
-            content={insights.recommendations} 
+            title="Daily Sales Insight" 
+            content={insight} 
           />
         </div>
       </div>
