@@ -4,9 +4,16 @@ export const generateDailyInsights = async (userId: number) => {
   try {
     console.log('Starting daily insights generation for user:', userId);
     
+    // First check if we have an active session
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError || !session) {
+      console.error('No active session found:', sessionError);
+      throw new Error('Authentication required');
+    }
+    
     const today = new Date().toISOString().split('T')[0];
     
-    // First check if user exists
+    // Check if user exists
     const { data: userData, error: userError } = await supabase
       .from('users')
       .select('*')
@@ -18,7 +25,7 @@ export const generateDailyInsights = async (userId: number) => {
       throw new Error('User not found');
     }
 
-    // Then check tracking record
+    // Check tracking record
     const { data: tracking, error: trackingError } = await supabase
       .from('user_insights_tracking')
       .select('*')
@@ -66,14 +73,16 @@ export const generateDailyInsights = async (userId: number) => {
           content_type: 'daily_motivation',
           content: pepTalk,
           created_at: new Date().toISOString()
-        });
+        })
+        .select()
+        .single();
 
       if (pepTalkError) {
         console.error('Error inserting pep talk:', pepTalkError);
         throw new Error('Failed to insert pep talk');
       }
 
-      // Update tracking only if insert was successful
+      // Update tracking
       const { error: updateError } = await supabase
         .from('user_insights_tracking')
         .update({ last_pep_talk_date: today })
@@ -94,14 +103,16 @@ export const generateDailyInsights = async (userId: number) => {
           content_type: 'contact_recommendations',
           content: recommendations,
           created_at: new Date().toISOString()
-        });
+        })
+        .select()
+        .single();
 
       if (recommendationsError) {
         console.error('Error inserting recommendations:', recommendationsError);
         throw new Error('Failed to insert recommendations');
       }
 
-      // Update tracking only if insert was successful
+      // Update tracking
       const { error: updateError } = await supabase
         .from('user_insights_tracking')
         .update({ last_recommendations_date: today })
