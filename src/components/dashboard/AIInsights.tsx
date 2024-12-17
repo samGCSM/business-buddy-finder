@@ -13,19 +13,28 @@ const AIInsights = () => {
 
   useEffect(() => {
     const checkUser = async () => {
-      const user = await getCurrentUser();
-      console.log('AIInsights - Current user:', user);
-      setCurrentUser(user);
+      if (session) {
+        const user = await getCurrentUser();
+        console.log('AIInsights - Current user:', user);
+        setCurrentUser(user);
+      }
     };
     
     checkUser();
-  }, []);
+  }, [session]);
 
-  // Show loading state while checking user
-  if (!currentUser && !session) {
+  if (!session) {
     return (
       <Card className="p-4">
-        <p className="text-sm text-gray-500">Loading user session...</p>
+        <p className="text-sm text-gray-500">Please log in to view insights</p>
+      </Card>
+    );
+  }
+
+  if (!currentUser) {
+    return (
+      <Card className="p-4">
+        <p className="text-sm text-gray-500">Verifying user session...</p>
       </Card>
     );
   }
