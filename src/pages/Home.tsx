@@ -1,13 +1,45 @@
 import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 import Header from "@/components/layout/Header";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useMetrics } from "@/hooks/useMetrics";
 import DashboardMetrics from "@/components/dashboard/DashboardMetrics";
+import InsightCard from "@/components/dashboard/InsightCard";
+import { getInsights } from "@/services/insightsService";
+import { getCurrentUser } from "@/services/userService";
 
 const Home = () => {
   const navigate = useNavigate();
   const { metrics, userRole } = useMetrics();
+  const [insights, setInsights] = useState({ pepTalk: "", recommendations: "" });
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const loadInsights = async () => {
+      try {
+        const currentUser = await getCurrentUser();
+        if (!currentUser) {
+          navigate("/login");
+          return;
+        }
+
+        const userInsights = await getInsights(currentUser.id, currentUser.type);
+        setInsights(userInsights);
+      } catch (error) {
+        console.error('Error loading insights:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load insights",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadInsights();
+  }, [navigate]);
 
   const handleLogout = async () => {
     try {
@@ -37,6 +69,17 @@ const Home = () => {
         </div>
         
         <DashboardMetrics {...metrics} />
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+          <InsightCard 
+            title="Daily Motivation" 
+            content={insights.pepTalk} 
+          />
+          <InsightCard 
+            title="Recommendations" 
+            content={insights.recommendations} 
+          />
+        </div>
       </div>
     </div>
   );
