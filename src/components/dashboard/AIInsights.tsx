@@ -13,28 +13,24 @@ const AIInsights = () => {
 
   useEffect(() => {
     const checkUser = async () => {
-      if (session) {
+      try {
         const user = await getCurrentUser();
         console.log('AIInsights - Current user:', user);
         setCurrentUser(user);
+      } catch (error) {
+        console.error('AIInsights - Error getting current user:', error);
       }
     };
     
-    checkUser();
+    if (session) {
+      checkUser();
+    }
   }, [session]);
 
   if (!session) {
     return (
       <Card className="p-4">
         <p className="text-sm text-gray-500">Please log in to view insights</p>
-      </Card>
-    );
-  }
-
-  if (!currentUser) {
-    return (
-      <Card className="p-4">
-        <p className="text-sm text-gray-500">Verifying user session...</p>
       </Card>
     );
   }

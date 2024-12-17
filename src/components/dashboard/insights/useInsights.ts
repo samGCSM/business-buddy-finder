@@ -14,6 +14,13 @@ export const useInsights = () => {
   useEffect(() => {
     const fetchInsights = async () => {
       try {
+        if (!session) {
+          console.log('useInsights - No session found');
+          setError('No user session found');
+          setIsLoading(false);
+          return;
+        }
+
         const currentUser = await getCurrentUser();
         console.log('useInsights - Current user:', currentUser);
 
