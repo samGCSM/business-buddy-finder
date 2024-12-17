@@ -11,24 +11,12 @@ export const useLogin = (onLogin: (isLoggedIn: boolean, userType: 'admin' | 'use
     try {
       console.log('Attempting login with email:', email);
       
-      // First authenticate with Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
-
-      if (authError) {
-        console.error('Supabase Auth error:', authError);
-        throw authError;
-      }
-
-      console.log('Successfully authenticated with Supabase Auth');
-
-      // Then get user data from users table
+      // Get user data from users table to verify credentials
       const { data: userRecord, error: userError } = await supabase
         .from('users')
         .select('*')
         .eq('email', email)
+        .eq('password', password)
         .maybeSingle();
 
       if (userError) {
@@ -37,8 +25,8 @@ export const useLogin = (onLogin: (isLoggedIn: boolean, userType: 'admin' | 'use
       }
 
       if (!userRecord) {
-        console.error('User not found in users table');
-        throw new Error('User not found');
+        console.error('Invalid credentials');
+        throw new Error('Invalid credentials');
       }
 
       console.log('Found user in users table:', userRecord);
