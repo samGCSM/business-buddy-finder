@@ -18,7 +18,7 @@ async function sleep(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function generateWithRetry(prompt: string, maxRetries = 3, initialDelay = 1000) {
+async function generateWithRetry(prompt: string, maxRetries = 3, initialDelay = 2000) {
   let lastError = null;
   
   for (let attempt = 0; attempt < maxRetries; attempt++) {
@@ -36,48 +36,62 @@ async function generateWithRetry(prompt: string, maxRetries = 3, initialDelay = 
         await sleep(delay);
       }
 
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${openAIApiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'gpt-4o-mini',
-          messages: [
-            { role: 'system', content: 'You are a professional sales coach and business advisor.' },
-            { role: 'user', content: prompt }
-          ],
-          temperature: 0.7,
-          max_tokens: 150,
-        }),
-      });
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 25000);
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`OpenAI API error (${response.status}):`, errorText);
-        
-        // Parse error response
-        try {
-          const errorJson = JSON.parse(errorText);
-          if (errorJson.error?.code === 'rate_limit_exceeded') {
-            console.log('Rate limit exceeded, will retry after delay');
-            lastError = new Error('Rate limit exceeded');
-            continue;
+      try {
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${openAIApiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'gpt-4o-mini',
+            messages: [
+              { role: 'system', content: 'You are a professional sales coach.' },
+              { role: 'user', content: prompt }
+            ],
+            temperature: 0.7,
+            max_tokens: 100,
+          }),
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeout);
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error(`OpenAI API error (${response.status}):`, errorText);
+          
+          try {
+            const errorJson = JSON.parse(errorText);
+            if (errorJson.error?.code === 'rate_limit_exceeded') {
+              console.log('Rate limit exceeded, will retry after delay');
+              lastError = new Error('Rate limit exceeded');
+              continue;
+            }
+          } catch (parseError) {
+            console.error('Error parsing OpenAI error response:', parseError);
           }
-        } catch (parseError) {
-          console.error('Error parsing OpenAI error response:', parseError);
+          
+          throw new Error(`OpenAI API error (${response.status}): ${errorText}`);
         }
-        
-        throw new Error(`OpenAI API error (${response.status}): ${errorText}`);
-      }
 
-      const data = await response.json();
-      console.log('Successfully generated content');
-      return data.choices[0].message.content;
+        const data = await response.json();
+        console.log('Successfully generated content');
+        return data.choices[0].message.content;
+      } finally {
+        clearTimeout(timeout);
+      }
     } catch (error) {
       console.error(`Attempt ${attempt + 1} failed:`, error);
       lastError = error;
+      
+      if (error.name === 'AbortError') {
+        console.log('Request timed out, will retry');
+        continue;
+      }
       
       if (attempt === maxRetries - 1) {
         throw lastError;
@@ -99,9 +113,9 @@ serve(async (req) => {
 
     let prompt = '';
     if (insightType === 'pep_talk') {
-      prompt = "Give a short, energizing 2-sentence pep talk for a salesperson to boost their confidence.";
+      prompt = "Give a short, energizing 1-sentence pep talk for a salesperson.";
     } else if (insightType === 'recommendations') {
-      prompt = "Provide 2 specific, actionable tips for improving sales performance in the next week.";
+      prompt = "Provide 1 specific, actionable tip for improving sales performance.";
     }
 
     console.log('Generating with prompt:', prompt);
@@ -113,6 +127,15 @@ serve(async (req) => {
     });
   } catch (error) {
     console.error('Error in generate-insights function:', error);
+    
+    // Specific error response for rate limits
+    if (error.message?.includes('rate_limit_exceeded')) {
+      return new Response(JSON.stringify({ error: 'Rate limit exceeded, please try again later' }), {
+        status: 429,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
