@@ -39,11 +39,6 @@ export const getInsights = async (userId: number, userType: string) => {
       // Handle rate limit error specifically
       if (insightError.status === 429) {
         const fallbackMessage = "Today's insight is not available right now due to high demand. Please try again in a few minutes.";
-        toast({
-          title: "Rate Limit Reached",
-          description: "Please try again in a few minutes",
-          variant: "destructive",
-        });
         return { dailyInsight: fallbackMessage };
       }
       
@@ -52,27 +47,29 @@ export const getInsights = async (userId: number, userType: string) => {
 
     console.log('Generated insight:', insightData);
 
-    // Store the new insight
-    const { error: insertError } = await supabase
-      .from('ai_insights')
-      .insert({
-        user_id: userId,
-        content_type: 'daily_insight',
-        content: insightData.content
-      });
+    // Only try to store the insight if we successfully generated one
+    if (insightData?.content) {
+      const { error: insertError } = await supabase
+        .from('ai_insights')
+        .insert({
+          user_id: userId,
+          content_type: 'daily_insight',
+          content: insightData.content
+        });
 
-    if (insertError) {
-      console.error('Error storing insight:', insertError);
+      if (insertError) {
+        console.error('Error storing insight:', insertError);
+      }
+
+      return { dailyInsight: insightData.content };
     }
 
-    return { dailyInsight: insightData.content };
+    // Fallback message if no content was generated
+    return {
+      dailyInsight: 'Unable to generate insight at this time. Please try again later.'
+    };
   } catch (error) {
     console.error('Error in getInsights:', error);
-    toast({
-      title: "Error",
-      description: "Unable to load insights. Please try again later.",
-      variant: "destructive",
-    });
     return {
       dailyInsight: 'Unable to load insights at this time. Please try again later.'
     };
