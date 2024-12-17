@@ -19,6 +19,7 @@ async function sleep(ms: number) {
 }
 
 async function getExistingInsight(userId: number, contentType: string) {
+  console.log(`Checking existing insight for user ${userId}, type ${contentType}`);
   const { data, error } = await supabase
     .from('ai_insights')
     .select('*')
@@ -33,8 +34,9 @@ async function getExistingInsight(userId: number, contentType: string) {
     return null;
   }
 
-  // If insight is less than 1 hour old, return it
-  if (data && new Date(data.created_at) > new Date(Date.now() - 60 * 60 * 1000)) {
+  // If insight is less than 4 hours old, return it
+  if (data && new Date(data.created_at) > new Date(Date.now() - 4 * 60 * 60 * 1000)) {
+    console.log('Found recent insight:', data);
     return data.content;
   }
 
@@ -44,6 +46,7 @@ async function getExistingInsight(userId: number, contentType: string) {
 async function generateWithRetry(prompt: string, maxRetries = 3) {
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
+      console.log(`Attempt ${attempt + 1} to generate content with prompt: ${prompt}`);
       const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -65,7 +68,7 @@ async function generateWithRetry(prompt: string, maxRetries = 3) {
         console.error('OpenAI API error:', error);
         
         if (openAIResponse.status === 429) {
-          const waitTime = Math.pow(2, attempt) * 1000; // Exponential backoff
+          const waitTime = Math.pow(2, attempt) * 1000;
           console.log(`Rate limited. Waiting ${waitTime}ms before retry...`);
           await sleep(waitTime);
           continue;
@@ -75,6 +78,7 @@ async function generateWithRetry(prompt: string, maxRetries = 3) {
       }
 
       const data = await openAIResponse.json();
+      console.log('Generated content successfully');
       return data.choices[0].message.content;
     } catch (error) {
       console.error(`Attempt ${attempt + 1} failed:`, error);
@@ -142,6 +146,18 @@ serve(async (req) => {
     if (insertError) {
       console.error('Error storing insight:', insertError);
       // Continue anyway - we can still return the content even if storing fails
+    }
+
+    // Update the tracking record
+    const { error: trackingError } = await supabase
+      .from('user_insights_tracking')
+      .upsert({
+        user_id: userId,
+        [insightType === 'pep_talk' ? 'last_pep_talk_date' : 'last_recommendations_date']: new Date().toISOString().split('T')[0]
+      });
+
+    if (trackingError) {
+      console.error('Error updating tracking:', trackingError);
     }
 
     return new Response(JSON.stringify({ content: generatedContent }), {

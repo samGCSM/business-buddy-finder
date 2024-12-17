@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
 export const getInsights = async (userId: number, userType: string) => {
   console.log('Getting insights for user:', userId, 'type:', userType);
@@ -71,16 +72,14 @@ export const getInsights = async (userId: number, userType: string) => {
         if (error) throw error;
         pepTalk = data.content;
 
-        // Update tracking record
-        await supabase
-          .from('user_insights_tracking')
-          .upsert({
-            user_id: userId,
-            last_pep_talk_date: today
-          });
       } catch (error) {
         console.error('Error generating pep talk:', error);
-        pepTalk = 'Unable to generate pep talk at this time. Please try again later.';
+        toast({
+          title: "Error",
+          description: "Unable to generate daily motivation. Please try again later.",
+          variant: "destructive",
+        });
+        pepTalk = 'Unable to generate daily motivation at this time. Please try again later.';
       }
     }
 
@@ -98,15 +97,13 @@ export const getInsights = async (userId: number, userType: string) => {
         if (error) throw error;
         recommendations = data.content;
 
-        // Update tracking record
-        await supabase
-          .from('user_insights_tracking')
-          .upsert({
-            user_id: userId,
-            last_recommendations_date: today
-          });
       } catch (error) {
         console.error('Error generating recommendations:', error);
+        toast({
+          title: "Error",
+          description: "Unable to generate recommendations. Please try again later.",
+          variant: "destructive",
+        });
         recommendations = 'Unable to generate recommendations at this time. Please try again later.';
       }
     }
@@ -117,6 +114,11 @@ export const getInsights = async (userId: number, userType: string) => {
     };
   } catch (error) {
     console.error('Error getting insights:', error);
+    toast({
+      title: "Error",
+      description: "Unable to load insights. Please try again later.",
+      variant: "destructive",
+    });
     return {
       pepTalk: 'Unable to load insights at this time. Please try again later.',
       recommendations: 'Unable to load insights at this time. Please try again later.'
