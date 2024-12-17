@@ -24,32 +24,45 @@ export const generateDailyInsights = async (userId: number) => {
     const needsRecommendations = !tracking?.last_recommendations_date || 
       new Date(tracking.last_recommendations_date).toISOString().split('T')[0] !== today;
 
+    console.log('Needs pep talk:', needsPepTalk);
+    console.log('Needs recommendations:', needsRecommendations);
+
     if (needsPepTalk) {
       console.log('Generating new pep talk');
       const pepTalk = generatePepTalk();
-      await supabase
+      const { error: insertError } = await supabase
         .from('ai_insights')
         .insert({
           user_id: userId,
           content_type: 'daily_motivation',
           content: pepTalk
         });
+
+      if (insertError) {
+        console.error('Error inserting pep talk:', insertError);
+        return;
+      }
     }
 
     if (needsRecommendations) {
       console.log('Generating new recommendations');
       const recommendations = generateRecommendations();
-      await supabase
+      const { error: insertError } = await supabase
         .from('ai_insights')
         .insert({
           user_id: userId,
           content_type: 'contact_recommendations',
           content: recommendations
         });
+
+      if (insertError) {
+        console.error('Error inserting recommendations:', insertError);
+        return;
+      }
     }
 
     // Update tracking
-    await supabase
+    const { error: upsertError } = await supabase
       .from('user_insights_tracking')
       .upsert({
         user_id: userId,
@@ -57,12 +70,15 @@ export const generateDailyInsights = async (userId: number) => {
         last_recommendations_date: needsRecommendations ? today : tracking?.last_recommendations_date
       });
 
+    if (upsertError) {
+      console.error('Error updating tracking:', upsertError);
+    }
+
   } catch (error) {
     console.error('Error generating daily insights:', error);
   }
 };
 
-// Helper functions to generate content
 const generatePepTalk = () => {
   const pepTalks = [
     "Today is your day to shine! Remember, every call is an opportunity to make a meaningful connection. Your dedication to building relationships sets you apart.",

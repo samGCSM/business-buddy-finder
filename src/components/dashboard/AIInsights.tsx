@@ -20,14 +20,14 @@ const AIInsights = () => {
 
   useEffect(() => {
     const fetchInsights = async () => {
-      if (!session?.user?.id) {
-        console.log('No user session found, skipping insights fetch');
-        setIsLoading(false);
-        return;
-      }
-
       try {
-        console.log('Fetching insights for auth user:', session.user.id);
+        if (!session?.user?.email) {
+          console.log('No user session found');
+          setIsLoading(false);
+          return;
+        }
+
+        console.log('Fetching insights for user email:', session.user.email);
         
         // First, get the public.users id that matches the auth.users email
         const { data: userData, error: userError } = await supabase
@@ -38,33 +38,34 @@ const AIInsights = () => {
 
         if (userError) {
           console.error('Error fetching user:', userError);
-          throw userError;
+          throw new Error('Could not find user account');
         }
 
-        if (!userData) {
-          console.log('No matching user found in public.users table');
-          setIsLoading(false);
-          return;
+        if (!userData?.id) {
+          console.error('No matching user found in public.users table');
+          throw new Error('User account not properly set up');
         }
+
+        console.log('Found user ID:', userData.id);
 
         // Generate new insights if needed
         await generateDailyInsights(userData.id);
 
-        // Fetch all insights for the user
-        const { data, error } = await supabase
+        // Fetch existing insights for the user
+        const { data: insightsData, error: insightsError } = await supabase
           .from('ai_insights')
           .select('*')
           .eq('user_id', userData.id)
           .order('created_at', { ascending: false })
           .limit(5);
 
-        if (error) {
-          console.error('Error fetching insights:', error);
-          throw error;
+        if (insightsError) {
+          console.error('Error fetching insights:', insightsError);
+          throw insightsError;
         }
 
-        console.log('Fetched insights:', data);
-        setInsights(data || []);
+        console.log('Fetched insights:', insightsData);
+        setInsights(insightsData || []);
       } catch (error) {
         console.error('Error in fetchInsights:', error);
         setError(error instanceof Error ? error.message : 'Failed to fetch insights');
@@ -74,7 +75,7 @@ const AIInsights = () => {
     };
 
     fetchInsights();
-  }, [session?.user?.id, session?.user?.email]);
+  }, [session?.user?.email]);
 
   const renderInsightCard = (insight: AIInsight) => {
     const isMotivation = insight.content_type === 'daily_motivation';
@@ -104,27 +105,8 @@ const AIInsights = () => {
           AI Insights
         </h2>
         <Card className="p-4 bg-red-50">
-          <p className="text-sm text-red-600">Error loading insights: {error}</p>
+          <p className="text-sm text-red-600">Error: {error}</p>
         </Card>
-      </div>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <div className="space-y-4">
-        <h2 className="text-xl font-semibold flex items-center gap-2">
-          <Lightbulb className="w-5 h-5" />
-          AI Insights
-        </h2>
-        <div className="animate-pulse space-y-4">
-          {[...Array(3)].map((_, i) => (
-            <Card key={i} className="p-4">
-              <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-              <div className="h-3 bg-gray-100 rounded w-1/4 mt-2"></div>
-            </Card>
-          ))}
-        </div>
       </div>
     );
   }
@@ -136,8 +118,15 @@ const AIInsights = () => {
         AI Insights
       </h2>
       <div className="grid gap-4">
-        {insights.map(renderInsightCard)}
-        {insights.length === 0 && (
+        {isLoading ? (
+          <Card className="p-4">
+            <p className="text-sm text-gray-500">
+              Loading insights...
+            </p>
+          </Card>
+        ) : insights.length > 0 ? (
+          insights.map(renderInsightCard)
+        ) : (
           <Card className="p-4">
             <p className="text-sm text-gray-500">
               Generating your daily insights... Check back in a moment!
