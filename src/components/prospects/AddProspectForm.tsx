@@ -26,6 +26,8 @@ const AddProspectForm = ({ onClose, onSuccess, userRole }: AddProspectFormProps)
     priority: "Medium",
     owner_phone: "",
     owner_email: "",
+    rating: "0.0",
+    review_count: "0",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -50,6 +52,8 @@ const AddProspectForm = ({ onClose, onSuccess, userRole }: AddProspectFormProps)
         .from('prospects')
         .insert({
           ...formData,
+          rating: parseFloat(formData.rating),
+          review_count: parseInt(formData.review_count),
           user_id: currentUser.id,
           last_contact: new Date().toISOString()
         })
