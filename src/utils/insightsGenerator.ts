@@ -6,16 +6,47 @@ export const generateDailyInsights = async (userId: number) => {
     
     const today = new Date().toISOString().split('T')[0];
     
-    // Check if we already generated insights today
+    // First ensure a tracking record exists for this user
+    const { data: existingTracking, error: checkError } = await supabase
+      .from('user_insights_tracking')
+      .select('*')
+      .eq('user_id', userId)
+      .maybeSingle(); // Use maybeSingle() instead of single()
+
+    console.log('Existing tracking:', existingTracking);
+    
+    if (checkError) {
+      console.error('Error checking tracking:', checkError);
+      throw new Error('Failed to check insight tracking');
+    }
+
+    // If no tracking record exists, create one
+    if (!existingTracking) {
+      console.log('No tracking record found, creating one');
+      const { error: insertError } = await supabase
+        .from('user_insights_tracking')
+        .insert({
+          user_id: userId,
+          last_pep_talk_date: null,
+          last_recommendations_date: null
+        });
+
+      if (insertError) {
+        console.error('Error creating tracking record:', insertError);
+        throw new Error('Failed to create tracking record');
+      }
+    }
+
+    // Now get the tracking record (either existing or newly created)
     const { data: tracking, error: trackingError } = await supabase
       .from('user_insights_tracking')
       .select('*')
       .eq('user_id', userId)
       .single();
     
-    if (trackingError && trackingError.code !== 'PGRST116') {
-      console.error('Error checking insight tracking:', trackingError);
-      throw new Error('Failed to check insight tracking');
+    if (trackingError) {
+      console.error('Error getting tracking:', trackingError);
+      throw new Error('Failed to get insight tracking');
     }
 
     console.log('Current tracking data:', tracking);
