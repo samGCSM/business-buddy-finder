@@ -1,6 +1,8 @@
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Pencil } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 import ProspectNotes from "./ProspectNotes";
 import StatusBadge from "./StatusBadge";
 import PriorityBadge from "./PriorityBadge";
@@ -16,13 +18,64 @@ interface ProspectTableRowProps {
 }
 
 const ProspectTableRow = ({ prospect, onEdit, onDelete, onUpdate }: ProspectTableRowProps) => {
-  // Calculate number of notes from activity log
   const noteCount = prospect.activity_log?.filter(item => 
     typeof item === 'object' && 
     item !== null && 
     'type' in item && 
     item.type === 'note'
   ).length || 0;
+
+  const handleStatusChange = async (newStatus: string) => {
+    try {
+      console.log("Updating status for prospect:", prospect.id, "to:", newStatus);
+      
+      const { error } = await supabase
+        .from('prospects')
+        .update({ status: newStatus })
+        .eq('id', prospect.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Status updated successfully",
+      });
+      onUpdate();
+    } catch (error) {
+      console.error('Error updating status:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update status",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handlePriorityChange = async (newPriority: string) => {
+    try {
+      console.log("Updating priority for prospect:", prospect.id, "to:", newPriority);
+      
+      const { error } = await supabase
+        .from('prospects')
+        .update({ priority: newPriority })
+        .eq('id', prospect.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Priority updated successfully",
+      });
+      onUpdate();
+    } catch (error) {
+      console.error('Error updating priority:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update priority",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <TableRow key={prospect.id}>
@@ -64,18 +117,14 @@ const ProspectTableRow = ({ prospect, onEdit, onDelete, onUpdate }: ProspectTabl
       <TableCell>{prospect.owner_name}</TableCell>
       <TableCell>
         <StatusBadge
-          status={prospect.status}
-          onStatusChange={(newStatus) => {
-            // Handle status change
-          }}
+          status={prospect.status || 'New'}
+          onStatusChange={(newStatus) => handleStatusChange(newStatus)}
         />
       </TableCell>
       <TableCell>
         <PriorityBadge
-          priority={prospect.priority}
-          onPriorityChange={(newPriority) => {
-            // Handle priority change
-          }}
+          priority={prospect.priority || 'Medium'}
+          onPriorityChange={(newPriority) => handlePriorityChange(newPriority)}
         />
       </TableCell>
       <TableCell>{prospect.owner_phone}</TableCell>
