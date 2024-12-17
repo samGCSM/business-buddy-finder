@@ -9,15 +9,28 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 
 const statusColors = {
-  'New': '#E5DEFF',
-  'Contacted': '#FEF7CD',
-  'Meeting': '#F2FCE2',
-  'Proposal': '#D3E4FD',
-  'Won': '#90EE90',
-  'Lost': '#FFDEE2'
+  'Done/Meeting': '#26D08A',
+  'Prospect': '#FDB85A',
+  'Warm Lead': '#FFD326',
+  'No Response': '#2691C0',
+  'DO NOT CONTACT': '#E44E65',
+  'Dead': '#6F5B5B',
+  'NO METAL': '#AFE7F7',
+  'QUOTED': '#89BBD4',
+  'OUT OF TERRITORY': '#C5516D'
 };
 
-const statusOptions = ['New', 'Contacted', 'Meeting', 'Proposal', 'Won', 'Lost'];
+const statusOptions = [
+  'Done/Meeting',
+  'Prospect',
+  'Warm Lead',
+  'No Response',
+  'DO NOT CONTACT',
+  'Dead',
+  'NO METAL',
+  'QUOTED',
+  'OUT OF TERRITORY'
+];
 
 interface StatusBadgeProps {
   status: string;
@@ -26,7 +39,7 @@ interface StatusBadgeProps {
 
 const StatusBadge = ({ status, onStatusChange }: StatusBadgeProps) => {
   const [currentStatus, setCurrentStatus] = useState(status);
-  const [customColor, setCustomColor] = useState(statusColors[status as keyof typeof statusColors] || '#E5DEFF');
+  const [customColor, setCustomColor] = useState(statusColors[status as keyof typeof statusColors] || '#26D08A');
 
   const handleColorChange = (color: string) => {
     setCustomColor(color);
@@ -52,7 +65,7 @@ const StatusBadge = ({ status, onStatusChange }: StatusBadgeProps) => {
             className="w-full h-9 px-4 rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             style={{
               backgroundColor: customColor,
-              color: '#000000',
+              color: '#ffffff', // Set text color to white
             }}
           >
             {currentStatus}
@@ -71,6 +84,7 @@ const StatusBadge = ({ status, onStatusChange }: StatusBadgeProps) => {
                     onClick={() => handleStatusSelect(option)}
                     style={{
                       backgroundColor: statusColors[option as keyof typeof statusColors],
+                      color: '#ffffff',
                       border: 'none'
                     }}
                   >
