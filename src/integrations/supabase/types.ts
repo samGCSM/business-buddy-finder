@@ -9,45 +9,6 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      ai_insights: {
-        Row: {
-          content: string
-          content_type: string
-          created_at: string
-          id: string
-          user_id: number | null
-        }
-        Insert: {
-          content: string
-          content_type: string
-          created_at?: string
-          id?: string
-          user_id?: number | null
-        }
-        Update: {
-          content?: string
-          content_type?: string
-          created_at?: string
-          id?: string
-          user_id?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "ai_insights_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "user_stats"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "ai_insights_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       notifications: {
         Row: {
           created_at: string
@@ -225,39 +186,6 @@ export type Database = {
           },
         ]
       }
-      user_insights_tracking: {
-        Row: {
-          last_pep_talk_date: string | null
-          last_recommendations_date: string | null
-          user_id: number
-        }
-        Insert: {
-          last_pep_talk_date?: string | null
-          last_recommendations_date?: string | null
-          user_id: number
-        }
-        Update: {
-          last_pep_talk_date?: string | null
-          last_recommendations_date?: string | null
-          user_id?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_insights_tracking_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: true
-            referencedRelation: "user_stats"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "user_insights_tracking_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: true
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       users: {
         Row: {
           created_at: string | null
@@ -325,10 +253,7 @@ export type Database = {
       }
     }
     Functions: {
-      current_user_id: {
-        Args: Record<PropertyKey, never>
-        Returns: number
-      }
+      [_ in never]: never
     }
     Enums: {
       [_ in never]: never

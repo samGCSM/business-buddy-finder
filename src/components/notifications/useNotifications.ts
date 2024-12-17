@@ -25,7 +25,6 @@ export const useNotifications = () => {
         throw error;
       }
 
-      // Combine all notifications from all records and sort by timestamp
       const allNotifications = notificationsData.reduce((acc: any[], record: any) => {
         return [...acc, ...(record.notifications || [])];
       }, []);
@@ -36,7 +35,6 @@ export const useNotifications = () => {
 
       setNotifications(allNotifications);
 
-      // Mark all notifications as read
       const updatePromises = notificationsData.map(record => {
         const updatedNotifications = record.notifications.map((n: any) => ({
           ...n,
