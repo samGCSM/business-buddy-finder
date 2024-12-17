@@ -1,12 +1,9 @@
-import { Button } from "@/components/ui/button";
-import { saveUsers } from "@/services/userService";
 import type { User } from "@/types/user";
-import { toast } from "@/hooks/use-toast";
 import { UserTableHeader } from "./UserTableHeader";
 import { UserTableRow } from "./UserTableRow";
 import { formatDate, getNumericValue } from "./UserTableUtils";
-import { supabase } from "@/integrations/supabase/client";
-import { useEffect, useState } from "react";
+import { useUserData } from "@/hooks/useUserData";
+import { useUserActions } from "./UserActions";
 
 interface UserTableProps {
   users: User[];
@@ -15,118 +12,8 @@ interface UserTableProps {
 }
 
 export const UserTable = ({ users, setUsers, setSelectedUserId }: UserTableProps) => {
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchLatestUserData = async () => {
-      try {
-        const { data: userData, error: userError } = await supabase
-          .from('users')
-          .select('*');
-        
-        if (userError) throw userError;
-
-        // Fetch user stats
-        const { data: statsData, error: statsError } = await supabase
-          .from('user_stats')
-          .select('*');
-
-        if (statsError) throw statsError;
-
-        // Fetch saved searches counts
-        const { data: savedSearchesData, error: savedSearchesError } = await supabase
-          .from('saved_searches')
-          .select('user_id, id');
-
-        if (savedSearchesError) throw savedSearchesError;
-
-        // Calculate saved searches count per user
-        const savedSearchesCounts = savedSearchesData.reduce((acc: { [key: string]: number }, curr) => {
-          acc[curr.user_id] = (acc[curr.user_id] || 0) + 1;
-          return acc;
-        }, {});
-
-        // Combine user data with stats and saved searches count
-        const enrichedUsers = userData.map(user => ({
-          ...user,
-          stats: statsData.find(stat => stat.id === user.id),
-          savedSearches: savedSearchesCounts[user.id] || 0
-        }));
-
-        console.log('Enriched user data:', enrichedUsers);
-        setUsers(enrichedUsers);
-      } catch (error) {
-        console.error('Error fetching latest user data:', error);
-        toast({
-          title: "Error",
-          description: "Failed to fetch latest user data",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchLatestUserData();
-
-    const subscription = supabase
-      .channel('users_channel')
-      .on('postgres_changes', 
-        { 
-          event: '*', 
-          schema: 'public', 
-          table: 'users' 
-        }, 
-        fetchLatestUserData
-      )
-      .subscribe();
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [setUsers]);
-
-  const handleDeleteUser = async (id: number) => {
-    try {
-      const updatedUsers = users.filter((user) => user.id !== id);
-      await saveUsers(updatedUsers);
-      setUsers(updatedUsers);
-      toast({
-        title: "Success",
-        description: "User deleted successfully",
-      });
-    } catch (error) {
-      console.error('Error deleting user:', error);
-      toast({
-        title: "Error",
-        description: "Failed to delete user",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleUpdateUser = async (id: number, updates: Partial<User>) => {
-    try {
-      const { error } = await supabase
-        .from('users')
-        .update(updates)
-        .eq('id', id);
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "User updated successfully",
-      });
-    } catch (error) {
-      console.error('Error updating user:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update user",
-        variant: "destructive",
-      });
-    }
-  };
+  const { isLoading } = useUserData(setUsers);
+  const { handleDeleteUser, handleUpdateUser } = useUserActions(users, setUsers);
 
   if (isLoading) {
     return <div className="flex justify-center items-center">Loading...</div>;
