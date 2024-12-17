@@ -58,24 +58,42 @@ export const searchBusinesses = async (location: string, keyword: string) => {
     const map = new window.google.maps.Map(document.createElement('div'));
     const service = new window.google.maps.places.PlacesService(map);
 
-    // Search for businesses
-    const searchResults = await new Promise((resolve, reject) => {
-      service.textSearch({
-        query: keyword,
-        location: geocodeResult,
-        radius: 50000,
-      }, (results: any, status: any) => {
-        if (status === 'OK') {
-          resolve(results);
-        } else {
-          reject(new Error('Places search failed'));
-        }
+    // Search for businesses with pagination
+    let allResults: any[] = [];
+    const searchAndGetNextPage = (pageToken?: string): Promise<any[]> => {
+      return new Promise((resolve, reject) => {
+        service.textSearch({
+          query: keyword,
+          location: geocodeResult,
+          radius: 50000,
+          pageToken: pageToken
+        }, (results: any, status: any, pagination: any) => {
+          if (status === 'OK') {
+            allResults = [...allResults, ...results];
+            
+            // If we have less than 40 results and there's a next page, get more results
+            if (pagination.hasNextPage && allResults.length < 40) {
+              // Wait a short delay before requesting the next page (required by Google Places API)
+              setTimeout(() => {
+                pagination.nextPage();
+              }, 2000);
+            } else {
+              resolve(allResults);
+            }
+          } else {
+            reject(new Error('Places search failed'));
+          }
+        });
       });
-    });
+    };
+
+    // Get initial results and handle pagination
+    const searchResults = await searchAndGetNextPage();
+    console.log('Total results fetched:', searchResults.length);
 
     // Transform the results to match our interface
     const businesses = await Promise.all(
-      (searchResults as any[]).map(async (place) => {
+      searchResults.slice(0, 40).map(async (place) => {
         // Get additional details for each place
         const details = await new Promise<PlaceDetails>((resolve, reject) => {
           service.getDetails({
