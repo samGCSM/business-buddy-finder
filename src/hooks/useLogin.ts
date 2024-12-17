@@ -11,20 +11,7 @@ export const useLogin = (onLogin: (isLoggedIn: boolean, userType: 'admin' | 'use
     try {
       console.log('Attempting login with email:', email);
       
-      // First attempt Supabase Auth signin
-      const { data: authData, error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (signInError) {
-        console.error('Auth sign in error:', signInError);
-        throw signInError;
-      }
-
-      console.log('Successfully authenticated with Supabase Auth');
-
-      // Then get user data from users table
+      // First get user data from users table to verify the user exists in our system
       const { data: userRecord, error: userError } = await supabase
         .from('users')
         .select('*')
@@ -42,6 +29,19 @@ export const useLogin = (onLogin: (isLoggedIn: boolean, userType: 'admin' | 'use
       }
 
       console.log('Found user in users table:', userRecord);
+
+      // Then attempt Supabase Auth signin
+      const { data: authData, error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (signInError) {
+        console.error('Auth sign in error:', signInError);
+        throw signInError;
+      }
+
+      console.log('Successfully authenticated with Supabase Auth');
 
       // Update the lastLogin timestamp
       const { error: updateError } = await supabase
