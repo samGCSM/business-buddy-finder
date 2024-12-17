@@ -1,5 +1,5 @@
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { format, subDays } from 'date-fns';
+import { format, subDays, startOfDay, endOfDay } from 'date-fns';
 import { useEffect, useState } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 
@@ -49,16 +49,18 @@ const MetricsGraph = ({ userId, userRole }: MetricsGraphProps) => {
           return;
         }
 
-        // Generate data for the last 7 days
+        // Generate data for the last 7 days, starting from today
+        const today = new Date();
         const last7Days = Array.from({ length: 7 }, (_, i) => {
-          const date = subDays(new Date(), i);
+          const date = subDays(today, 6 - i); // This makes today the last point
           return format(date, 'yyyy-MM-dd');
-        }).reverse();
+        });
+
+        console.log('Date range:', last7Days[0], 'to', last7Days[6]);
 
         const metricsData = last7Days.map(date => {
-          const dayStart = new Date(date);
-          const dayEnd = new Date(date);
-          dayEnd.setHours(23, 59, 59, 999);
+          const dayStart = startOfDay(new Date(date));
+          const dayEnd = endOfDay(new Date(date));
 
           const dayProspects = prospectsData?.filter(
             prospect => {
