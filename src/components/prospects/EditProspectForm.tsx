@@ -18,6 +18,8 @@ interface EditProspectFormProps {
     priority: string;
     owner_phone: string;
     owner_email: string;
+    rating: number;
+    review_count: number;
   };
   onClose: () => void;
   onSuccess: () => void;
@@ -36,6 +38,8 @@ const EditProspectForm = ({ prospect, onClose, onSuccess }: EditProspectFormProp
     priority: prospect.priority || "Medium",
     owner_phone: prospect.owner_phone || "",
     owner_email: prospect.owner_email || "",
+    rating: prospect.rating?.toString() || "0.0",
+    review_count: prospect.review_count?.toString() || "0",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -47,7 +51,11 @@ const EditProspectForm = ({ prospect, onClose, onSuccess }: EditProspectFormProp
 
       const { data, error } = await supabase
         .from('prospects')
-        .update(formData)
+        .update({
+          ...formData,
+          rating: parseFloat(formData.rating),
+          review_count: parseInt(formData.review_count)
+        })
         .eq('id', prospect.id)
         .select()
         .single();

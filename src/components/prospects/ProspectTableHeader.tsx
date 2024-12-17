@@ -1,25 +1,51 @@
 import { TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ArrowUpDown } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import type { Prospect } from "@/types/prospects";
 
-const ProspectTableHeader = () => (
-  <TableHeader className="sticky top-0 bg-white z-10">
-    <TableRow>
-      <TableHead className="w-[200px] min-w-[200px] sticky left-0 bg-white z-20">Business Name</TableHead>
-      <TableHead className="min-w-[100px]">Notes</TableHead>
-      <TableHead>Website</TableHead>
-      <TableHead>Email</TableHead>
-      <TableHead>Address</TableHead>
-      <TableHead>Phone</TableHead>
-      <TableHead>Rating</TableHead>
-      <TableHead>Reviews</TableHead>
-      <TableHead>Status</TableHead>
-      <TableHead>Priority</TableHead>
-      <TableHead>Owner Name</TableHead>
-      <TableHead>Owner Phone</TableHead>
-      <TableHead>Owner Email</TableHead>
-      <TableHead>Last Contact</TableHead>
-      <TableHead>Actions</TableHead>
-    </TableRow>
-  </TableHeader>
-);
+interface ProspectTableHeaderProps {
+  onSort: (key: keyof Prospect) => void;
+  sortConfig: {
+    key: keyof Prospect;
+    direction: 'asc' | 'desc';
+  } | null;
+}
+
+const ProspectTableHeader = ({ onSort, sortConfig }: ProspectTableHeaderProps) => {
+  const renderSortButton = (label: string, key: keyof Prospect) => (
+    <Button
+      variant="ghost"
+      onClick={() => onSort(key)}
+      className="h-8 px-2 lg:px-3"
+    >
+      {label}
+      <ArrowUpDown className="ml-2 h-4 w-4" />
+    </Button>
+  );
+
+  return (
+    <TableHeader className="sticky top-0 bg-white z-10">
+      <TableRow>
+        <TableHead className="w-[200px] min-w-[200px] sticky left-0 bg-white z-20">
+          {renderSortButton("Business Name", "business_name")}
+        </TableHead>
+        <TableHead className="min-w-[100px]">Notes</TableHead>
+        <TableHead>{renderSortButton("Website", "website")}</TableHead>
+        <TableHead>{renderSortButton("Email", "email")}</TableHead>
+        <TableHead>{renderSortButton("Address", "business_address")}</TableHead>
+        <TableHead>{renderSortButton("Phone", "phone_number")}</TableHead>
+        <TableHead>{renderSortButton("Rating", "rating")}</TableHead>
+        <TableHead>{renderSortButton("Reviews", "review_count")}</TableHead>
+        <TableHead>{renderSortButton("Status", "status")}</TableHead>
+        <TableHead>{renderSortButton("Priority", "priority")}</TableHead>
+        <TableHead>{renderSortButton("Owner Name", "owner_name")}</TableHead>
+        <TableHead>{renderSortButton("Owner Phone", "owner_phone")}</TableHead>
+        <TableHead>{renderSortButton("Owner Email", "owner_email")}</TableHead>
+        <TableHead>{renderSortButton("Last Contact", "last_contact")}</TableHead>
+        <TableHead>Actions</TableHead>
+      </TableRow>
+    </TableHeader>
+  );
+};
 
 export default ProspectTableHeader;
