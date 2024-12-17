@@ -33,18 +33,13 @@ export const generateDailyInsights = async (userId: number) => {
     // If no tracking record exists, create one
     if (!tracking) {
       console.log('No tracking record found, creating one');
-      const { error: insertError } = await supabase
+      await supabase
         .from('user_insights_tracking')
         .insert({
           user_id: userId,
           last_pep_talk_date: null,
           last_recommendations_date: null
         });
-
-      if (insertError) {
-        console.error('Error creating tracking record:', insertError);
-        throw new Error('Failed to create tracking record');
-      }
     }
 
     const needsPepTalk = !tracking?.last_pep_talk_date || 
@@ -60,8 +55,7 @@ export const generateDailyInsights = async (userId: number) => {
       console.log('Generating new pep talk');
       const pepTalk = generatePepTalk();
       
-      // Insert pep talk with single insert operation
-      const { error: pepTalkError } = await supabase
+      await supabase
         .from('ai_insights')
         .insert({
           user_id: userId,
@@ -69,28 +63,17 @@ export const generateDailyInsights = async (userId: number) => {
           content: pepTalk
         });
 
-      if (pepTalkError) {
-        console.error('Error inserting pep talk:', pepTalkError);
-        throw new Error('Failed to insert pep talk');
-      }
-
-      // Update tracking in a separate operation
-      const { error: updateError } = await supabase
+      await supabase
         .from('user_insights_tracking')
         .update({ last_pep_talk_date: today })
         .eq('user_id', userId);
-
-      if (updateError) {
-        console.error('Error updating pep talk tracking:', updateError);
-      }
     }
 
     if (needsRecommendations) {
       console.log('Generating new recommendations');
       const recommendations = generateRecommendations();
       
-      // Insert recommendations with single insert operation
-      const { error: recommendationsError } = await supabase
+      await supabase
         .from('ai_insights')
         .insert({
           user_id: userId,
@@ -98,20 +81,10 @@ export const generateDailyInsights = async (userId: number) => {
           content: recommendations
         });
 
-      if (recommendationsError) {
-        console.error('Error inserting recommendations:', recommendationsError);
-        throw new Error('Failed to insert recommendations');
-      }
-
-      // Update tracking in a separate operation
-      const { error: updateError } = await supabase
+      await supabase
         .from('user_insights_tracking')
         .update({ last_recommendations_date: today })
         .eq('user_id', userId);
-
-      if (updateError) {
-        console.error('Error updating recommendations tracking:', updateError);
-      }
     }
 
   } catch (error) {
