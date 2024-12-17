@@ -1,30 +1,25 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useSession } from '@supabase/auth-helpers-react';
 import { generateDailyInsights } from "@/utils/insightsGenerator";
-import { getCurrentUser } from "@/services/userService";
 import type { AIInsight } from "./types";
+import type { User } from "@/types/user";
 
-export const useInsights = () => {
+export const useInsights = (currentUser: User | null) => {
   const [insights, setInsights] = useState<AIInsight[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const session = useSession();
 
   useEffect(() => {
     const fetchInsights = async () => {
       try {
-        const currentUser = await getCurrentUser();
-        console.log('useInsights - Current user:', currentUser);
-
         if (!currentUser?.id) {
-          console.log('No user ID found in current user:', currentUser);
+          console.log('useInsights - No user found:', currentUser);
           setError('User not found');
           setIsLoading(false);
           return;
         }
 
-        console.log('Fetching insights for user ID:', currentUser.id);
+        console.log('useInsights - Fetching insights for user ID:', currentUser.id);
 
         // Generate insights if needed
         await generateDailyInsights(currentUser.id);
@@ -53,10 +48,14 @@ export const useInsights = () => {
       }
     };
 
-    if (session) {
+    if (currentUser) {
+      console.log('useInsights - Current user found, fetching insights');
       fetchInsights();
+    } else {
+      console.log('useInsights - No current user, skipping fetch');
+      setIsLoading(false);
     }
-  }, [session]);
+  }, [currentUser]);
 
   return { insights, isLoading, error };
 };

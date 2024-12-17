@@ -9,16 +9,11 @@ import { useEffect, useState } from "react";
 const AIInsights = () => {
   const session = useSession();
   const [currentUser, setCurrentUser] = useState(null);
-  const { insights, isLoading, error } = useInsights();
+  const { insights, isLoading, error } = useInsights(currentUser);
 
   useEffect(() => {
     const checkUser = async () => {
       try {
-        if (!session) {
-          console.log('AIInsights - No session found');
-          return;
-        }
-        
         const user = await getCurrentUser();
         console.log('AIInsights - Current user:', user);
         setCurrentUser(user);
@@ -27,10 +22,16 @@ const AIInsights = () => {
       }
     };
     
-    checkUser();
+    if (session) {
+      console.log('AIInsights - Session found, checking user');
+      checkUser();
+    } else {
+      console.log('AIInsights - No session found');
+      setCurrentUser(null);
+    }
   }, [session]);
 
-  if (!session || !currentUser) {
+  if (!session) {
     return (
       <Card className="p-4">
         <p className="text-sm text-gray-500">Please log in to view insights</p>
