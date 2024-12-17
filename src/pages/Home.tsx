@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useMetrics } from "@/hooks/useMetrics";
 import DashboardMetrics from "@/components/dashboard/DashboardMetrics";
+import MetricsGraph from "@/components/dashboard/MetricsGraph";
 import InsightCard from "@/components/dashboard/InsightCard";
 import { getInsights } from "@/services/insightsService";
 import { getCurrentUser } from "@/services/userService";
@@ -17,6 +18,7 @@ const Home = () => {
     recommendations: "" 
   });
   const [isLoading, setIsLoading] = useState(true);
+  const [userId, setUserId] = useState<number | null>(null);
 
   useEffect(() => {
     const loadInsights = async () => {
@@ -27,6 +29,7 @@ const Home = () => {
           return;
         }
 
+        setUserId(currentUser.id);
         const userInsights = await getInsights(currentUser.id, currentUser.type);
         setInsights(userInsights);
       } catch (error) {
@@ -72,6 +75,10 @@ const Home = () => {
         </div>
         
         <DashboardMetrics {...metrics} />
+
+        <div className="mt-8">
+          <MetricsGraph userId={userId} userRole={userRole} />
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
           <InsightCard 
