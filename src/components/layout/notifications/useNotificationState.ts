@@ -28,6 +28,7 @@ export const useNotificationState = () => {
 
       console.log('Fetched notifications:', notificationsData);
 
+      // Calculate total unread notifications across all notification records
       let totalUnread = 0;
       notificationsData?.forEach(record => {
         const unreadCount = record.notifications?.filter((n: any) => !n.read)?.length || 0;
