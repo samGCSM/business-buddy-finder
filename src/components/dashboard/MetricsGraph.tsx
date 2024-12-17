@@ -1,6 +1,6 @@
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { format, subDays } from 'date-fns';
-import { zonedTimeToUtc, utcToZonedTime } from 'date-fns-tz';
+import { fromZonedTime, toZonedTime } from 'date-fns-tz';
 import { useEffect, useState } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 
@@ -53,7 +53,7 @@ const MetricsGraph = ({ userId, userRole }: MetricsGraphProps) => {
         }
 
         // Get current date in EST
-        const nowInEST = utcToZonedTime(new Date(), timeZone);
+        const nowInEST = toZonedTime(new Date(), timeZone);
         
         // Generate data for the last 7 days, starting from today in EST
         const last7Days = Array.from({ length: 7 }, (_, i) => {
@@ -64,12 +64,12 @@ const MetricsGraph = ({ userId, userRole }: MetricsGraphProps) => {
         console.log('Date range:', last7Days[0], 'to', last7Days[6]);
 
         const metricsData = last7Days.map(date => {
-          const dayStart = zonedTimeToUtc(new Date(`${date}T00:00:00`), timeZone);
-          const dayEnd = zonedTimeToUtc(new Date(`${date}T23:59:59.999`), timeZone);
+          const dayStart = fromZonedTime(new Date(`${date}T00:00:00`), timeZone);
+          const dayEnd = fromZonedTime(new Date(`${date}T23:59:59.999`), timeZone);
 
           const dayProspects = prospectsData?.filter(
             prospect => {
-              const prospectDate = utcToZonedTime(new Date(prospect.created_at), timeZone);
+              const prospectDate = toZonedTime(new Date(prospect.created_at), timeZone);
               return prospectDate >= dayStart && prospectDate <= dayEnd;
             }
           ) || [];
@@ -80,7 +80,7 @@ const MetricsGraph = ({ userId, userRole }: MetricsGraphProps) => {
           dayProspects.forEach(prospect => {
             if (prospect.activity_log) {
               prospect.activity_log.forEach((activity: any) => {
-                const activityDate = utcToZonedTime(new Date(activity.timestamp), timeZone);
+                const activityDate = toZonedTime(new Date(activity.timestamp), timeZone);
                 if (activityDate >= dayStart && activityDate <= dayEnd) {
                   if (activity.type === 'Email') emailCount++;
                   if (activity.type === 'Phone Call') callCount++;
@@ -90,9 +90,9 @@ const MetricsGraph = ({ userId, userRole }: MetricsGraphProps) => {
           });
 
           return {
-            date: format(utcToZonedTime(dayStart, timeZone), 'MMM dd'),
+            date: format(toZonedTime(dayStart, timeZone), 'MMM dd'),
             totalProspects: prospectsData?.filter(
-              prospect => utcToZonedTime(new Date(prospect.created_at), timeZone) <= dayEnd
+              prospect => toZonedTime(new Date(prospect.created_at), timeZone) <= dayEnd
             ).length || 0,
             newProspects: dayProspects.length,
             emailsSent: emailCount,
