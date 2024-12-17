@@ -12,7 +12,10 @@ import { getCurrentUser } from "@/services/userService";
 const Home = () => {
   const navigate = useNavigate();
   const { metrics, userRole } = useMetrics();
-  const [insights, setInsights] = useState({ pepTalk: "", recommendations: "" });
+  const [insights, setInsights] = useState<{ pepTalk: string; recommendations: string }>({ 
+    pepTalk: "", 
+    recommendations: "" 
+  });
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {

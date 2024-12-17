@@ -24,7 +24,7 @@ export const getInsights = async (userId: number, userType: string) => {
       .order('created_at', { ascending: false })
       .limit(2);
 
-    const insights: Record<string, string> = {
+    const insights = {
       pepTalk: '',
       recommendations: ''
     };
