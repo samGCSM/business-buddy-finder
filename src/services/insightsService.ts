@@ -20,6 +20,23 @@ export const getInsights = async (userId: number, userType: string) => {
     const needsPepTalk = !tracking?.last_pep_talk_date || tracking.last_pep_talk_date < today;
     const needsRecommendations = !tracking?.last_recommendations_date || tracking.last_recommendations_date < today;
 
+    // If no tracking record exists, create one
+    if (!tracking) {
+      console.log('Creating new tracking record for user:', userId);
+      const { error: createError } = await supabase
+        .from('user_insights_tracking')
+        .insert([{
+          user_id: userId,
+          last_pep_talk_date: null,
+          last_recommendations_date: null
+        }]);
+
+      if (createError) {
+        console.error('Error creating tracking record:', createError);
+        throw createError;
+      }
+    }
+
     // Get existing insights
     const { data: existingInsights, error: insightsError } = await supabase
       .from('ai_insights')
@@ -57,7 +74,7 @@ export const getInsights = async (userId: number, userType: string) => {
 
       insights.pepTalk = data.content;
 
-      // Create tracking record if it doesn't exist
+      // Update tracking record
       const { error: upsertError } = await supabase
         .from('user_insights_tracking')
         .upsert({
