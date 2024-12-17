@@ -16,4 +16,6 @@ export interface Prospect {
   owner_email: string | null;
   last_contact: string | null;
   activity_log: Json[] | null;
+  rating: number | null;
+  review_count: number | null;
 }

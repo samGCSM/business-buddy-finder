@@ -40,7 +40,8 @@ const ProspectTableRow = ({ prospect, onEdit, onDelete, onUpdate }: ProspectTabl
       <TableCell>{prospect.email}</TableCell>
       <TableCell>{prospect.business_address}</TableCell>
       <TableCell>{prospect.phone_number}</TableCell>
-      <TableCell>{prospect.owner_name}</TableCell>
+      <TableCell>{prospect.rating || '0.0'}</TableCell>
+      <TableCell>{prospect.review_count || '0'}</TableCell>
       <ProspectStatusCell
         prospectId={prospect.id}
         status={prospect.status}
@@ -51,6 +52,7 @@ const ProspectTableRow = ({ prospect, onEdit, onDelete, onUpdate }: ProspectTabl
         priority={prospect.priority}
         onUpdate={onUpdate}
       />
+      <TableCell>{prospect.owner_name}</TableCell>
       <TableCell>{prospect.owner_phone}</TableCell>
       <TableCell>{prospect.owner_email}</TableCell>
       <TableCell>

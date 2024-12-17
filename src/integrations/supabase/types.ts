@@ -123,6 +123,8 @@ export type Database = {
           owner_phone: string | null
           phone_number: string | null
           priority: string | null
+          rating: number | null
+          review_count: number | null
           status: string | null
           updated_at: string | null
           user_id: number
@@ -142,6 +144,8 @@ export type Database = {
           owner_phone?: string | null
           phone_number?: string | null
           priority?: string | null
+          rating?: number | null
+          review_count?: number | null
           status?: string | null
           updated_at?: string | null
           user_id: number
@@ -161,6 +165,8 @@ export type Database = {
           owner_phone?: string | null
           phone_number?: string | null
           priority?: string | null
+          rating?: number | null
+          review_count?: number | null
           status?: string | null
           updated_at?: string | null
           user_id?: number

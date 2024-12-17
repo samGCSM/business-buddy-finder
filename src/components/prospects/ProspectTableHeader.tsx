@@ -9,9 +9,11 @@ const ProspectTableHeader = () => (
       <TableHead>Email</TableHead>
       <TableHead>Address</TableHead>
       <TableHead>Phone</TableHead>
-      <TableHead>Owner Name</TableHead>
+      <TableHead>Rating</TableHead>
+      <TableHead>Reviews</TableHead>
       <TableHead>Status</TableHead>
       <TableHead>Priority</TableHead>
+      <TableHead>Owner Name</TableHead>
       <TableHead>Owner Phone</TableHead>
       <TableHead>Owner Email</TableHead>
       <TableHead>Last Contact</TableHead>
