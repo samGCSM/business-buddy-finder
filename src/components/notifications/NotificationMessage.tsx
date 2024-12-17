@@ -4,12 +4,14 @@ interface NotificationMessageProps {
 
 const NotificationMessage = ({ notification }: NotificationMessageProps) => {
   const formatMessage = () => {
-    const noteMatch = notification.message.match(/New note from (.*?) on prospect/);
+    const noteMatch = notification.message.match(/New note from (.*?) on prospect (.*)/);
     if (noteMatch) {
       const userType = noteMatch[1];
       return (
         <div>
-          <p className="font-medium">New note from {userType}</p>
+          <p className="font-medium">
+            New note from {userType} on {notification.businessName || 'Unknown Business'}
+          </p>
           <p className="text-sm text-gray-600 mt-1">{notification.content}</p>
         </div>
       );

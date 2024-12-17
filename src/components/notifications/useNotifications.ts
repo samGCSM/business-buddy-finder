@@ -25,8 +25,35 @@ export const useNotifications = () => {
         throw error;
       }
 
+      // Get all prospect IDs from notifications
+      const prospectIds = notificationsData.reduce((acc: string[], record: any) => {
+        const prospectIdsFromRecord = record.notifications?.map((n: any) => n.prospectId) || [];
+        return [...acc, ...prospectIdsFromRecord];
+      }, []);
+
+      // Fetch business names for all prospects
+      const { data: prospectsData, error: prospectsError } = await supabase
+        .from('prospects')
+        .select('id, business_name')
+        .in('id', prospectIds);
+
+      if (prospectsError) {
+        console.error('Error fetching prospects:', prospectsError);
+        throw prospectsError;
+      }
+
+      // Create a map of prospect IDs to business names
+      const businessNameMap = prospectsData.reduce((acc: {[key: string]: string}, prospect: any) => {
+        acc[prospect.id] = prospect.business_name;
+        return acc;
+      }, {});
+
       const allNotifications = notificationsData.reduce((acc: any[], record: any) => {
-        return [...acc, ...(record.notifications || [])];
+        const notificationsWithBusinessNames = (record.notifications || []).map((notification: any) => ({
+          ...notification,
+          businessName: businessNameMap[notification.prospectId] || 'Unknown Business'
+        }));
+        return [...acc, ...notificationsWithBusinessNames];
       }, []);
 
       allNotifications.sort((a: any, b: any) => 
