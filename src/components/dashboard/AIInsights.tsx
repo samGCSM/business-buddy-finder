@@ -2,51 +2,24 @@ import { Card } from "@/components/ui/card";
 import { Lightbulb } from "lucide-react";
 import InsightsList from "./insights/InsightsList";
 import { useInsights } from "./insights/useInsights";
-import { useSession } from '@supabase/auth-helpers-react';
-import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useState, useEffect } from "react";
 
 const AIInsights = () => {
-  const session = useSession();
-  const [userId, setUserId] = useState<number | null>(null);
-  const { insights, isLoading, error } = useInsights(userId);
+  const [currentUser, setCurrentUser] = useState(null);
+  const { insights, isLoading, error } = useInsights(currentUser?.id);
 
   useEffect(() => {
-    const getCurrentUserId = async () => {
-      if (!session) {
-        console.log('AIInsights - No session found');
-        setUserId(null);
-        return;
-      }
+    // Simple way to get the current user from localStorage
+    const storedUser = localStorage.getItem('currentUser');
+    if (storedUser) {
+      console.log('AIInsights - Found user in localStorage');
+      setCurrentUser(JSON.parse(storedUser));
+    } else {
+      console.log('AIInsights - No user found in localStorage');
+    }
+  }, []);
 
-      try {
-        // Get the current user's ID directly from the users table
-        const { data: userData, error: userError } = await supabase
-          .from('users')
-          .select('id')
-          .eq('email', session.user.email)
-          .single();
-
-        if (userError) {
-          console.error('AIInsights - Error getting user:', userError);
-          setUserId(null);
-          return;
-        }
-
-        if (userData) {
-          console.log('AIInsights - Found user ID:', userData.id);
-          setUserId(userData.id);
-        }
-      } catch (error) {
-        console.error('AIInsights - Error in getCurrentUserId:', error);
-        setUserId(null);
-      }
-    };
-
-    getCurrentUserId();
-  }, [session]);
-
-  if (!session) {
+  if (!currentUser) {
     return (
       <Card className="p-4">
         <p className="text-sm text-gray-500">Please log in to view insights</p>
