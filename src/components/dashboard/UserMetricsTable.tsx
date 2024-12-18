@@ -7,6 +7,7 @@ import { fromZonedTime, toZonedTime } from 'date-fns-tz';
 interface UserMetric {
   id: number;
   email: string;
+  full_name: string;
   totalProspects: number;
   newProspects: number;
   emailsSent: number;
@@ -98,6 +99,7 @@ const UserMetricsTable = ({ userRole, userId }: UserMetricsTableProps) => {
           return {
             id: user.id,
             email: user.email || '',
+            full_name: user.full_name || 'N/A',
             totalProspects: userProspects.length,
             newProspects: userProspects.filter(p => 
               new Date(p.created_at || '') >= sevenDaysAgo
@@ -150,7 +152,7 @@ const UserMetricsTable = ({ userRole, userId }: UserMetricsTableProps) => {
           <TableBody>
             {userMetrics.map((metric) => (
               <TableRow key={metric.id}>
-                <TableCell>{metric.email}</TableCell>
+                <TableCell>{metric.full_name}</TableCell>
                 <TableCell>{metric.totalProspects}</TableCell>
                 <TableCell>{metric.newProspects}</TableCell>
                 <TableCell>{metric.emailsSent}</TableCell>

@@ -7,34 +7,35 @@ import { useMetrics } from "@/hooks/useMetrics";
 import DashboardMetrics from "@/components/dashboard/DashboardMetrics";
 import MetricsGraph from "@/components/dashboard/MetricsGraph";
 import UserMetricsTable from "@/components/dashboard/UserMetricsTable";
-import InsightCard from "@/components/dashboard/InsightCard";
-import { getInsights } from "@/services/insightsService";
-import { getCurrentUser } from "@/services/userService";
 
 const Home = () => {
   const navigate = useNavigate();
   const { metrics, userRole } = useMetrics();
-  const [insight, setInsight] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
   const [userId, setUserId] = useState<number | null>(null);
 
   useEffect(() => {
-    const loadInsights = async () => {
+    const loadData = async () => {
       try {
-        const currentUser = await getCurrentUser();
-        if (!currentUser) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
           navigate("/login");
           return;
         }
 
-        setUserId(currentUser.id);
-        const userInsight = await getInsights(currentUser.id, currentUser.type);
-        setInsight(userInsight.dailyInsight);
+        const { data: userData, error: userError } = await supabase
+          .from('users')
+          .select('id')
+          .eq('email', user.email)
+          .single();
+
+        if (userError) throw userError;
+        setUserId(userData.id);
       } catch (error) {
-        console.error('Error loading insights:', error);
+        console.error('Error loading data:', error);
         toast({
           title: "Error",
-          description: "Failed to load insights",
+          description: "Failed to load user data",
           variant: "destructive",
         });
       } finally {
@@ -42,7 +43,7 @@ const Home = () => {
       }
     };
 
-    loadInsights();
+    loadData();
   }, [navigate]);
 
   const handleLogout = async () => {
@@ -79,13 +80,6 @@ const Home = () => {
         </div>
 
         <UserMetricsTable userId={userId} userRole={userRole} />
-
-        <div className="mt-8">
-          <InsightCard 
-            title="Daily Sales Insight" 
-            content={insight} 
-          />
-        </div>
       </div>
     </div>
   );
