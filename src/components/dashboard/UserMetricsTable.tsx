@@ -1,0 +1,171 @@
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { format, subDays } from 'date-fns';
+import { fromZonedTime, toZonedTime } from 'date-fns-tz';
+
+interface UserMetric {
+  id: number;
+  email: string;
+  totalProspects: number;
+  newProspects: number;
+  emailsSent: number;
+  callsMade: number;
+  meetingsSet: number;
+  bulkSearches: number;
+  savedSearches: number;
+  completedProspects: number;
+}
+
+interface UserMetricsTableProps {
+  userRole: string | null;
+  userId: number | null;
+}
+
+const timeZone = 'America/New_York';
+
+const UserMetricsTable = ({ userRole, userId }: UserMetricsTableProps) => {
+  const [userMetrics, setUserMetrics] = useState<UserMetric[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchUserMetrics = async () => {
+      if (!userId || !['admin', 'supervisor'].includes(userRole || '')) return;
+
+      try {
+        console.log('Fetching user metrics for:', userId, 'role:', userRole);
+        
+        // Get supervised users
+        let query = supabase.from('users').select('*');
+        if (userRole === 'supervisor') {
+          query = query.eq('supervisor_id', userId);
+        }
+        
+        const { data: users, error: usersError } = await query;
+        
+        if (usersError) throw usersError;
+        
+        // Get date range
+        const nowInEST = toZonedTime(new Date(), timeZone);
+        const sevenDaysAgo = subDays(nowInEST, 7);
+        
+        // Get prospects for all users
+        const userIds = users.map(user => user.id);
+        const { data: prospects, error: prospectsError } = await supabase
+          .from('prospects')
+          .select('*')
+          .in('user_id', userIds)
+          .gte('created_at', sevenDaysAgo.toISOString());
+        
+        if (prospectsError) throw prospectsError;
+        
+        // Get saved searches
+        const { data: savedSearches, error: searchesError } = await supabase
+          .from('saved_searches')
+          .select('*')
+          .in('user_id', userIds)
+          .gte('created_at', sevenDaysAgo.toISOString());
+          
+        if (searchesError) throw searchesError;
+
+        // Calculate metrics for each user
+        const metrics = users.map(user => {
+          const userProspects = prospects?.filter(p => p.user_id === user.id) || [];
+          const userSearches = savedSearches?.filter(s => s.user_id === user.id) || [];
+          
+          let emailCount = 0;
+          let callCount = 0;
+          let meetingCount = 0;
+          let completedCount = 0;
+          
+          userProspects.forEach(prospect => {
+            if (prospect.activity_log) {
+              prospect.activity_log.forEach((activity: any) => {
+                const activityDate = new Date(activity.timestamp);
+                if (activityDate >= sevenDaysAgo) {
+                  if (activity.type === 'Email') emailCount++;
+                  if (activity.type === 'Phone Call') callCount++;
+                  if (activity.type === 'Meeting') meetingCount++;
+                }
+              });
+            }
+            
+            if (['Done', 'Meeting', 'Quoted'].includes(prospect.status || '')) {
+              completedCount++;
+            }
+          });
+
+          return {
+            id: user.id,
+            email: user.email || '',
+            totalProspects: userProspects.length,
+            newProspects: userProspects.filter(p => 
+              new Date(p.created_at || '') >= sevenDaysAgo
+            ).length,
+            emailsSent: emailCount,
+            callsMade: callCount,
+            meetingsSet: meetingCount,
+            bulkSearches: user.totalSearches || 0,
+            savedSearches: userSearches.length,
+            completedProspects: completedCount,
+          };
+        });
+
+        console.log('Calculated user metrics:', metrics);
+        setUserMetrics(metrics);
+      } catch (error) {
+        console.error('Error fetching user metrics:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchUserMetrics();
+  }, [userId, userRole]);
+
+  if (!['admin', 'supervisor'].includes(userRole || '')) return null;
+  
+  if (isLoading) {
+    return <div className="text-center py-4">Loading user metrics...</div>;
+  }
+
+  return (
+    <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 mt-8">
+      <h3 className="text-lg font-semibold mb-4">Team Performance (Last 7 Days)</h3>
+      <div className="overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>User</TableHead>
+              <TableHead>Total Prospects</TableHead>
+              <TableHead>New Prospects</TableHead>
+              <TableHead>Emails Sent</TableHead>
+              <TableHead>Calls Made</TableHead>
+              <TableHead>Meetings Set</TableHead>
+              <TableHead>Bulk Searches</TableHead>
+              <TableHead>Saved Searches</TableHead>
+              <TableHead>Completed</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {userMetrics.map((metric) => (
+              <TableRow key={metric.id}>
+                <TableCell>{metric.email}</TableCell>
+                <TableCell>{metric.totalProspects}</TableCell>
+                <TableCell>{metric.newProspects}</TableCell>
+                <TableCell>{metric.emailsSent}</TableCell>
+                <TableCell>{metric.callsMade}</TableCell>
+                <TableCell>{metric.meetingsSet}</TableCell>
+                <TableCell>{metric.bulkSearches}</TableCell>
+                <TableCell>{metric.savedSearches}</TableCell>
+                <TableCell>{metric.completedProspects}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    </div>
+  );
+};
+
+export default UserMetricsTable;

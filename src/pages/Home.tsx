@@ -6,6 +6,7 @@ import { toast } from "@/hooks/use-toast";
 import { useMetrics } from "@/hooks/useMetrics";
 import DashboardMetrics from "@/components/dashboard/DashboardMetrics";
 import MetricsGraph from "@/components/dashboard/MetricsGraph";
+import UserMetricsTable from "@/components/dashboard/UserMetricsTable";
 import InsightCard from "@/components/dashboard/InsightCard";
 import { getInsights } from "@/services/insightsService";
 import { getCurrentUser } from "@/services/userService";
@@ -76,6 +77,8 @@ const Home = () => {
         <div className="mt-8">
           <MetricsGraph userId={userId} userRole={userRole} />
         </div>
+
+        <UserMetricsTable userId={userId} userRole={userRole} />
 
         <div className="mt-8">
           <InsightCard 
