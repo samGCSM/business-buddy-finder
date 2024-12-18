@@ -7,7 +7,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { getCurrentUser } from "@/services/userService";
 
 interface ProfileFormProps {
-  session: any;
   fullName: string;
   email: string;
   onUpdateProfile: (newFullName: string) => void;

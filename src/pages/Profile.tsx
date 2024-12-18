@@ -1,25 +1,22 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useSession } from "@supabase/auth-helpers-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { UserRound, Camera } from "lucide-react";
 import PasswordChangeForm from "@/components/auth/PasswordChangeForm";
 import ProfileForm from "@/components/profile/ProfileForm";
+import ProfileAvatar from "@/components/profile/ProfileAvatar";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { getCurrentUser } from "@/services/userService";
 
 const Profile = () => {
-  const session = useSession();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const [uploading, setUploading] = useState(false);
+  const [sessionId, setSessionId] = useState<string | null>(null);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -36,31 +33,29 @@ const Profile = () => {
         setEmail(currentUser.email || '');
         setFullName(currentUser.full_name || '');
         
-        // Only fetch profile if we have a session
+        // Get session ID from auth
+        const { data: { session } } = await supabase.auth.getSession();
         if (session?.user?.id) {
-          await getProfile(currentUser.email);
+          setSessionId(session.user.id);
+          await getProfile(session.user.id);
         }
       } catch (error) {
         console.error('Error in checkAuth:', error);
         navigate("/login");
+      } finally {
+        setLoading(false);
       }
     };
     
     checkAuth();
-  }, [navigate, session]);
+  }, [navigate]);
 
-  const getProfile = async (userEmail: string) => {
+  const getProfile = async (userId: string) => {
     try {
-      if (!session?.user?.id) {
-        console.log('No session user ID available');
-        return;
-      }
-
-      // Fetch avatar from profiles table
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('avatar_url')
-        .eq('id', session.user.id)
+        .eq('id', userId)
         .single();
 
       if (profileError) {
@@ -85,57 +80,6 @@ const Profile = () => {
         description: "Failed to load profile",
         variant: "destructive",
       });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const uploadAvatar = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    try {
-      setUploading(true);
-      if (!event.target.files || event.target.files.length === 0) {
-        throw new Error('You must select an image to upload.');
-      }
-
-      if (!session?.user?.id) {
-        throw new Error('No session user ID available');
-      }
-
-      const file = event.target.files[0];
-      const fileExt = file.name.split('.').pop();
-      const filePath = `${session.user.id}/${Math.random()}.${fileExt}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(filePath);
-
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ avatar_url: publicUrl })
-        .eq('id', session.user.id);
-
-      if (updateError) throw updateError;
-
-      setAvatarUrl(publicUrl);
-      toast({
-        title: "Success",
-        description: "Avatar updated successfully",
-      });
-    } catch (error) {
-      console.error('Error uploading avatar:', error);
-      toast({
-        title: "Error",
-        description: "Failed to upload avatar",
-        variant: "destructive",
-      });
-    } finally {
-      setUploading(false);
     }
   };
 
@@ -147,7 +91,17 @@ const Profile = () => {
   };
 
   if (loading) {
-    return <div className="flex justify-center items-center min-h-screen">Loading...</div>;
+    return (
+      <div className="container mx-auto p-6">
+        <div className="max-w-2xl mx-auto">
+          <Card className="p-6">
+            <div className="flex justify-center items-center h-64">
+              Loading...
+            </div>
+          </Card>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -162,31 +116,15 @@ const Profile = () => {
         
         <Card className="p-6 space-y-6">
           <div className="flex items-center space-x-4">
-            <div className="relative">
-              <Avatar className="h-24 w-24">
-                <AvatarImage src={avatarUrl || ''} alt="Profile" />
-                <AvatarFallback>
-                  <UserRound className="h-12 w-12" />
-                </AvatarFallback>
-              </Avatar>
-              <label 
-                htmlFor="avatar-upload" 
-                className="absolute bottom-0 right-0 p-1 bg-primary text-primary-foreground rounded-full cursor-pointer hover:bg-primary/90"
-              >
-                <Camera className="h-4 w-4" />
-                <input
-                  id="avatar-upload"
-                  type="file"
-                  accept="image/*"
-                  onChange={uploadAvatar}
-                  disabled={uploading}
-                  className="hidden"
-                />
-              </label>
-            </div>
+            {sessionId && (
+              <ProfileAvatar 
+                sessionId={sessionId}
+                avatarUrl={avatarUrl}
+                onAvatarUpdate={setAvatarUrl}
+              />
+            )}
             
             <ProfileForm 
-              session={session}
               fullName={fullName}
               email={email}
               onUpdateProfile={setFullName}
@@ -202,7 +140,7 @@ const Profile = () => {
               </DialogTrigger>
               <DialogContent>
                 <PasswordChangeForm 
-                  userId={session?.user?.id || ''} 
+                  userId={sessionId || ''} 
                   onClose={handleCloseDialog} 
                 />
               </DialogContent>
