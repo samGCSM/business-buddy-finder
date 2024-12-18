@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { getCurrentUser } from "@/services/userService";
 
 interface ProfileFormProps {
   session: any;
@@ -12,17 +13,22 @@ interface ProfileFormProps {
   onUpdateProfile: (newFullName: string) => void;
 }
 
-const ProfileForm = ({ session, fullName, email, onUpdateProfile }: ProfileFormProps) => {
+const ProfileForm = ({ fullName, email, onUpdateProfile }: ProfileFormProps) => {
   const [newFullName, setNewFullName] = useState(fullName);
 
   const updateProfile = async () => {
     try {
       console.log('Updating profile with full name:', newFullName);
       
+      const currentUser = await getCurrentUser();
+      if (!currentUser) {
+        throw new Error('No user found');
+      }
+
       const { error: usersError } = await supabase
         .from('users')
         .update({ full_name: newFullName })
-        .eq('email', session.user.email);
+        .eq('email', currentUser.email);
 
       if (usersError) throw usersError;
 

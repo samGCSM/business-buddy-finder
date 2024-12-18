@@ -17,11 +17,11 @@ const Profile = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
-    console.log("Profile - Session state:", session);
     const checkAuth = async () => {
       const currentUser = await getCurrentUser();
       console.log("Profile - Current user:", currentUser);
@@ -31,38 +31,27 @@ const Profile = () => {
         navigate("/login");
         return;
       }
-      getProfile();
+
+      setEmail(currentUser.email || '');
+      setFullName(currentUser.full_name || '');
+      getProfile(currentUser.email);
     };
     
     checkAuth();
-  }, [navigate, session]);
+  }, [navigate]);
 
-  const getProfile = async () => {
+  const getProfile = async (userEmail: string) => {
     try {
-      if (!session?.user?.email) return;
-
-      // Fetch user data from the users table
-      const { data: userData, error: userError } = await supabase
-        .from('users')
-        .select('full_name')
-        .eq('email', session.user.email)
-        .single();
-
-      if (userError) throw userError;
-
-      if (userData) {
-        console.log('Fetched user data:', userData);
-        setFullName(userData.full_name || '');
-      }
-
       // Fetch avatar from profiles table
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('avatar_url')
-        .eq('id', session.user.id)
+        .eq('id', session?.user?.id)
         .single();
 
-      if (profileError) throw profileError;
+      if (profileError && profileError.code !== 'PGRST116') {
+        throw profileError;
+      }
 
       if (profileData) {
         setAvatarUrl(profileData.avatar_url);
@@ -124,24 +113,6 @@ const Profile = () => {
     }
   };
 
-  const handleSignOut = async () => {
-    try {
-      await supabase.auth.signOut();
-      toast({
-        title: "Success",
-        description: "Signed out successfully",
-      });
-      navigate("/login");
-    } catch (error) {
-      console.error("Error signing out:", error);
-      toast({
-        title: "Error",
-        description: "Failed to sign out",
-        variant: "destructive",
-      });
-    }
-  };
-
   const handleCloseDialog = () => {
     const closeButton = document.querySelector('button[aria-label="Close"]') as HTMLButtonElement;
     if (closeButton) {
@@ -191,7 +162,7 @@ const Profile = () => {
             <ProfileForm 
               session={session}
               fullName={fullName}
-              email={session?.user?.email || ''}
+              email={email}
               onUpdateProfile={setFullName}
             />
           </div>
@@ -210,14 +181,6 @@ const Profile = () => {
                 />
               </DialogContent>
             </Dialog>
-
-            <Button 
-              variant="destructive" 
-              onClick={handleSignOut}
-              className="w-full"
-            >
-              Sign Out
-            </Button>
           </div>
         </Card>
       </div>
