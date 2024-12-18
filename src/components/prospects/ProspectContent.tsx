@@ -29,7 +29,7 @@ const ProspectContent = ({
   supervisedUsers = []
 }: ProspectContentProps) => {
   const [isAddFormVisible, setIsAddFormVisible] = useState(showAddForm);
-  const [selectedTerritory, setSelectedTerritory] = useState<string>('');
+  const [selectedTerritory, setSelectedTerritory] = useState<string>("all");
 
   const handleAddClick = () => {
     setIsAddFormVisible(true);
@@ -39,9 +39,9 @@ const ProspectContent = ({
   const territories = Array.from(new Set(prospects.map(p => p.territory).filter(Boolean)));
 
   // Filter prospects by territory
-  const filteredProspects = selectedTerritory
-    ? prospects.filter(p => p.territory === selectedTerritory)
-    : prospects;
+  const filteredProspects = selectedTerritory === "all"
+    ? prospects
+    : prospects.filter(p => p.territory === selectedTerritory);
 
   // Allow all users to add prospects
   const canAddProspects = true;
@@ -65,7 +65,7 @@ const ProspectContent = ({
               <SelectValue placeholder="Filter by Territory" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Territories</SelectItem>
+              <SelectItem value="all">All Territories</SelectItem>
               {territories.map((territory) => (
                 <SelectItem key={territory} value={territory}>
                   {territory}

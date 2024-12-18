@@ -17,6 +17,7 @@ export interface ProspectFormState {
   owner_email: string;
   rating: string;
   review_count: string;
+  territory: string;
 }
 
 const initialState: ProspectFormState = {
@@ -33,6 +34,7 @@ const initialState: ProspectFormState = {
   owner_email: "",
   rating: "0.0",
   review_count: "0",
+  territory: "",
 };
 
 export const useProspectForm = (onSuccess: () => void) => {

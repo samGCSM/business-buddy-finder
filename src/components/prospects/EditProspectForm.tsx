@@ -20,6 +20,7 @@ interface EditProspectFormProps {
     owner_email: string;
     rating: number;
     review_count: number;
+    territory: string;
   };
   onClose: () => void;
   onSuccess: () => void;
@@ -40,6 +41,7 @@ const EditProspectForm = ({ prospect, onClose, onSuccess }: EditProspectFormProp
     owner_email: prospect.owner_email || "",
     rating: prospect.rating?.toString() || "0.0",
     review_count: prospect.review_count?.toString() || "0",
+    territory: prospect.territory || "",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
