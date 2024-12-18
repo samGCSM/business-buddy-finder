@@ -23,34 +23,56 @@ const Profile = () => {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const currentUser = await getCurrentUser();
-      console.log("Profile - Current user:", currentUser);
-      
-      if (!currentUser) {
-        console.log("Profile - No current user, redirecting to login");
-        navigate("/login");
-        return;
-      }
+      try {
+        const currentUser = await getCurrentUser();
+        console.log("Profile - Current user:", currentUser);
+        
+        if (!currentUser) {
+          console.log("Profile - No current user, redirecting to login");
+          navigate("/login");
+          return;
+        }
 
-      setEmail(currentUser.email || '');
-      setFullName(currentUser.full_name || '');
-      getProfile(currentUser.email);
+        setEmail(currentUser.email || '');
+        setFullName(currentUser.full_name || '');
+        
+        // Only fetch profile if we have a session
+        if (session?.user?.id) {
+          await getProfile(currentUser.email);
+        }
+      } catch (error) {
+        console.error('Error in checkAuth:', error);
+        navigate("/login");
+      }
     };
     
     checkAuth();
-  }, [navigate]);
+  }, [navigate, session]);
 
   const getProfile = async (userEmail: string) => {
     try {
+      if (!session?.user?.id) {
+        console.log('No session user ID available');
+        return;
+      }
+
       // Fetch avatar from profiles table
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('avatar_url')
-        .eq('id', session?.user?.id)
+        .eq('id', session.user.id)
         .single();
 
-      if (profileError && profileError.code !== 'PGRST116') {
-        throw profileError;
+      if (profileError) {
+        console.error('Error fetching profile:', profileError);
+        if (profileError.code !== 'PGRST116') {
+          toast({
+            title: "Error",
+            description: "Failed to load profile",
+            variant: "destructive",
+          });
+        }
+        return;
       }
 
       if (profileData) {
@@ -75,9 +97,13 @@ const Profile = () => {
         throw new Error('You must select an image to upload.');
       }
 
+      if (!session?.user?.id) {
+        throw new Error('No session user ID available');
+      }
+
       const file = event.target.files[0];
       const fileExt = file.name.split('.').pop();
-      const filePath = `${session?.user?.id}/${Math.random()}.${fileExt}`;
+      const filePath = `${session.user.id}/${Math.random()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from('avatars')
@@ -92,7 +118,7 @@ const Profile = () => {
       const { error: updateError } = await supabase
         .from('profiles')
         .update({ avatar_url: publicUrl })
-        .eq('id', session?.user?.id);
+        .eq('id', session.user.id);
 
       if (updateError) throw updateError;
 
