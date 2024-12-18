@@ -17,19 +17,13 @@ const Home = () => {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
+        const currentUser = localStorage.getItem('currentUser');
+        if (!currentUser) {
           navigate("/login");
           return;
         }
 
-        const { data: userData, error: userError } = await supabase
-          .from('users')
-          .select('id')
-          .eq('email', user.email)
-          .single();
-
-        if (userError) throw userError;
+        const userData = JSON.parse(currentUser);
         setUserId(userData.id);
       } catch (error) {
         console.error('Error loading data:', error);
@@ -48,8 +42,8 @@ const Home = () => {
 
   const handleLogout = async () => {
     try {
-      await supabase.auth.signOut();
-      navigate("/");
+      localStorage.removeItem('currentUser');
+      navigate("/login");
       toast({
         title: "Success",
         description: "Logged out successfully",
