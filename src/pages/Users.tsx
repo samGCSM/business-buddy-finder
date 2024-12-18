@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
-import { getUsers, saveUsers, setCurrentUser } from "@/services/userService";
+import { getUsers, getCurrentUser } from "@/services/userService";
 import type { User } from "@/types/user";
 import PasswordChangeForm from "@/components/auth/PasswordChangeForm";
 import { UserTable } from "@/components/users/UserTable";
@@ -37,8 +37,8 @@ const Users = () => {
 
   const handleLogout = async () => {
     try {
-      await setCurrentUser(null);
-      navigate("/");
+      localStorage.removeItem('currentUser');
+      navigate("/login");
       toast({
         title: "Success",
         description: "Logged out successfully",

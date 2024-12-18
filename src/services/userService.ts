@@ -15,7 +15,54 @@ export const getCurrentUser = async (): Promise<User | null> => {
   return null;
 };
 
-// Additional code to fetch user from Supabase if not found in localStorage
+export const getUsers = async (): Promise<User[]> => {
+  console.log('Getting users from service');
+  const { data, error } = await supabase
+    .from('users')
+    .select('*');
+
+  if (error) {
+    console.error('Error fetching users:', error);
+    throw error;
+  }
+
+  return data || [];
+};
+
+export const saveUsers = async (users: User[]) => {
+  console.log('Saving users:', users);
+  for (const user of users) {
+    if (user && user.id) {
+      const { error } = await supabase
+        .from('users')
+        .upsert({
+          id: user.id,
+          email: user.email,
+          password: user.password,
+          type: user.type,
+          full_name: user.full_name,
+          lastLogin: user.lastLogin,
+          totalSearches: user.totalSearches,
+          savedSearches: user.savedSearches
+        });
+
+      if (error) {
+        console.error('Error saving user:', error);
+        throw error;
+      }
+    }
+  }
+};
+
+export const setCurrentUser = async (user: User | null) => {
+  console.log('Setting current user:', user);
+  if (user) {
+    localStorage.setItem('currentUser', JSON.stringify(user));
+  } else {
+    localStorage.removeItem('currentUser');
+  }
+};
+
 export const fetchUserFromSupabase = async (email: string): Promise<User | null> => {
   const { data, error } = await supabase
     .from('users')
