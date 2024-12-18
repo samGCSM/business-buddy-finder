@@ -15,4 +15,5 @@ export interface User {
   savedSearches: number;
   stats?: UserStats;
   supervisor_id?: number;
+  full_name?: string;
 }
