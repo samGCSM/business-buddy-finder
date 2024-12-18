@@ -13,13 +13,10 @@ const Login = () => {
 
   useEffect(() => {
     const checkAuth = async () => {
-      // Check Supabase session
-      const { data: { session } } = await supabase.auth.getSession();
       const currentUser = await getCurrentUser();
-      console.log("Login - Current session:", session);
-      console.log("Login - Current user:", currentUser);
+      console.log("Login - Current user from localStorage:", currentUser);
       
-      if (session && currentUser) {
+      if (currentUser) {
         console.log("Login - User found, redirecting to home");
         setIsLoggedIn(true);
         setIsAdmin(currentUser.type === 'admin');
@@ -28,7 +25,7 @@ const Login = () => {
     };
     
     checkAuth();
-  }, [session, navigate]);
+  }, [navigate]);
 
   const handleLogin = async (isLoggedIn: boolean, userType: 'admin' | 'user') => {
     console.log("Login - Login handler:", { isLoggedIn, userType });

@@ -17,7 +17,7 @@ export const useLogin = (onLogin: (isLoggedIn: boolean, userType: 'admin' | 'use
         .select('*')
         .eq('email', email)
         .eq('password', password)
-        .maybeSingle();
+        .single();
 
       if (userError) {
         console.error('Error fetching user from users table:', userError);
