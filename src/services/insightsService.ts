@@ -38,31 +38,21 @@ export const getInsights = async (userId: number, userType: string) => {
       
       // Handle rate limit error specifically
       if (insightError.status === 429) {
-        const fallbackMessage = "Today's insight is not available right now due to high demand. Please try again in a few minutes.";
+        const fallbackMessage = "Your daily insight will be available shortly. Please check back in a few minutes.";
+        toast({
+          title: "Rate limit reached",
+          description: "Please try again in a few minutes.",
+          variant: "default"
+        });
         return { dailyInsight: fallbackMessage };
       }
       
       throw insightError;
     }
 
-    console.log('Generated insight:', insightData);
-
     // Only try to store the insight if we successfully generated one
     if (insightData?.content) {
-      // Get the current session to ensure we're authenticated
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError) {
-        console.error('Error getting session:', sessionError);
-        throw sessionError;
-      }
-
-      if (!session) {
-        console.error('No active session found');
-        throw new Error('Authentication required');
-      }
-
-      // Insert the insight with explicit user_id
+      // Store the generated insight
       const { error: insertError } = await supabase
         .from('ai_insights')
         .insert({
@@ -81,12 +71,17 @@ export const getInsights = async (userId: number, userType: string) => {
 
     // Fallback message if no content was generated
     return {
-      dailyInsight: 'Unable to generate insight at this time. Please try again later.'
+      dailyInsight: 'Your daily insight will be available shortly. Please check back in a few minutes.'
     };
   } catch (error) {
     console.error('Error in getInsights:', error);
+    toast({
+      title: "Temporarily unavailable",
+      description: "Daily insights will be back shortly. Please try again in a few minutes.",
+      variant: "default"
+    });
     return {
-      dailyInsight: 'Unable to load insights at this time. Please try again later.'
+      dailyInsight: 'Your daily insight will be available shortly. Please check back in a few minutes.'
     };
   }
 };
