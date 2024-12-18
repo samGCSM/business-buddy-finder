@@ -23,8 +23,8 @@ const Profile = () => {
     console.log("Profile - Session state:", session);
     const checkAuth = async () => {
       if (!session?.user?.email) {
-        console.log("Profile - No current user, redirecting to home");
-        navigate("/");
+        console.log("Profile - No current user, redirecting to login");
+        navigate("/login");
         return;
       }
       getProfile();
@@ -127,7 +127,7 @@ const Profile = () => {
         title: "Success",
         description: "Signed out successfully",
       });
-      navigate("/");
+      navigate("/login");
     } catch (error) {
       console.error("Error signing out:", error);
       toast({
