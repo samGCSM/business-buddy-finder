@@ -13,6 +13,31 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
 const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
 
+// Rate limiting cache using Deno's native cache API
+const cache = new Map();
+const RATE_LIMIT_WINDOW = 60000; // 1 minute
+const MAX_REQUESTS = 5; // 5 requests per minute per user
+
+function isRateLimited(userId: number): boolean {
+  const now = Date.now();
+  const userKey = `rate_limit_${userId}`;
+  const userRequests = cache.get(userKey) || [];
+
+  // Clean up old requests
+  const validRequests = userRequests.filter((timestamp: number) => 
+    now - timestamp < RATE_LIMIT_WINDOW
+  );
+
+  if (validRequests.length >= MAX_REQUESTS) {
+    return true;
+  }
+
+  // Add current request
+  validRequests.push(now);
+  cache.set(userKey, validRequests);
+  return false;
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -20,27 +45,41 @@ serve(async (req) => {
   }
 
   try {
-    const { userId } = await req.json();
+    const { userId, userType } = await req.json();
     console.log('Generating insights for user:', userId);
 
-    // Check if we already have an insight generated today for this user
-    const today = new Date().toISOString().split('T')[0];
+    // Check rate limiting
+    if (isRateLimited(userId)) {
+      console.log('Rate limit exceeded for user:', userId);
+      return new Response(
+        JSON.stringify({
+          error: 'Rate limit exceeded',
+          content: "Today's insight is not available right now due to high demand. Please try again in a few minutes."
+        }),
+        { 
+          status: 429,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
+    // Check for existing recent insight first
     const { data: existingInsights, error: fetchError } = await supabase
       .from('ai_insights')
       .select('*')
       .eq('user_id', userId)
-      .gte('created_at', today)
+      .eq('content_type', 'daily_insight')
+      .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
       .order('created_at', { ascending: false })
       .limit(1);
 
     if (fetchError) {
       console.error('Error fetching existing insights:', fetchError);
-      throw new Error('Failed to check existing insights');
+      throw fetchError;
     }
 
-    // If we have an insight from today, return it
+    // If we have today's insight, return it
     if (existingInsights && existingInsights.length > 0) {
-      console.log('Returning existing insight from today');
       return new Response(
         JSON.stringify({ content: existingInsights[0].content }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -55,7 +94,7 @@ serve(async (req) => {
 
     if (prospectsError) {
       console.error('Error fetching prospects:', prospectsError);
-      throw new Error('Failed to fetch prospects data');
+      throw prospectsError;
     }
 
     // Prepare the prompt with actual data
@@ -66,7 +105,7 @@ serve(async (req) => {
       Generate a short, encouraging insight (max 2 sentences) about their sales progress. 
       Focus on being motivational and actionable.`;
 
-    // Call OpenAI with retry logic
+    // Call OpenAI with exponential backoff
     let retries = 3;
     let delay = 1000; // Start with 1 second delay
 
@@ -89,24 +128,8 @@ serve(async (req) => {
           }),
         });
 
-        if (response.status === 429) {
-          console.log(`Rate limit hit, retries left: ${retries}`);
-          retries--;
-          if (retries > 0) {
-            await new Promise(resolve => setTimeout(resolve, delay));
-            delay *= 2; // Exponential backoff
-            continue;
-          }
-          return new Response(
-            JSON.stringify({
-              error: 'Rate limit exceeded',
-              content: "Today's insight is not available right now due to high demand. Please try again in a few minutes."
-            }),
-            { 
-              status: 429,
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-            }
-          );
+        if (!response.ok) {
+          throw new Error(`OpenAI API error: ${response.status}`);
         }
 
         const data = await response.json();
@@ -123,7 +146,7 @@ serve(async (req) => {
 
         if (insertError) {
           console.error('Error storing insight:', insertError);
-          throw new Error('Failed to store insight');
+          throw insertError;
         }
 
         return new Response(
@@ -131,11 +154,11 @@ serve(async (req) => {
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       } catch (error) {
-        console.error('Error in generate-insights function:', error);
+        console.error(`Attempt ${4 - retries} failed:`, error);
         retries--;
         if (retries > 0) {
           await new Promise(resolve => setTimeout(resolve, delay));
-          delay *= 2;
+          delay *= 2; // Exponential backoff
           continue;
         }
         throw error;
