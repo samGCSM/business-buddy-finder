@@ -16,6 +16,7 @@ interface ProspectFormData {
   owner_email: string;
   rating: string;
   review_count: string;
+  territory: string;
 }
 
 interface ProspectFormFieldsProps {
@@ -39,6 +40,7 @@ const ProspectFormFields = ({
         phoneNumber={formData.phone_number}
         rating={formData.rating}
         reviewCount={formData.review_count}
+        territory={formData.territory}
         onChange={handleChange}
       />
       <OwnerInfoFields
