@@ -1,15 +1,24 @@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { getCurrentUser } from "@/services/userService";
 
 export const getInsights = async (userId: number, userType: string) => {
   console.log('Getting insights for user:', userId, 'type:', userType);
   
   try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) {
+      console.error('No current user found');
+      return { 
+        dailyInsight: 'Please log in to view your insights.' 
+      };
+    }
+
     // Check for existing recent insight
     const { data: existingInsights, error: fetchError } = await supabase
       .from('ai_insights')
       .select('*')
-      .eq('user_id', userId)
+      .eq('user_id', currentUser.id)
       .eq('content_type', 'daily_insight')
       .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
       .order('created_at', { ascending: false })
@@ -30,7 +39,7 @@ export const getInsights = async (userId: number, userType: string) => {
     // Generate new insight if we don't have one from today
     console.log('Generating new insight via edge function');
     const { data: insightData, error: insightError } = await supabase.functions.invoke('generate-insights', {
-      body: { userId, userType }
+      body: { userId: currentUser.id, userType: currentUser.type }
     });
 
     if (insightError) {
@@ -38,7 +47,7 @@ export const getInsights = async (userId: number, userType: string) => {
       
       // Handle rate limit error specifically
       if (insightError.status === 429) {
-        const fallbackMessage = "Your daily insight will be available shortly. Please check back in a few minutes.";
+        const fallbackMessage = "Today's insight will be available shortly. Please check back in a few minutes.";
         toast({
           title: "Rate limit reached",
           description: "Please try again in a few minutes.",
@@ -56,7 +65,7 @@ export const getInsights = async (userId: number, userType: string) => {
       const { error: insertError } = await supabase
         .from('ai_insights')
         .insert({
-          user_id: userId,
+          user_id: currentUser.id,
           content_type: 'daily_insight',
           content: insightData.content
         });
