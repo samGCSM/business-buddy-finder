@@ -3,15 +3,13 @@ import { useNavigate } from "react-router-dom";
 import { useSession } from "@supabase/auth-helpers-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { toast } from "@/hooks/use-toast";
-import { User, Camera, UserRound } from "lucide-react";
+import { UserRound, Camera } from "lucide-react";
 import PasswordChangeForm from "@/components/auth/PasswordChangeForm";
+import ProfileForm from "@/components/profile/ProfileForm";
 import { supabase } from "@/integrations/supabase/client";
-import { getCurrentUser } from "@/services/userService";
+import { toast } from "@/hooks/use-toast";
 
 const Profile = () => {
   const session = useSession();
@@ -24,9 +22,7 @@ const Profile = () => {
   useEffect(() => {
     console.log("Profile - Session state:", session);
     const checkAuth = async () => {
-      const currentUser = await getCurrentUser();
-      console.log("Profile - Current user:", currentUser);
-      if (!currentUser) {
+      if (!session?.user?.email) {
         console.log("Profile - No current user, redirecting to home");
         navigate("/");
         return;
@@ -39,19 +35,33 @@ const Profile = () => {
 
   const getProfile = async () => {
     try {
-      if (!session?.user?.id) return;
+      if (!session?.user?.email) return;
 
-      const { data, error } = await supabase
+      // Fetch user data from the users table
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('full_name')
+        .eq('email', session.user.email)
+        .single();
+
+      if (userError) throw userError;
+
+      if (userData) {
+        console.log('Fetched user data:', userData);
+        setFullName(userData.full_name || '');
+      }
+
+      // Fetch avatar from profiles table
+      const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select('full_name, avatar_url')
+        .select('avatar_url')
         .eq('id', session.user.id)
         .single();
 
-      if (error) throw error;
+      if (profileError) throw profileError;
 
-      if (data) {
-        setFullName(data.full_name || '');
-        setAvatarUrl(data.avatar_url);
+      if (profileData) {
+        setAvatarUrl(profileData.avatar_url);
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
@@ -62,34 +72,6 @@ const Profile = () => {
       });
     } finally {
       setLoading(false);
-    }
-  };
-
-  const updateProfile = async () => {
-    try {
-      if (!session?.user?.id) return;
-
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          full_name: fullName,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', session.user.id);
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Profile updated successfully",
-      });
-    } catch (error) {
-      console.error('Error updating profile:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update profile",
-        variant: "destructive",
-      });
     }
   };
 
@@ -201,26 +183,13 @@ const Profile = () => {
                 />
               </label>
             </div>
-            <div className="flex-1">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={session?.user?.email || ''}
-                disabled
-                className="mb-4"
-              />
-              <Label htmlFor="fullName">Full Name</Label>
-              <Input
-                id="fullName"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                className="mb-2"
-              />
-              <Button onClick={updateProfile} size="sm">
-                Update Profile
-              </Button>
-            </div>
+            
+            <ProfileForm 
+              session={session}
+              fullName={fullName}
+              email={session?.user?.email || ''}
+              onUpdateProfile={setFullName}
+            />
           </div>
 
           <div className="space-y-4 pt-4 border-t">
