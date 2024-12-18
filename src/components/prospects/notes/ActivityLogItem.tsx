@@ -67,10 +67,12 @@ const ActivityLogItem = ({ item, prospectId, onReply }: ActivityLogItemProps) =>
 
   const handleLike = async () => {
     try {
+      console.log('Handling like for item:', item);
       const newLikeCount = isLiked ? likes - 1 : likes + 1;
       const success = await updateActivityLogLikes(prospectId, item.timestamp, newLikeCount);
       
       if (success) {
+        console.log('Like updated successfully');
         setLikes(newLikeCount);
         setIsLiked(!isLiked);
       }
@@ -126,19 +128,19 @@ const ActivityLogItem = ({ item, prospectId, onReply }: ActivityLogItemProps) =>
           <Button 
             variant="ghost" 
             size="sm" 
-            className={`h-7 px-2 text-xs ${isLiked ? 'text-blue-600' : ''}`}
+            className={`h-7 px-2 text-xs flex items-center gap-1 ${isLiked ? 'text-blue-600' : ''}`}
             onClick={handleLike}
           >
-            <ThumbsUp className="h-3 w-3 mr-1" />
-            Like {likes > 0 && `(${likes})`}
+            <ThumbsUp className={`h-3 w-3 ${isLiked ? 'fill-current' : ''}`} />
+            {likes > 0 && `(${likes})`}
           </Button>
           <Button 
             variant="ghost" 
             size="sm" 
-            className="h-7 px-2 text-xs"
+            className="h-7 px-2 text-xs flex items-center gap-1"
             onClick={() => onReply(item)}
           >
-            <MessageSquare className="h-3 w-3 mr-1" />
+            <MessageSquare className="h-3 w-3" />
             Reply
           </Button>
         </div>
