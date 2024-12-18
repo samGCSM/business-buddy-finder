@@ -10,6 +10,7 @@ import PasswordChangeForm from "@/components/auth/PasswordChangeForm";
 import ProfileForm from "@/components/profile/ProfileForm";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { getCurrentUser } from "@/services/userService";
 
 const Profile = () => {
   const session = useSession();
@@ -22,7 +23,10 @@ const Profile = () => {
   useEffect(() => {
     console.log("Profile - Session state:", session);
     const checkAuth = async () => {
-      if (!session?.user?.email) {
+      const currentUser = await getCurrentUser();
+      console.log("Profile - Current user:", currentUser);
+      
+      if (!currentUser) {
         console.log("Profile - No current user, redirecting to login");
         navigate("/login");
         return;

@@ -1,64 +1,32 @@
-import { User } from '@/types/user';
-import * as supabaseService from './supabaseService';
-
-export const getUsers = async (): Promise<User[]> => {
-  console.log('Getting users from service');
-  return await supabaseService.getUsers();
-};
-
-export const saveUsers = async (users: User[]) => {
-  console.log('Saving users:', users);
-  for (const user of users) {
-    if (user && user.id) {
-      await supabaseService.saveUser(user);
-    }
-  }
-};
+import { supabase } from "@/integrations/supabase/client";
+import { User } from "@/types/user";
 
 export const getCurrentUser = async (): Promise<User | null> => {
-  console.log('Getting current user from service');
-  return await supabaseService.getCurrentUser();
+  console.log("Getting current user from service");
+  
+  // First try to get from localStorage
+  const storedUser = localStorage.getItem('currentUser');
+  console.log("Getting current user from localStorage");
+  
+  if (storedUser) {
+    return JSON.parse(storedUser);
+  }
+  
+  return null;
 };
 
-export const setCurrentUser = async (user: User | null) => {
-  console.log('Setting current user:', user);
-  if (user && user.id) {
-    localStorage.setItem('currentUser', JSON.stringify(user));
-    await supabaseService.saveUser(user);
-  } else {
-    localStorage.removeItem('currentUser');
-  }
-};
+// Additional code to fetch user from Supabase if not found in localStorage
+export const fetchUserFromSupabase = async (email: string): Promise<User | null> => {
+  const { data, error } = await supabase
+    .from('users')
+    .select('*')
+    .eq('email', email)
+    .single();
 
-export const updateUserStats = async (userId: string, type: 'search' | 'savedSearch') => {
-  console.log('Updating user stats:', userId, type);
-  if (!userId) {
-    console.error('No user ID provided for stats update');
-    return;
+  if (error) {
+    console.error("Error fetching user from Supabase:", error);
+    return null;
   }
-  await supabaseService.updateUserStats(userId, type);
-};
 
-export const updateUserLastLogin = async (userId: string) => {
-  console.log('Updating user last login:', userId);
-  if (!userId) {
-    console.error('No user ID provided for last login update');
-    return;
-  }
-  await supabaseService.updateUserLastLogin(userId);
-};
-
-export const changeUserPassword = async (userId: string, newPassword: string) => {
-  console.log('Changing user password:', userId);
-  if (!userId) {
-    console.error('No user ID provided for password change');
-    return false;
-  }
-  try {
-    await supabaseService.changeUserPassword(userId, newPassword);
-    return true;
-  } catch (error) {
-    console.error('Error changing password:', error);
-    return false;
-  }
+  return data;
 };
