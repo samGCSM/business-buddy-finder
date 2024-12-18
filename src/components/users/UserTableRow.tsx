@@ -6,6 +6,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import type { User } from "@/types/user";
 import { useState } from "react";
 
@@ -29,6 +30,7 @@ export const UserTableRow = ({
   onUpdateUser
 }: UserTableRowProps) => {
   const [isEditing, setIsEditing] = useState(false);
+  const [fullName, setFullName] = useState(user.full_name || '');
 
   const handleRoleChange = async (newRole: string) => {
     try {
@@ -40,11 +42,18 @@ export const UserTableRow = ({
 
   const handleSupervisorChange = async (supervisorId: string) => {
     try {
-      // If "none" is selected, set supervisor_id to null
       const newSupervisorId = supervisorId === "none" ? null : parseInt(supervisorId);
       await onUpdateUser(user.id, { supervisor_id: newSupervisorId });
     } catch (error) {
       console.error('Error updating supervisor:', error);
+    }
+  };
+
+  const handleFullNameSave = async () => {
+    try {
+      await onUpdateUser(user.id, { full_name: fullName });
+    } catch (error) {
+      console.error('Error updating full name:', error);
     }
   };
 
@@ -60,6 +69,21 @@ export const UserTableRow = ({
     <tr key={user.id}>
       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
         {user.email}
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+        {isEditing ? (
+          <div className="flex gap-2">
+            <Input
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              onBlur={handleFullNameSave}
+              placeholder="Enter full name"
+              className="w-[180px]"
+            />
+          </div>
+        ) : (
+          user.full_name || '-'
+        )}
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
         {isEditing ? (

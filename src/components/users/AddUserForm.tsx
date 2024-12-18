@@ -13,6 +13,7 @@ interface AddUserFormProps {
 export const AddUserForm = ({ users, setUsers }: AddUserFormProps) => {
   const [newUserEmail, setNewUserEmail] = useState("");
   const [newUserPassword, setNewUserPassword] = useState("");
+  const [newUserFullName, setNewUserFullName] = useState("");
 
   const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,8 +21,9 @@ export const AddUserForm = ({ users, setUsers }: AddUserFormProps) => {
       id: users.length + 1,
       email: newUserEmail,
       password: newUserPassword,
+      full_name: newUserFullName,
       type: "user",
-      lastLogin: null, // Changed from "-" to null
+      lastLogin: null,
       totalSearches: 0,
       savedSearches: 0,
     };
@@ -32,6 +34,7 @@ export const AddUserForm = ({ users, setUsers }: AddUserFormProps) => {
       setUsers(updatedUsers);
       setNewUserEmail("");
       setNewUserPassword("");
+      setNewUserFullName("");
       toast({
         title: "Success",
         description: "User added successfully",
@@ -48,7 +51,7 @@ export const AddUserForm = ({ users, setUsers }: AddUserFormProps) => {
 
   return (
     <form onSubmit={handleAddUser} className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-3 gap-4">
         <Input
           type="email"
           value={newUserEmail}
@@ -62,6 +65,12 @@ export const AddUserForm = ({ users, setUsers }: AddUserFormProps) => {
           onChange={(e) => setNewUserPassword(e.target.value)}
           placeholder="Enter user password"
           required
+        />
+        <Input
+          type="text"
+          value={newUserFullName}
+          onChange={(e) => setNewUserFullName(e.target.value)}
+          placeholder="Enter full name"
         />
       </div>
       <Button type="submit">Add User</Button>

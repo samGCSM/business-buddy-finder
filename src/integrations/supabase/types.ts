@@ -271,6 +271,7 @@ export type Database = {
         Row: {
           created_at: string | null
           email: string | null
+          full_name: string | null
           id: number
           lastLogin: string | null
           password: string | null
@@ -283,6 +284,7 @@ export type Database = {
         Insert: {
           created_at?: string | null
           email?: string | null
+          full_name?: string | null
           id: number
           lastLogin?: string | null
           password?: string | null
@@ -295,6 +297,7 @@ export type Database = {
         Update: {
           created_at?: string | null
           email?: string | null
+          full_name?: string | null
           id?: number
           lastLogin?: string | null
           password?: string | null
