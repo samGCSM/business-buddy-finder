@@ -118,7 +118,7 @@ serve(async (req) => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            model: 'gpt-3.5-turbo',
+            model: 'gpt-4o-mini',
             messages: [
               { role: 'system', content: 'You are a helpful sales assistant.' },
               { role: 'user', content: prompt }
@@ -135,7 +135,7 @@ serve(async (req) => {
         const data = await response.json();
         const insight = data.choices[0].message.content;
 
-        // Store the generated insight
+        // Store the generated insight using service role client
         const { error: insertError } = await supabase
           .from('ai_insights')
           .insert([{
