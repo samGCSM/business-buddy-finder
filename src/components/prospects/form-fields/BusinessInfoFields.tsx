@@ -9,6 +9,7 @@ interface BusinessInfoProps {
   phoneNumber: string;
   rating: string;
   reviewCount: string;
+  territory: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
@@ -20,6 +21,7 @@ const BusinessInfoFields = ({
   phoneNumber,
   rating,
   reviewCount,
+  territory,
   onChange
 }: BusinessInfoProps) => {
   return (
@@ -32,6 +34,15 @@ const BusinessInfoFields = ({
           value={businessName}
           onChange={onChange}
           required
+        />
+      </div>
+      <div>
+        <Label htmlFor="territory">Territory</Label>
+        <Input
+          id="territory"
+          name="territory"
+          value={territory}
+          onChange={onChange}
         />
       </div>
       <div>

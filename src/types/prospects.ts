@@ -18,4 +18,5 @@ export interface Prospect {
   activity_log: Json[] | null;
   rating: number | null;
   review_count: number | null;
+  territory: string | null;
 }

@@ -30,6 +30,7 @@ const ProspectTableHeader = ({ onSort, sortConfig }: ProspectTableHeaderProps) =
           {renderSortButton("Business Name", "business_name")}
         </TableHead>
         <TableHead className="min-w-[100px]">Notes</TableHead>
+        <TableHead>{renderSortButton("Territory", "territory")}</TableHead>
         <TableHead>{renderSortButton("Website", "website")}</TableHead>
         <TableHead>{renderSortButton("Email", "email")}</TableHead>
         <TableHead>{renderSortButton("Address", "business_address")}</TableHead>

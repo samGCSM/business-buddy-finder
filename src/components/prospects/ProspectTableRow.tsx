@@ -25,6 +25,7 @@ const ProspectTableRow = ({ prospect, onEdit, onDelete, onUpdate }: ProspectTabl
         activityLog={prospect.activity_log}
         onUpdate={onUpdate}
       />
+      <TableCell>{prospect.territory || '-'}</TableCell>
       <TableCell>
         {prospect.website ? (
           <a 

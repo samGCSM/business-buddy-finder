@@ -3,6 +3,7 @@ import ProspectsTable from "./ProspectsTable";
 import AddProspectForm from "./AddProspectForm";
 import ProspectHeader from "./ProspectHeader";
 import UserProspectFilter from "./UserProspectFilter";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { Prospect } from "@/types/prospects";
 import type { User } from "@/types/user";
 
@@ -28,23 +29,52 @@ const ProspectContent = ({
   supervisedUsers = []
 }: ProspectContentProps) => {
   const [isAddFormVisible, setIsAddFormVisible] = useState(showAddForm);
+  const [selectedTerritory, setSelectedTerritory] = useState<string>('');
 
   const handleAddClick = () => {
     setIsAddFormVisible(true);
   };
+
+  // Get unique territories from prospects
+  const territories = Array.from(new Set(prospects.map(p => p.territory).filter(Boolean)));
+
+  // Filter prospects by territory
+  const filteredProspects = selectedTerritory
+    ? prospects.filter(p => p.territory === selectedTerritory)
+    : prospects;
 
   // Allow all users to add prospects
   const canAddProspects = true;
 
   return (
     <div className="space-y-6">
-      {(userRole === 'admin' || userRole === 'supervisor') && supervisedUsers.length > 0 && (
-        <UserProspectFilter 
-          users={supervisedUsers}
-          onUserSelect={onUserSelect}
-          currentUser={currentUser}
-        />
-      )}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          {(userRole === 'admin' || userRole === 'supervisor') && supervisedUsers.length > 0 && (
+            <UserProspectFilter 
+              users={supervisedUsers}
+              onUserSelect={onUserSelect}
+              currentUser={currentUser}
+            />
+          )}
+          <Select
+            value={selectedTerritory}
+            onValueChange={setSelectedTerritory}
+          >
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Filter by Territory" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">All Territories</SelectItem>
+              {territories.map((territory) => (
+                <SelectItem key={territory} value={territory}>
+                  {territory}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
       <ProspectHeader 
         onAddClick={handleAddClick}
         onBulkUploadSuccess={onProspectAdded}
@@ -65,7 +95,7 @@ const ProspectContent = ({
         />
       )}
       <ProspectsTable 
-        prospects={prospects}
+        prospects={filteredProspects}
         onUpdate={onProspectAdded}
       />
     </div>

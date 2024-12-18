@@ -126,6 +126,7 @@ export type Database = {
           rating: number | null
           review_count: number | null
           status: string | null
+          territory: string | null
           updated_at: string | null
           user_id: number
           website: string | null
@@ -147,6 +148,7 @@ export type Database = {
           rating?: number | null
           review_count?: number | null
           status?: string | null
+          territory?: string | null
           updated_at?: string | null
           user_id: number
           website?: string | null
@@ -168,6 +170,7 @@ export type Database = {
           rating?: number | null
           review_count?: number | null
           status?: string | null
+          territory?: string | null
           updated_at?: string | null
           user_id?: number
           website?: string | null
