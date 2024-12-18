@@ -6,6 +6,8 @@ import { useEffect, useState, useRef } from "react";
 import { ActivityLogItemData } from "./ActivityLogItem";
 import FileUpload from "./FileUpload";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { MessageSquare, ThumbsUp } from "lucide-react";
+import { updateActivityLogLikes } from "./useActivityLogStorage";
 
 interface NotesTabContentProps {
   existingNotes: string;
@@ -32,6 +34,8 @@ const NotesTabContent = ({
 }: NotesTabContentProps) => {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const [likeStates, setLikeStates] = useState<{ [key: string]: boolean }>({});
+  const [likeCounts, setLikeCounts] = useState<{ [key: string]: number }>({});
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -42,11 +46,50 @@ const NotesTabContent = ({
   }, []);
 
   useEffect(() => {
+    // Initialize like counts from activity log
+    const initialLikeCounts: { [key: string]: number } = {};
+    const initialLikeStates: { [key: string]: boolean } = {};
+    
+    activityLog.forEach(item => {
+      initialLikeCounts[item.timestamp] = item.likes || 0;
+      initialLikeStates[item.timestamp] = false; // Default to not liked
+    });
+    
+    setLikeCounts(initialLikeCounts);
+    setLikeStates(initialLikeStates);
+  }, [activityLog]);
+
+  useEffect(() => {
     // Scroll to bottom when new content is added
     if (scrollAreaRef.current) {
       scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
     }
   }, [activityLog]);
+
+  const handleLike = async (item: ActivityLogItemData) => {
+    try {
+      console.log('Handling like for item:', item);
+      const isCurrentlyLiked = likeStates[item.timestamp] || false;
+      const currentCount = likeCounts[item.timestamp] || 0;
+      const newLikeCount = isCurrentlyLiked ? currentCount - 1 : currentCount + 1;
+      
+      const success = await updateActivityLogLikes(prospectId, item.timestamp, newLikeCount);
+      
+      if (success) {
+        console.log('Like updated successfully');
+        setLikeCounts(prev => ({
+          ...prev,
+          [item.timestamp]: newLikeCount
+        }));
+        setLikeStates(prev => ({
+          ...prev,
+          [item.timestamp]: !isCurrentlyLiked
+        }));
+      }
+    } catch (error) {
+      console.error('Error updating likes:', error);
+    }
+  };
 
   return (
     <div className="flex flex-col h-[calc(100vh-250px)]">
@@ -73,15 +116,22 @@ const NotesTabContent = ({
                 </div>
               </div>
               <div className="ml-11 flex items-center space-x-2">
-                <Button variant="ghost" size="sm" className="text-xs">
-                  Like
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className={`h-7 px-2 text-xs flex items-center gap-1 ${likeStates[item.timestamp] ? 'text-blue-600' : ''}`}
+                  onClick={() => handleLike(item)}
+                >
+                  <ThumbsUp className={`h-3 w-3 ${likeStates[item.timestamp] ? 'fill-current' : ''}`} />
+                  {likeCounts[item.timestamp] > 0 && `(${likeCounts[item.timestamp]})`}
                 </Button>
                 <Button 
                   variant="ghost" 
                   size="sm" 
-                  className="text-xs"
+                  className="h-7 px-2 text-xs flex items-center gap-1"
                   onClick={() => onReply(item)}
                 >
+                  <MessageSquare className="h-3 w-3" />
                   Reply
                 </Button>
               </div>
