@@ -15,6 +15,7 @@ export const useNotifications = () => {
       }
 
       console.log('Fetching notifications for user:', currentUser.id);
+      // Remove .single() since we expect multiple records
       const { data: notificationsData, error } = await supabase
         .from('notifications')
         .select('*')
@@ -48,6 +49,7 @@ export const useNotifications = () => {
         return acc;
       }, {});
 
+      // Combine all notifications from all records and add business names
       const allNotifications = notificationsData.reduce((acc: any[], record: any) => {
         const notificationsWithBusinessNames = (record.notifications || []).map((notification: any) => ({
           ...notification,
@@ -56,12 +58,14 @@ export const useNotifications = () => {
         return [...acc, ...notificationsWithBusinessNames];
       }, []);
 
+      // Sort notifications by timestamp
       allNotifications.sort((a: any, b: any) => 
         new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
       );
 
       setNotifications(allNotifications);
 
+      // Mark all notifications as read
       const updatePromises = notificationsData.map(record => {
         const updatedNotifications = record.notifications.map((n: any) => ({
           ...n,
