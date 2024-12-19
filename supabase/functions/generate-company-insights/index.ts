@@ -26,11 +26,11 @@ async function generateInsight(businessName: string, website: string) {
         messages: [
           {
             role: 'system',
-            content: 'You are a business analyst providing insights about companies. Be concise and focus on actionable recommendations.'
+            content: 'You are a business analyst providing detailed company insights and contact information.'
           },
           {
             role: 'user',
-            content: `Please analyze the business "${businessName}" with website "${website}" and provide insights about their online presence, potential opportunities, and areas for improvement. Focus on actionable recommendations.`
+            content: `Summarize what ${businessName} (${website}) does, who owns it, who runs it, and who are their competitors. Also find emails for employees and managers if possible.`
           }
         ],
         max_tokens: 500,
