@@ -38,22 +38,39 @@ async function generateInsight(businessName: string, website: string) {
       }),
     });
 
+    const data = await response.json();
+    
     if (!response.ok) {
-      const error = await response.json();
-      console.error('OpenAI API error:', error);
+      console.error('OpenAI API error response:', data);
       
-      if (error.error?.message?.includes('exceeded your current quota')) {
-        throw new Error('OpenAI API quota exceeded. Please check your billing details or try again later.');
+      // Handle quota exceeded error
+      if (data.error?.message?.includes('exceeded your current quota')) {
+        return {
+          error: true,
+          message: 'OpenAI API quota exceeded. Please check your billing details.',
+          status: 402 // Payment Required
+        };
       }
       
-      throw new Error(`OpenAI API error: ${error.error?.message || response.statusText}`);
+      return {
+        error: true,
+        message: data.error?.message || 'OpenAI API error',
+        status: response.status
+      };
     }
 
-    const data = await response.json();
-    return data.choices[0].message.content.trim();
+    return {
+      error: false,
+      content: data.choices[0].message.content.trim(),
+      status: 200
+    };
   } catch (error) {
     console.error('Error in generateInsight:', error);
-    throw error;
+    return {
+      error: true,
+      message: error.message || 'Internal server error',
+      status: 500
+    };
   }
 }
 
@@ -77,32 +94,35 @@ serve(async (req) => {
       );
     }
 
-    const insight = await generateInsight(businessName, website || '');
-    console.log('Generated insight:', insight);
-    
-    return new Response(
-      JSON.stringify({ insight }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
-  } catch (error) {
-    console.error('Error in generate-company-insights function:', error);
-    
-    // Handle quota exceeded error specifically
-    if (error.message?.includes('quota exceeded')) {
+    const result = await generateInsight(businessName, website || '');
+    console.log('Generate insight result:', result);
+
+    if (result.error) {
       return new Response(
         JSON.stringify({ 
-          error: error.message,
-          isQuotaError: true
+          error: result.message,
+          isQuotaError: result.status === 402
         }),
         { 
-          status: 402, // Payment Required
+          status: result.status,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         }
       );
     }
 
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ insight: result.content }),
+      { 
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      }
+    );
+  } catch (error) {
+    console.error('Error in generate-company-insights function:', error);
+    return new Response(
+      JSON.stringify({ 
+        error: error.message || 'Internal server error',
+      }),
       { 
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
