@@ -38,33 +38,36 @@ const CompanyInsightsDrawer = ({
     prospectId,
     businessName,
     website,
-    onInsightGenerated
+    () => {
+      fetchInsights();
+      onInsightGenerated();
+    }
   );
 
+  const fetchInsights = async () => {
+    console.log('Fetching insights for prospect:', prospectId);
+    const { data, error } = await supabase
+      .from('prospects')
+      .select('ai_company_insights')
+      .eq('id', prospectId)
+      .single();
+
+    if (error) {
+      console.error('Error fetching insights:', error);
+      return;
+    }
+
+    if (data?.ai_company_insights) {
+      console.log('Received insights:', data.ai_company_insights);
+      const formattedInsights = (data.ai_company_insights as Json[]).map((insight: any) => ({
+        content: insight.content,
+        timestamp: insight.timestamp
+      }));
+      setInsights(formattedInsights);
+    }
+  };
+
   useEffect(() => {
-    const fetchInsights = async () => {
-      console.log('Fetching insights for prospect:', prospectId);
-      const { data, error } = await supabase
-        .from('prospects')
-        .select('ai_company_insights')
-        .eq('id', prospectId)
-        .single();
-
-      if (error) {
-        console.error('Error fetching insights:', error);
-        return;
-      }
-
-      if (data?.ai_company_insights) {
-        console.log('Received insights:', data.ai_company_insights);
-        const formattedInsights = (data.ai_company_insights as Json[]).map((insight: any) => ({
-          content: insight.content,
-          timestamp: insight.timestamp
-        }));
-        setInsights(formattedInsights);
-      }
-    };
-
     if (isOpen) {
       fetchInsights();
     }

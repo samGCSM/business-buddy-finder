@@ -8,6 +8,8 @@ interface InsightsListProps {
 }
 
 const InsightsList = ({ insights }: InsightsListProps) => {
+  console.log('Rendering insights:', insights);
+  
   return (
     <ScrollArea className="h-[calc(100vh-200px)] pr-4">
       <div className="space-y-4">
