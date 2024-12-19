@@ -19,6 +19,11 @@ interface CompanyInsightsDrawerProps {
   onInsightGenerated: () => void;
 }
 
+interface Insight {
+  content: string;
+  timestamp: string;
+}
+
 const CompanyInsightsDrawer = ({
   isOpen,
   onClose,
@@ -27,7 +32,7 @@ const CompanyInsightsDrawer = ({
   website,
   onInsightGenerated,
 }: CompanyInsightsDrawerProps) => {
-  const [insights, setInsights] = useState<Array<{ content: string; timestamp: string }>>([]);
+  const [insights, setInsights] = useState<Insight[]>([]);
   const { isGenerating, retryTimeout, generateInsights } = useInsightGeneration(
     prospectId,
     businessName,
@@ -44,7 +49,12 @@ const CompanyInsightsDrawer = ({
         .single();
 
       if (!error && data?.ai_company_insights) {
-        setInsights(data.ai_company_insights);
+        // Ensure we're converting the JSON data to the correct type
+        const formattedInsights = (data.ai_company_insights as any[]).map((insight: any) => ({
+          content: insight.content,
+          timestamp: insight.timestamp
+        }));
+        setInsights(formattedInsights);
       }
     };
 

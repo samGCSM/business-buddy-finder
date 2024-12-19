@@ -20,10 +20,17 @@ async function handleRetry(
 
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
-      const response = await fn();
+      const completion = await fn();
       
-      if (response.status === 429) {
-        const retryAfter = parseInt(response.headers.get('retry-after') || '60', 10);
+      return new Response(
+        JSON.stringify({ insight: completion.data.choices[0].text.trim() }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    } catch (error) {
+      console.error(`Attempt ${attempt + 1} failed:`, error);
+
+      if (error.response?.status === 429) {
+        const retryAfter = parseInt(error.response.headers.get('retry-after') || '60', 10);
         console.log(`Rate limited on attempt ${attempt + 1}, retry after ${retryAfter}s`);
         
         if (attempt === maxRetries - 1) {
@@ -44,19 +51,16 @@ async function handleRetry(
         continue;
       }
 
-      if (!response.ok) {
-        throw new Error(`OpenAI API error: ${response.status}`);
+      if (attempt === maxRetries - 1) {
+        return new Response(
+          JSON.stringify({ error: `OpenAI API error: ${error.response?.status || error.message}` }),
+          { 
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          }
+        );
       }
 
-      const data = await response.json();
-      return new Response(
-        JSON.stringify({ insight: data.choices[0].text.trim() }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    } catch (error) {
-      if (attempt === maxRetries - 1) {
-        throw error;
-      }
       await new Promise(resolve => setTimeout(resolve, delay));
       delay *= 2;
     }
@@ -69,7 +73,7 @@ async function generateInsight(businessName: string, website: string) {
   const prompt = `Please analyze the business "${businessName}" with website "${website}" and provide insights about their online presence, potential opportunities, and areas for improvement. Focus on actionable recommendations.`;
 
   return openai.createCompletion({
-    model: 'gpt-3.5-turbo-instruct',
+    model: 'gpt-4o-mini',
     prompt,
     max_tokens: 500,
     temperature: 0.7,
