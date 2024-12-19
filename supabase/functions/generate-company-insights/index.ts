@@ -30,7 +30,7 @@ async function generateInsight(businessName: string, website: string) {
           },
           {
             role: 'user',
-            content: `Summarize what ${businessName} (${website}) does, who owns it, who runs it, and who are their competitors. Also find emails for employees and managers if possible.`
+            content: `Summarize what ${businessName} (${website}) does, who owns it, who runs it, and who are their direct local competitors. Also find business emails for employees and managers or at least their main business email.`
           }
         ],
         max_tokens: 500,
