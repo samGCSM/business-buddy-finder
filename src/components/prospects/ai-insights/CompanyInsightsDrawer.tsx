@@ -49,10 +49,23 @@ const CompanyInsightsDrawer = ({
         timestamp: new Date().toISOString(),
       };
 
+      // First, get the current insights array
+      const { data: currentData, error: fetchError } = await supabase
+        .from('prospects')
+        .select('ai_company_insights')
+        .eq('id', prospectId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Create a new array with the existing insights plus the new one
+      const updatedInsights = [...(currentData.ai_company_insights || []), newInsight];
+
+      // Update the prospects table with the new array
       const { error: updateError } = await supabase
         .from('prospects')
         .update({
-          ai_company_insights: supabase.sql`array_append(ai_company_insights, ${newInsight}::jsonb)`,
+          ai_company_insights: updatedInsights,
         })
         .eq('id', prospectId);
 
