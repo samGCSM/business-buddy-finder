@@ -39,16 +39,17 @@ async function generateInsight(businessName: string, website: string) {
     });
 
     const data = await response.json();
+    console.log('OpenAI API response:', data);
     
     if (!response.ok) {
-      console.error('OpenAI API error response:', data);
-      
-      // Handle quota exceeded error
-      if (data.error?.message?.includes('exceeded your current quota')) {
+      // Check specifically for quota exceeded error
+      if (data.error?.type === 'insufficient_quota' || 
+          data.error?.message?.includes('exceeded your current quota')) {
         return {
           error: true,
           message: 'OpenAI API quota exceeded. Please check your billing details.',
-          status: 402 // Payment Required
+          status: 402,
+          isQuotaError: true
         };
       }
       
@@ -101,7 +102,7 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ 
           error: result.message,
-          isQuotaError: result.status === 402
+          isQuotaError: result.isQuotaError
         }),
         { 
           status: result.status,

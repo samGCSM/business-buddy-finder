@@ -53,7 +53,7 @@ export const useInsightGeneration = (
       if (insightData?.isQuotaError) {
         toast({
           title: "OpenAI API Quota Exceeded",
-          description: "The AI service is currently unavailable due to quota limits. Please try again later.",
+          description: "Please check your OpenAI API billing details and ensure you have available credits.",
           variant: "destructive",
         });
         return;
