@@ -23,7 +23,8 @@ const Home = () => {
       try {
         const currentUser = localStorage.getItem('currentUser');
         if (!currentUser) {
-          navigate("/login");
+          console.log('Home - No user found, redirecting to login');
+          navigate("/login", { replace: true });
           return;
         }
 
@@ -31,11 +32,6 @@ const Home = () => {
         setUserId(userData.id);
       } catch (error) {
         console.error('Error loading data:', error);
-        toast({
-          title: "Error",
-          description: "Failed to load user data",
-          variant: "destructive",
-        });
       } finally {
         setIsLoading(false);
       }

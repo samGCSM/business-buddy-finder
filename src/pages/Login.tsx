@@ -7,17 +7,24 @@ const Login = () => {
   const navigate = useNavigate();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const checkAuth = async () => {
-      const currentUser = await getCurrentUser();
-      console.log("Login - Current user from localStorage:", currentUser);
-      
-      if (currentUser) {
-        console.log("Login - User found, redirecting to home");
-        setIsLoggedIn(true);
-        setIsAdmin(currentUser.type === 'admin');
-        navigate('/');
+      try {
+        const currentUser = await getCurrentUser();
+        console.log("Login - Current user from localStorage:", currentUser);
+        
+        if (currentUser) {
+          console.log("Login - User found, redirecting to home");
+          setIsLoggedIn(true);
+          setIsAdmin(currentUser.type === 'admin');
+          navigate('/', { replace: true });
+        }
+      } catch (error) {
+        console.error("Login - Error checking auth:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
     
@@ -30,9 +37,14 @@ const Login = () => {
     setIsAdmin(userType === 'admin');
     if (isLoggedIn) {
       console.log("Login - Successfully logged in, redirecting to home");
-      navigate('/');
+      navigate('/', { replace: true });
     }
   };
+
+  // Show loading state
+  if (isLoading) {
+    return null;
+  }
 
   // If already logged in, don't render the login form
   if (isLoggedIn) {
