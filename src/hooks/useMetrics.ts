@@ -27,13 +27,8 @@ export const useMetrics = () => {
         console.log('useMetrics - Current user:', currentUser);
         
         if (!currentUser) {
-          console.error('useMetrics - No user found');
-          toast({
-            title: "Error",
-            description: "Unable to load user data. Please try logging in again.",
-            variant: "destructive",
-          });
-          return;
+          console.log('useMetrics - No user found');
+          return; // Simply return without showing error toast
         }
 
         setUserRole(currentUser.type as 'admin' | 'supervisor' | 'user');
@@ -41,11 +36,14 @@ export const useMetrics = () => {
         await fetchDashboardMetrics(currentUser);
       } catch (error) {
         console.error('useMetrics - Error initializing:', error);
-        toast({
-          title: "Error",
-          description: "Failed to load dashboard metrics",
-          variant: "destructive",
-        });
+        // Only show error toast if there's an actual error, not just missing user
+        if (error instanceof Error && error.message !== 'No user found') {
+          toast({
+            title: "Error",
+            description: "Failed to load dashboard metrics",
+            variant: "destructive",
+          });
+        }
       }
     };
 
