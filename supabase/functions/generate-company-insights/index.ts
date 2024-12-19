@@ -47,13 +47,25 @@ serve(async (req) => {
         });
 
         if (response.status === 429) {
-          console.log(`Rate limited on attempt ${attempt + 1}, waiting ${delay}ms`);
-          if (attempt < maxRetries - 1) {
-            await new Promise(resolve => setTimeout(resolve, delay));
-            delay *= 2; // Double the delay for next attempt
-            continue;
+          const retryAfter = parseInt(response.headers.get('retry-after') || '60', 10);
+          console.log(`Rate limited on attempt ${attempt + 1}, waiting ${delay}ms, retry after ${retryAfter}s`);
+          
+          if (attempt === maxRetries - 1) {
+            return new Response(
+              JSON.stringify({ 
+                error: 'Rate limit exceeded after all retries',
+                retryAfter: retryAfter
+              }),
+              { 
+                status: 429,
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+              }
+            );
           }
-          throw new Error('Rate limit exceeded after all retries');
+          
+          await new Promise(resolve => setTimeout(resolve, delay));
+          delay *= 2; // Double the delay for next attempt
+          continue;
         }
 
         if (!response.ok) {

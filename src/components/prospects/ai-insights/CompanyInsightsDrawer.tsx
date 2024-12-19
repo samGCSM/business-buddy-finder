@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -31,6 +31,27 @@ const CompanyInsightsDrawer = ({
   const [isGenerating, setIsGenerating] = useState(false);
   const [retryTimeout, setRetryTimeout] = useState<number | null>(null);
 
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    
+    if (retryTimeout !== null && retryTimeout > 0) {
+      interval = setInterval(() => {
+        setRetryTimeout((current) => {
+          if (current === null || current <= 1) {
+            return null;
+          }
+          return current - 1;
+        });
+      }, 1000);
+    }
+
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
+  }, [retryTimeout]);
+
   const generateInsights = async () => {
     try {
       setIsGenerating(true);
@@ -45,22 +66,10 @@ const CompanyInsightsDrawer = ({
 
       if (insightError) {
         // Check if it's a rate limit error
-        if (insightError.message?.includes('429') || insightError.message?.includes('Rate limit')) {
+        if (insightError.status === 429) {
           const retryAfter = 60; // Default to 60 seconds if no retry-after header
           setRetryTimeout(retryAfter);
           
-          // Start countdown
-          const interval = setInterval(() => {
-            setRetryTimeout((current) => {
-              if (current === null || current <= 1) {
-                clearInterval(interval);
-                setRetryTimeout(null);
-                return null;
-              }
-              return current - 1;
-            });
-          }, 1000);
-
           toast({
             title: "Rate limit reached",
             description: `Please try again in ${retryAfter} seconds`,
@@ -71,11 +80,6 @@ const CompanyInsightsDrawer = ({
         throw insightError;
       }
 
-      const newInsight = {
-        content: insightData.insight,
-        timestamp: new Date().toISOString(),
-      };
-
       // First, get the current insights array
       const { data: currentData, error: fetchError } = await supabase
         .from('prospects')
@@ -84,6 +88,11 @@ const CompanyInsightsDrawer = ({
         .single();
 
       if (fetchError) throw fetchError;
+
+      const newInsight = {
+        content: insightData.insight,
+        timestamp: new Date().toISOString(),
+      };
 
       // Create a new array with the existing insights plus the new one
       const updatedInsights = [...(currentData.ai_company_insights || []), newInsight];
