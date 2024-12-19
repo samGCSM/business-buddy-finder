@@ -1,17 +1,17 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
+const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+if (!openAIApiKey) {
+  throw new Error('OpenAI API key not configured');
+}
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
 async function generateInsight(businessName: string, website: string) {
-  const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
-  if (!openAIApiKey) {
-    throw new Error('OpenAI API key not configured');
-  }
-
   console.log('Generating insight for:', businessName, 'website:', website);
 
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -40,6 +40,12 @@ async function generateInsight(businessName: string, website: string) {
   if (!response.ok) {
     const error = await response.json();
     console.error('OpenAI API error:', error);
+    
+    // Check specifically for quota exceeded error
+    if (error.error?.message?.includes('exceeded your current quota')) {
+      throw new Error('OpenAI API quota exceeded. Please check your billing details or try again later.');
+    }
+    
     throw new Error(`OpenAI API error: ${error.error?.message || response.statusText}`);
   }
 
@@ -76,6 +82,20 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error in generate-company-insights function:', error);
     
+    // Handle quota exceeded error specifically
+    if (error.message?.includes('quota exceeded')) {
+      return new Response(
+        JSON.stringify({ 
+          error: error.message,
+          isQuotaError: true
+        }),
+        { 
+          status: 402, // Payment Required
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
     return new Response(
       JSON.stringify({ error: error.message }),
       { 

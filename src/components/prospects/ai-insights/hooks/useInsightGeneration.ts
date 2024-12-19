@@ -49,6 +49,16 @@ export const useInsightGeneration = (
         throw insightError;
       }
 
+      // Handle quota exceeded error from the edge function
+      if (insightData?.isQuotaError) {
+        toast({
+          title: "OpenAI API Quota Exceeded",
+          description: "The AI service is currently unavailable due to quota limits. Please try again later.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       if (!insightData?.insight) {
         throw new Error('No insight generated');
       }
