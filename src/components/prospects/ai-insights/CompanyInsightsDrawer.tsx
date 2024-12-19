@@ -7,6 +7,8 @@ import {
 import InsightsList from "./components/InsightsList";
 import GenerateInsightButton from "./components/GenerateInsightButton";
 import { useInsightGeneration } from "./hooks/useInsightGeneration";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface CompanyInsightsDrawerProps {
   isOpen: boolean;
@@ -25,12 +27,31 @@ const CompanyInsightsDrawer = ({
   website,
   onInsightGenerated,
 }: CompanyInsightsDrawerProps) => {
+  const [insights, setInsights] = useState<Array<{ content: string; timestamp: string }>>([]);
   const { isGenerating, retryTimeout, generateInsights } = useInsightGeneration(
     prospectId,
     businessName,
     website,
     onInsightGenerated
   );
+
+  useEffect(() => {
+    const fetchInsights = async () => {
+      const { data, error } = await supabase
+        .from('prospects')
+        .select('ai_company_insights')
+        .eq('id', prospectId)
+        .single();
+
+      if (!error && data?.ai_company_insights) {
+        setInsights(data.ai_company_insights);
+      }
+    };
+
+    if (isOpen) {
+      fetchInsights();
+    }
+  }, [isOpen, prospectId]);
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
@@ -44,7 +65,7 @@ const CompanyInsightsDrawer = ({
             retryTimeout={retryTimeout}
             onClick={generateInsights}
           />
-          <InsightsList insights={website} />
+          <InsightsList insights={insights} />
         </div>
       </SheetContent>
     </Sheet>
