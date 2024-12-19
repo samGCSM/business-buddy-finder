@@ -12,7 +12,7 @@ const InsightsList = ({ insights }: InsightsListProps) => {
     <ScrollArea className="h-[calc(100vh-200px)] pr-4">
       <div className="space-y-4">
         {Array.isArray(insights) && insights.length > 0 ? (
-          [...insights].reverse().map((insight: any, index: number) => (
+          [...insights].reverse().map((insight, index) => (
             <div
               key={index}
               className="rounded-lg border p-4 text-sm"

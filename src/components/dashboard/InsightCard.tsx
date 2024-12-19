@@ -16,7 +16,7 @@ const InsightCard = ({ title, content }: InsightCardProps) => {
         <Lightbulb className="h-4 w-4 text-muted-foreground" />
       </CardHeader>
       <CardContent>
-        <div className="text-sm text-muted-foreground">
+        <div className="text-sm text-muted-foreground whitespace-pre-wrap">
           {content || (
             <div className="flex items-center space-x-2">
               <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600"></div>
