@@ -29,6 +29,7 @@ const CompanyInsightsDrawer = ({
   onInsightGenerated,
 }: CompanyInsightsDrawerProps) => {
   const [isGenerating, setIsGenerating] = useState(false);
+  const [retryTimeout, setRetryTimeout] = useState<number | null>(null);
 
   const generateInsights = async () => {
     try {
@@ -42,7 +43,33 @@ const CompanyInsightsDrawer = ({
         }
       );
 
-      if (insightError) throw insightError;
+      if (insightError) {
+        // Check if it's a rate limit error
+        if (insightError.message?.includes('429') || insightError.message?.includes('Rate limit')) {
+          const retryAfter = 60; // Default to 60 seconds if no retry-after header
+          setRetryTimeout(retryAfter);
+          
+          // Start countdown
+          const interval = setInterval(() => {
+            setRetryTimeout((current) => {
+              if (current === null || current <= 1) {
+                clearInterval(interval);
+                setRetryTimeout(null);
+                return null;
+              }
+              return current - 1;
+            });
+          }, 1000);
+
+          toast({
+            title: "Rate limit reached",
+            description: `Please try again in ${retryAfter} seconds`,
+            variant: "default"
+          });
+          return;
+        }
+        throw insightError;
+      }
 
       const newInsight = {
         content: insightData.insight,
@@ -98,7 +125,7 @@ const CompanyInsightsDrawer = ({
         <div className="mt-4 space-y-4">
           <Button
             onClick={generateInsights}
-            disabled={isGenerating}
+            disabled={isGenerating || retryTimeout !== null}
             className="w-full"
           >
             {isGenerating ? (
@@ -106,13 +133,14 @@ const CompanyInsightsDrawer = ({
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Generating Company Insights...
               </>
+            ) : retryTimeout !== null ? (
+              `Try again in ${retryTimeout} seconds`
             ) : (
               "Generate Company Insights by AI"
             )}
           </Button>
           <ScrollArea className="h-[calc(100vh-200px)] pr-4">
             <div className="space-y-4">
-              {/* Display insights in reverse chronological order */}
               {Array.isArray(website) && website.length > 0 ? (
                 [...website].reverse().map((insight: any, index: number) => (
                   <div
