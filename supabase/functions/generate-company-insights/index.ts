@@ -39,6 +39,7 @@ async function generateInsight(businessName: string, website: string) {
 
   if (!response.ok) {
     const error = await response.json();
+    console.error('OpenAI API error:', error);
     throw new Error(`OpenAI API error: ${error.error?.message || response.statusText}`);
   }
 
@@ -75,20 +76,6 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error in generate-company-insights function:', error);
     
-    // Handle rate limiting specifically
-    if (error.message?.includes('429')) {
-      return new Response(
-        JSON.stringify({ 
-          error: 'Rate limit exceeded',
-          retryAfter: 60
-        }),
-        { 
-          status: 429,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      );
-    }
-
     return new Response(
       JSON.stringify({ error: error.message }),
       { 

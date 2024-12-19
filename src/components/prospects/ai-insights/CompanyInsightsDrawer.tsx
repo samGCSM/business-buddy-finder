@@ -9,6 +9,7 @@ import GenerateInsightButton from "./components/GenerateInsightButton";
 import { useInsightGeneration } from "./hooks/useInsightGeneration";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
 
 interface CompanyInsightsDrawerProps {
   isOpen: boolean;
@@ -49,8 +50,7 @@ const CompanyInsightsDrawer = ({
         .single();
 
       if (!error && data?.ai_company_insights) {
-        // Ensure we're converting the JSON data to the correct type
-        const formattedInsights = (data.ai_company_insights as any[]).map((insight: any) => ({
+        const formattedInsights = (data.ai_company_insights as Json[]).map((insight: any) => ({
           content: insight.content,
           timestamp: insight.timestamp
         }));

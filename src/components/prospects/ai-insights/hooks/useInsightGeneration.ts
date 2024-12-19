@@ -45,18 +45,12 @@ export const useInsightGeneration = (
       );
 
       if (insightError) {
-        if (insightError.status === 429) {
-          const retryAfter = 60;
-          setRetryTimeout(retryAfter);
-          
-          toast({
-            title: "Rate limit reached",
-            description: `Please try again in ${retryAfter} seconds`,
-            variant: "default"
-          });
-          return;
-        }
+        console.error('Error generating insights:', insightError);
         throw insightError;
+      }
+
+      if (!insightData?.insight) {
+        throw new Error('No insight generated');
       }
 
       const { data: currentData, error: fetchError } = await supabase
@@ -72,7 +66,7 @@ export const useInsightGeneration = (
         timestamp: new Date().toISOString(),
       };
 
-      const updatedInsights = [...(currentData.ai_company_insights || []), newInsight];
+      const updatedInsights = [...(currentData?.ai_company_insights || []), newInsight];
 
       const { error: updateError } = await supabase
         .from('prospects')
@@ -89,11 +83,11 @@ export const useInsightGeneration = (
       });
 
       onInsightGenerated();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error generating insights:', error);
       toast({
         title: "Error",
-        description: "Failed to generate company insights",
+        description: error.message || "Failed to generate company insights",
         variant: "destructive",
       });
     } finally {
