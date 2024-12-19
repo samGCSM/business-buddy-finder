@@ -1,6 +1,6 @@
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { BrainCircuit } from "lucide-react";
+import { Brain } from "lucide-react";
 import type { Prospect } from "@/types/prospects";
 import ProspectActions from "./table/ProspectActions";
 import ProspectNotesCell from "./table/ProspectNotesCell";
@@ -77,7 +77,7 @@ const ProspectTableRow = ({ prospect, onEdit, onDelete, onUpdate }: ProspectTabl
           onClick={() => setIsInsightsOpen(true)}
           className="hover:bg-accent"
         >
-          <BrainCircuit className="h-4 w-4" />
+          <Brain className="h-4 w-4" />
         </Button>
         <CompanyInsightsDrawer
           isOpen={isInsightsOpen}
