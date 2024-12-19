@@ -111,6 +111,7 @@ export type Database = {
       prospects: {
         Row: {
           activity_log: Json[] | null
+          ai_company_insights: Json[] | null
           business_address: string | null
           business_name: string
           created_at: string | null
@@ -133,6 +134,7 @@ export type Database = {
         }
         Insert: {
           activity_log?: Json[] | null
+          ai_company_insights?: Json[] | null
           business_address?: string | null
           business_name: string
           created_at?: string | null
@@ -155,6 +157,7 @@ export type Database = {
         }
         Update: {
           activity_log?: Json[] | null
+          ai_company_insights?: Json[] | null
           business_address?: string | null
           business_name?: string
           created_at?: string | null
