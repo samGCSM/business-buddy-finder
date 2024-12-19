@@ -20,10 +20,10 @@ const LoginForm = ({ onLogin }: { onLogin: (isLoggedIn: boolean, userType: 'admi
       <div className="flex flex-col items-center mb-6">
         <img 
           src="/lovable-uploads/a39fe416-87d2-481d-bf99-5a86c104e18e.png" 
-          alt="Sales Storm Logo" 
+          alt="Prospect Pro Logo" 
           className="w-32 h-32 mb-4"
         />
-        <h1 className="text-2xl font-bold text-center">Sales Storm Prospecting</h1>
+        <h1 className="text-2xl font-bold text-center">Prospect Pro</h1>
       </div>
       <form onSubmit={onSubmit} className="space-y-4">
         <div>
