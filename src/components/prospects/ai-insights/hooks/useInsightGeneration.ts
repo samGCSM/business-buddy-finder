@@ -51,9 +51,10 @@ export const useInsightGeneration = (
 
       // Handle quota exceeded error from the edge function
       if (insightData?.isQuotaError) {
+        console.error('OpenAI API quota exceeded');
         toast({
           title: "OpenAI API Quota Exceeded",
-          description: "Please check your OpenAI API billing details and ensure you have available credits.",
+          description: "Please verify your OpenAI API key and billing status in your OpenAI account.",
           variant: "destructive",
         });
         return;

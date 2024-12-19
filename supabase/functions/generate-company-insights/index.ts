@@ -3,6 +3,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 if (!openAIApiKey) {
+  console.error('OpenAI API key not configured');
   throw new Error('OpenAI API key not configured');
 }
 
@@ -15,6 +16,8 @@ async function generateInsight(businessName: string, website: string) {
   console.log('Generating insight for:', businessName, 'website:', website);
 
   try {
+    console.log('Using OpenAI API key:', openAIApiKey.substring(0, 5) + '...');
+    
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -39,20 +42,27 @@ async function generateInsight(businessName: string, website: string) {
     });
 
     const data = await response.json();
+    console.log('OpenAI API response status:', response.status);
     console.log('OpenAI API response:', data);
     
     if (!response.ok) {
-      // Check specifically for quota exceeded error
-      if (data.error?.type === 'insufficient_quota' || 
-          data.error?.message?.includes('exceeded your current quota')) {
+      // Check for various quota and billing errors
+      if (
+        data.error?.type === 'insufficient_quota' || 
+        data.error?.code === 'insufficient_quota' ||
+        data.error?.message?.toLowerCase().includes('quota') ||
+        data.error?.message?.toLowerCase().includes('billing')
+      ) {
+        console.error('OpenAI API quota/billing error:', data.error);
         return {
           error: true,
-          message: 'OpenAI API quota exceeded. Please check your billing details.',
+          message: 'OpenAI API quota exceeded or billing issue. Please check your billing details.',
           status: 402,
           isQuotaError: true
         };
       }
       
+      console.error('OpenAI API error:', data.error);
       return {
         error: true,
         message: data.error?.message || 'OpenAI API error',
