@@ -41,6 +41,7 @@ async function generateInsight(businessName: string, website: string) {
     const data = await response.json();
     
     if (!response.ok) {
+      console.error('OpenAI API error:', data);
       return {
         error: true,
         message: data.error?.message || 'OpenAI API error',
