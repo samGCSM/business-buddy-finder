@@ -20,6 +20,10 @@ interface ProspectTableRowProps {
 const ProspectTableRow = ({ prospect, onEdit, onDelete, onUpdate }: ProspectTableRowProps) => {
   const [isInsightsOpen, setIsInsightsOpen] = useState(false);
 
+  const getGoogleMapsUrl = (address: string) => {
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
+  };
+
   return (
     <TableRow key={prospect.id}>
       <TableCell className="sticky left-0 bg-white font-medium whitespace-nowrap">
@@ -45,7 +49,18 @@ const ProspectTableRow = ({ prospect, onEdit, onDelete, onUpdate }: ProspectTabl
         ) : null}
       </TableCell>
       <TableCell>{prospect.email}</TableCell>
-      <TableCell>{prospect.business_address}</TableCell>
+      <TableCell>
+        {prospect.business_address ? (
+          <a
+            href={getGoogleMapsUrl(prospect.business_address)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:text-blue-800 hover:underline"
+          >
+            {prospect.business_address}
+          </a>
+        ) : null}
+      </TableCell>
       <TableCell>{prospect.location_type || 'Business'}</TableCell>
       <TableCell>{prospect.phone_number}</TableCell>
       <TableCell>{prospect.rating || '0.0'}</TableCell>
