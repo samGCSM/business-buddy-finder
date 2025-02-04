@@ -20,4 +20,5 @@ export interface Prospect {
   review_count: number | null;
   territory: string | null;
   ai_company_insights: Json[] | null;
+  location_type: string | null;
 }
