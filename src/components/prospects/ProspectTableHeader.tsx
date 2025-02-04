@@ -34,6 +34,7 @@ const ProspectTableHeader = ({ onSort, sortConfig }: ProspectTableHeaderProps) =
         <TableHead>{renderSortButton("Website", "website")}</TableHead>
         <TableHead>{renderSortButton("Email", "email")}</TableHead>
         <TableHead>{renderSortButton("Address", "business_address")}</TableHead>
+        <TableHead>{renderSortButton("Location Type", "location_type")}</TableHead>
         <TableHead>{renderSortButton("Phone", "phone_number")}</TableHead>
         <TableHead>{renderSortButton("Rating", "rating")}</TableHead>
         <TableHead>{renderSortButton("Reviews", "review_count")}</TableHead>

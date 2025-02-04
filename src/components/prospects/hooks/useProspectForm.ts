@@ -18,6 +18,7 @@ export interface ProspectFormState {
   rating: string;
   review_count: string;
   territory: string;
+  location_type: string;
 }
 
 const initialState: ProspectFormState = {
@@ -35,6 +36,7 @@ const initialState: ProspectFormState = {
   rating: "0.0",
   review_count: "0",
   territory: "",
+  location_type: "Business",
 };
 
 export const useProspectForm = (onSuccess: () => void) => {
@@ -59,6 +61,13 @@ export const useProspectForm = (onSuccess: () => void) => {
     setFormData(prev => ({
       ...prev,
       priority: value
+    }));
+  };
+
+  const handleLocationTypeChange = (value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      location_type: value
     }));
   };
 
@@ -120,5 +129,6 @@ export const useProspectForm = (onSuccess: () => void) => {
     handleSubmit,
     handleStatusChange,
     handlePriorityChange,
+    handleLocationTypeChange,
   };
 };

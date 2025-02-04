@@ -1,5 +1,6 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 interface BusinessInfoProps {
   businessName: string;
@@ -10,7 +11,9 @@ interface BusinessInfoProps {
   rating: string;
   reviewCount: string;
   territory: string;
+  locationType?: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onLocationTypeChange?: (value: string) => void;
 }
 
 const BusinessInfoFields = ({
@@ -22,7 +25,9 @@ const BusinessInfoFields = ({
   rating,
   reviewCount,
   territory,
-  onChange
+  locationType = 'Business',
+  onChange,
+  onLocationTypeChange
 }: BusinessInfoProps) => {
   return (
     <>
@@ -72,6 +77,23 @@ const BusinessInfoFields = ({
           value={businessAddress}
           onChange={onChange}
         />
+      </div>
+      <div className="space-y-2">
+        <Label>Location Type</Label>
+        <RadioGroup
+          defaultValue={locationType}
+          onValueChange={onLocationTypeChange}
+          className="flex space-x-4"
+        >
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="Business" id="business" />
+            <Label htmlFor="business">Business</Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="Home" id="home" />
+            <Label htmlFor="home">Home</Label>
+          </div>
+        </RadioGroup>
       </div>
       <div>
         <Label htmlFor="phone_number">Phone Number</Label>

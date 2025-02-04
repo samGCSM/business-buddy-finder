@@ -17,6 +17,7 @@ interface ProspectFormData {
   rating: string;
   review_count: string;
   territory: string;
+  location_type?: string;
 }
 
 interface ProspectFormFieldsProps {
@@ -24,11 +25,13 @@ interface ProspectFormFieldsProps {
   handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onStatusChange?: (value: string) => void;
   onPriorityChange?: (value: string) => void;
+  onLocationTypeChange?: (value: string) => void;
 }
 
 const ProspectFormFields = ({ 
   formData, 
   handleChange,
+  onLocationTypeChange,
 }: ProspectFormFieldsProps) => (
   <div className="space-y-4">
     <div className="grid grid-cols-2 gap-4">
@@ -41,7 +44,9 @@ const ProspectFormFields = ({
         rating={formData.rating}
         reviewCount={formData.review_count}
         territory={formData.territory}
+        locationType={formData.location_type}
         onChange={handleChange}
+        onLocationTypeChange={onLocationTypeChange}
       />
       <OwnerInfoFields
         ownerName={formData.owner_name}

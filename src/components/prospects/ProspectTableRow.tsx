@@ -46,6 +46,7 @@ const ProspectTableRow = ({ prospect, onEdit, onDelete, onUpdate }: ProspectTabl
       </TableCell>
       <TableCell>{prospect.email}</TableCell>
       <TableCell>{prospect.business_address}</TableCell>
+      <TableCell>{prospect.location_type || 'Business'}</TableCell>
       <TableCell>{prospect.phone_number}</TableCell>
       <TableCell>{prospect.rating || '0.0'}</TableCell>
       <TableCell>{prospect.review_count || '0'}</TableCell>
