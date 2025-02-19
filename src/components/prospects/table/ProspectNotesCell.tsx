@@ -24,22 +24,45 @@ interface ActivityLogJson {
   fileName?: string;
 }
 
+const isActivityLogItem = (item: Json): item is ActivityLogJson => {
+  return (
+    typeof item === 'object' &&
+    item !== null &&
+    'type' in item &&
+    'content' in item &&
+    'timestamp' in item &&
+    'userId' in item &&
+    'userEmail' in item &&
+    'userType' in item
+  );
+};
+
 const ProspectNotesCell = ({ prospectId, notes, activityLog, onUpdate }: ProspectNotesCellProps) => {
   // Convert activity log from Json[] to ActivityLogItemData[]
   const formattedActivityLog: ActivityLogItemData[] = activityLog?.map(item => {
-    // Cast the Json item to our expected shape
-    const logItem = item as ActivityLogJson;
-    
+    if (!isActivityLogItem(item)) {
+      console.warn('Invalid activity log item:', item);
+      return {
+        type: 'note',
+        content: 'Invalid log entry',
+        timestamp: new Date().toISOString(),
+        userId: 0,
+        userEmail: '',
+        userType: '',
+        likes: 0
+      };
+    }
+
     return {
-      type: logItem.type as 'note' | 'file' | 'image',
-      content: logItem.content,
-      timestamp: logItem.timestamp,
-      userId: logItem.userId,
-      userEmail: logItem.userEmail,
-      userType: logItem.userType,
-      likes: logItem.likes || 0,
-      fileUrl: logItem.fileUrl,
-      fileName: logItem.fileName,
+      type: item.type as 'note' | 'file' | 'image',
+      content: item.content,
+      timestamp: item.timestamp,
+      userId: item.userId,
+      userEmail: item.userEmail,
+      userType: item.userType,
+      likes: item.likes || 0,
+      fileUrl: item.fileUrl,
+      fileName: item.fileName,
     };
   }) || [];
 
