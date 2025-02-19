@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,6 +7,7 @@ import { ContactLogProps, ContactHistoryItem, ContactType } from "./types";
 import { ContactHistory } from "./ContactHistory";
 import { ContactForm } from "./ContactForm";
 import { Json } from "@/integrations/supabase/types";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export const ContactLog = ({ 
   isOpen, 
@@ -98,15 +100,17 @@ export const ContactLog = ({
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent side="right" className="w-[400px] sm:w-[540px]">
+      <SheetContent side="right" className="w-[400px] sm:w-[540px] overflow-hidden flex flex-col">
         <SheetHeader>
           <SheetTitle>{prospectName}</SheetTitle>
         </SheetHeader>
         
-        <div className="mt-6">
-          <ContactForm onSubmit={handleContactSubmit} />
-          <ContactHistory contactHistory={contactHistory} />
-        </div>
+        <ScrollArea className="flex-1 mt-6">
+          <div className="pr-4">
+            <ContactForm onSubmit={handleContactSubmit} />
+            <ContactHistory contactHistory={contactHistory} />
+          </div>
+        </ScrollArea>
       </SheetContent>
     </Sheet>
   );
