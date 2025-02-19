@@ -1,19 +1,45 @@
+
 import { TableCell } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import ProspectNotes from "../ProspectNotes";
+import { Json } from "@/integrations/supabase/types";
+import { ActivityLogItemData } from "../notes/ActivityLogItem";
 
 interface ProspectNotesCellProps {
   prospectId: string;
   notes: string;
-  activityLog: any[];
+  activityLog: Json[] | null;
   onUpdate: () => void;
 }
 
 const ProspectNotesCell = ({ prospectId, notes, activityLog, onUpdate }: ProspectNotesCellProps) => {
-  const noteCount = activityLog?.filter(item => 
-    typeof item === 'object' && 
-    item !== null && 
-    'type' in item && 
+  // Convert activity log from Json[] to ActivityLogItemData[]
+  const formattedActivityLog: ActivityLogItemData[] = activityLog?.map(item => {
+    if (typeof item === 'object' && item !== null) {
+      return {
+        type: item.type as 'note' | 'file' | 'image',
+        content: item.content as string,
+        timestamp: item.timestamp as string,
+        userId: item.userId as number,
+        userEmail: item.userEmail as string,
+        userType: item.userType as string,
+        likes: (item.likes as number) || 0,
+        fileUrl: item.fileUrl as string | undefined,
+        fileName: item.fileName as string | undefined,
+      };
+    }
+    return {
+      type: 'note',
+      content: '',
+      timestamp: new Date().toISOString(),
+      likes: 0,
+      userId: 0,
+      userEmail: '',
+      userType: '',
+    };
+  }) || [];
+
+  const noteCount = formattedActivityLog.filter(item => 
     item.type === 'note'
   ).length || 0;
 
@@ -22,7 +48,7 @@ const ProspectNotesCell = ({ prospectId, notes, activityLog, onUpdate }: Prospec
       <div className="relative inline-flex">
         <ProspectNotes
           prospectId={prospectId}
-          existingNotes={notes}
+          existingNotes={notes || ''}
           onNotesUpdated={onUpdate}
         />
         {noteCount > 0 && (
