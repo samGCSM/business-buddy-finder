@@ -1,3 +1,4 @@
+
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { format, subDays } from 'date-fns';
 import { fromZonedTime, toZonedTime } from 'date-fns-tz';
@@ -14,7 +15,7 @@ interface DailyMetrics {
   totalProspects: number;
   newProspects: number;
   emailsSent: number;
-  callsMade: number;
+  faceToFace: number;
 }
 
 const timeZone = 'America/New_York'; // EST timezone
@@ -75,7 +76,7 @@ const MetricsGraph = ({ userId, userRole }: MetricsGraphProps) => {
           ) || [];
 
           let emailCount = 0;
-          let callCount = 0;
+          let faceToFaceCount = 0;
 
           dayProspects.forEach(prospect => {
             if (prospect.activity_log) {
@@ -83,7 +84,7 @@ const MetricsGraph = ({ userId, userRole }: MetricsGraphProps) => {
                 const activityDate = toZonedTime(new Date(activity.timestamp), timeZone);
                 if (activityDate >= dayStart && activityDate <= dayEnd) {
                   if (activity.type === 'Email') emailCount++;
-                  if (activity.type === 'Phone Call') callCount++;
+                  if (activity.type === 'Face To Face') faceToFaceCount++;
                 }
               });
             }
@@ -96,7 +97,7 @@ const MetricsGraph = ({ userId, userRole }: MetricsGraphProps) => {
             ).length || 0,
             newProspects: dayProspects.length,
             emailsSent: emailCount,
-            callsMade: callCount,
+            faceToFace: faceToFaceCount,
           };
         });
 
@@ -141,9 +142,9 @@ const MetricsGraph = ({ userId, userRole }: MetricsGraphProps) => {
             />
             <Line 
               type="monotone" 
-              dataKey="callsMade" 
+              dataKey="faceToFace" 
               stroke="#ff7300" 
-              name="Calls Made"
+              name="Face To Face"
             />
           </LineChart>
         </ResponsiveContainer>

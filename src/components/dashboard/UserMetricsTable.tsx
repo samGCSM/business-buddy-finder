@@ -11,7 +11,7 @@ interface UserMetric {
   totalProspects: number;
   newProspects: number;
   emailsSent: number;
-  callsMade: number;
+  faceToFace: number;
   meetingsSet: number;
   bulkSearches: number;
   savedSearches: number;
@@ -36,7 +36,6 @@ const UserMetricsTable = ({ userRole, userId }: UserMetricsTableProps) => {
       try {
         console.log('Fetching user metrics for:', userId, 'role:', userRole);
         
-        // Get supervised users
         let query = supabase.from('users').select('*');
         if (userRole === 'supervisor') {
           query = query.eq('supervisor_id', userId);
@@ -46,11 +45,9 @@ const UserMetricsTable = ({ userRole, userId }: UserMetricsTableProps) => {
         
         if (usersError) throw usersError;
         
-        // Get date range
         const nowInEST = toZonedTime(new Date(), timeZone);
         const sevenDaysAgo = subDays(nowInEST, 7);
         
-        // Get prospects for all users
         const userIds = users.map(user => user.id);
         const { data: prospects, error: prospectsError } = await supabase
           .from('prospects')
@@ -60,7 +57,6 @@ const UserMetricsTable = ({ userRole, userId }: UserMetricsTableProps) => {
         
         if (prospectsError) throw prospectsError;
         
-        // Get saved searches
         const { data: savedSearches, error: searchesError } = await supabase
           .from('saved_searches')
           .select('*')
@@ -69,13 +65,12 @@ const UserMetricsTable = ({ userRole, userId }: UserMetricsTableProps) => {
           
         if (searchesError) throw searchesError;
 
-        // Calculate metrics for each user
         const metrics = users.map(user => {
           const userProspects = prospects?.filter(p => p.user_id === user.id) || [];
           const userSearches = savedSearches?.filter(s => s.user_id === user.id) || [];
           
           let emailCount = 0;
-          let callCount = 0;
+          let faceToFaceCount = 0;
           let meetingCount = 0;
           let completedCount = 0;
           
@@ -85,7 +80,7 @@ const UserMetricsTable = ({ userRole, userId }: UserMetricsTableProps) => {
                 const activityDate = new Date(activity.timestamp);
                 if (activityDate >= sevenDaysAgo) {
                   if (activity.type === 'Email') emailCount++;
-                  if (activity.type === 'Phone Call') callCount++;
+                  if (activity.type === 'Face To Face') faceToFaceCount++;
                   if (activity.type === 'Meeting') meetingCount++;
                 }
               });
@@ -105,7 +100,7 @@ const UserMetricsTable = ({ userRole, userId }: UserMetricsTableProps) => {
               new Date(p.created_at || '') >= sevenDaysAgo
             ).length,
             emailsSent: emailCount,
-            callsMade: callCount,
+            faceToFace: faceToFaceCount,
             meetingsSet: meetingCount,
             bulkSearches: user.totalSearches || 0,
             savedSearches: userSearches.length,
@@ -142,7 +137,7 @@ const UserMetricsTable = ({ userRole, userId }: UserMetricsTableProps) => {
               <TableHead>Total Prospects</TableHead>
               <TableHead>New Prospects</TableHead>
               <TableHead>Emails Sent</TableHead>
-              <TableHead>Calls Made</TableHead>
+              <TableHead>Face To Face</TableHead>
               <TableHead>Meetings Set</TableHead>
               <TableHead>Bulk Searches</TableHead>
               <TableHead>Saved Searches</TableHead>
@@ -156,7 +151,7 @@ const UserMetricsTable = ({ userRole, userId }: UserMetricsTableProps) => {
                 <TableCell>{metric.totalProspects}</TableCell>
                 <TableCell>{metric.newProspects}</TableCell>
                 <TableCell>{metric.emailsSent}</TableCell>
-                <TableCell>{metric.callsMade}</TableCell>
+                <TableCell>{metric.faceToFace}</TableCell>
                 <TableCell>{metric.meetingsSet}</TableCell>
                 <TableCell>{metric.bulkSearches}</TableCell>
                 <TableCell>{metric.savedSearches}</TableCell>

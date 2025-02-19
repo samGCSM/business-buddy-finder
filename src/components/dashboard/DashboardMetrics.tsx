@@ -1,18 +1,19 @@
-import { Users, Mail, PhoneCall, UserPlus } from "lucide-react";
+
+import { Users, Mail, UserPlus, HandshakeIcon } from "lucide-react";
 import MetricCard from "./MetricCard";
 
 interface DashboardMetricsProps {
   totalProspects: number;
   newProspects: number;
   emailsSent: number;
-  callsMade: number;
+  faceToFace: number;
 }
 
 const DashboardMetrics = ({ 
   totalProspects, 
   newProspects, 
   emailsSent, 
-  callsMade 
+  faceToFace 
 }: DashboardMetricsProps) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -32,9 +33,9 @@ const DashboardMetrics = ({
         icon={Mail}
       />
       <MetricCard
-        title="Calls Made"
-        value={callsMade}
-        icon={PhoneCall}
+        title="Face To Face"
+        value={faceToFace}
+        icon={HandshakeIcon}
       />
     </div>
   );

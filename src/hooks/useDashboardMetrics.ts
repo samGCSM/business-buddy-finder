@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -6,7 +7,7 @@ interface DashboardMetrics {
   totalProspects: number;
   newProspects: number;
   emailsSent: number;
-  callsMade: number;
+  faceToFace: number;
 }
 
 export const useDashboardMetrics = () => {
@@ -14,7 +15,7 @@ export const useDashboardMetrics = () => {
     totalProspects: 0,
     newProspects: 0,
     emailsSent: 0,
-    callsMade: 0,
+    faceToFace: 0,
   });
 
   const fetchDashboardMetrics = async (currentUser: any) => {
@@ -58,13 +59,13 @@ export const useDashboardMetrics = () => {
       ).length || 0;
 
       let emailCount = 0;
-      let callCount = 0;
+      let faceToFaceCount = 0;
 
       prospectsData?.forEach(prospect => {
         if (prospect.activity_log) {
           prospect.activity_log.forEach((activity: any) => {
             if (activity.type === 'Email') emailCount++;
-            if (activity.type === 'Phone Call') callCount++;
+            if (activity.type === 'Face To Face') faceToFaceCount++;
           });
         }
       });
@@ -73,14 +74,14 @@ export const useDashboardMetrics = () => {
         totalProspects: prospectsData?.length || 0,
         newProspects: newProspectsCount,
         emailsSent: emailCount,
-        callsMade: callCount,
+        faceToFace: faceToFaceCount,
       });
 
       setMetrics({
         totalProspects: prospectsData?.length || 0,
         newProspects: newProspectsCount,
         emailsSent: emailCount,
-        callsMade: callCount,
+        faceToFace: faceToFaceCount,
       });
 
     } catch (error) {
