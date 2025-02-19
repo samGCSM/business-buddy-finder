@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -15,10 +16,10 @@ interface ActivityLogJson {
   likes: number;
   fileUrl?: string;
   fileName?: string;
-  [key: string]: Json | undefined;
+  [key: string]: Json | undefined;  // Add index signature for Json compatibility
 }
 
-const isActivityLogItem = (item: Json): item is ActivityLogItemData => {
+const isActivityLogJson = (item: Json): item is ActivityLogJson => {
   if (typeof item !== 'object' || item === null) return false;
 
   const requiredFields = ['type', 'content', 'timestamp', 'userId', 'userEmail', 'userType'];
@@ -197,7 +198,7 @@ export const useActivityLog = (prospectId: string, onUpdate: () => void) => {
       if (error) throw error;
 
       return (data?.activity_log || []).map((item: Json) => {
-        if (!isActivityLogItem(item)) {
+        if (!isActivityLogJson(item)) {
           console.warn('Invalid activity log item:', item);
           return {
             type: 'note',

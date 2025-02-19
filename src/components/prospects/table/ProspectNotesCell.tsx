@@ -25,7 +25,7 @@ interface ActivityLogJson {
   [key: string]: Json | undefined;  // Add index signature for Json compatibility
 }
 
-const isActivityLogItem = (item: Json): item is ActivityLogItemData => {
+const isActivityLogJson = (item: Json): item is ActivityLogJson => {
   if (typeof item !== 'object' || item === null) return false;
 
   const requiredFields = ['type', 'content', 'timestamp', 'userId', 'userEmail', 'userType'];
@@ -35,7 +35,7 @@ const isActivityLogItem = (item: Json): item is ActivityLogItemData => {
 const ProspectNotesCell = ({ prospectId, notes, activityLog, onUpdate }: ProspectNotesCellProps) => {
   // Convert activity log from Json[] to ActivityLogItemData[]
   const formattedActivityLog: ActivityLogItemData[] = activityLog?.map(item => {
-    if (!isActivityLogItem(item)) {
+    if (!isActivityLogJson(item)) {
       console.warn('Invalid activity log item:', item);
       return {
         type: 'note',
