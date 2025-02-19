@@ -8,22 +8,21 @@ import { Json } from "@/integrations/supabase/types";
 
 interface ActivityLogJson {
   type: string;
-  content: string;
+  notes?: string;  // Added for backward compatibility
+  content?: string; // Made optional
   timestamp: string;
-  userId: number;
-  userEmail: string;
-  userType: string;
-  likes: number;
+  userId?: number;  // Made optional for backward compatibility
+  userEmail?: string;
+  userType?: string;
+  likes?: number;
   fileUrl?: string;
   fileName?: string;
-  [key: string]: Json | undefined;  // Add index signature for Json compatibility
+  [key: string]: Json | undefined;
 }
 
 const isActivityLogJson = (item: Json): item is ActivityLogJson => {
   if (typeof item !== 'object' || item === null) return false;
-
-  const requiredFields = ['type', 'content', 'timestamp', 'userId', 'userEmail', 'userType'];
-  return requiredFields.every(field => field in item);
+  return 'type' in item && ('notes' in item || 'content' in item) && 'timestamp' in item;
 };
 
 export const useActivityLog = (prospectId: string, onUpdate: () => void) => {
@@ -139,9 +138,9 @@ export const useActivityLog = (prospectId: string, onUpdate: () => void) => {
       const timestamp = new Date().toISOString();
       const updatedNotes = existingNotes ? `${existingNotes}\n${newNote}` : newNote;
 
-      const newActivity: ActivityLogItemData = {
+      const newActivity: ActivityLogJson = {
         type: 'note',
-        content: newNote,
+        notes: newNote,
         timestamp,
         userId: currentUser.id,
         userEmail: currentUser.email || '',
@@ -161,7 +160,8 @@ export const useActivityLog = (prospectId: string, onUpdate: () => void) => {
         .from('prospects')
         .update({
           notes: updatedNotes,
-          activity_log: updatedLog
+          activity_log: updatedLog,
+          last_contact: new Date().toISOString()
         })
         .eq('id', prospectId);
 
@@ -213,12 +213,12 @@ export const useActivityLog = (prospectId: string, onUpdate: () => void) => {
 
         return {
           type: item.type as 'note' | 'file' | 'image',
-          content: String(item.content),
+          content: String(item.notes || item.content || ''),  // Use notes if available, fall back to content
           timestamp: String(item.timestamp),
-          userId: Number(item.userId),
-          userEmail: String(item.userEmail),
-          userType: String(item.userType),
-          likes: Number(item.likes) || 0,
+          userId: Number(item.userId || 0),
+          userEmail: String(item.userEmail || ''),
+          userType: String(item.userType || ''),
+          likes: Number(item.likes || 0),
           fileUrl: item.fileUrl ? String(item.fileUrl) : undefined,
           fileName: item.fileName ? String(item.fileName) : undefined,
         };
