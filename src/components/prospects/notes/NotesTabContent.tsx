@@ -1,3 +1,4 @@
+
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -52,23 +53,15 @@ const NotesTabContent = ({
     
     activityLog.forEach(item => {
       initialLikeCounts[item.timestamp] = item.likes || 0;
-      initialLikeStates[item.timestamp] = false; // Default to not liked
+      initialLikeStates[item.timestamp] = false;
     });
     
     setLikeCounts(initialLikeCounts);
     setLikeStates(initialLikeStates);
   }, [activityLog]);
 
-  useEffect(() => {
-    // Scroll to bottom when new content is added
-    if (scrollAreaRef.current) {
-      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
-    }
-  }, [activityLog]);
-
   const handleLike = async (item: ActivityLogItemData) => {
     try {
-      console.log('Handling like for item:', item);
       const isCurrentlyLiked = likeStates[item.timestamp] || false;
       const currentCount = likeCounts[item.timestamp] || 0;
       const newLikeCount = isCurrentlyLiked ? currentCount - 1 : currentCount + 1;
@@ -76,7 +69,6 @@ const NotesTabContent = ({
       const success = await updateActivityLogLikes(prospectId, item.timestamp, newLikeCount);
       
       if (success) {
-        console.log('Like updated successfully');
         setLikeCounts(prev => ({
           ...prev,
           [item.timestamp]: newLikeCount
@@ -91,53 +83,72 @@ const NotesTabContent = ({
     }
   };
 
+  // Split existing notes into paragraphs for better readability
+  const notesParagraphs = existingNotes ? existingNotes.split('\n').filter(Boolean) : [];
+
   return (
     <div className="flex flex-col h-[calc(100vh-250px)]">
-      <ScrollArea className="flex-1 pr-4" ref={scrollAreaRef}>
-        <div className="space-y-4">
-          {activityLog.map((item, index) => (
-            <div key={index} className="bg-gray-50 rounded-lg p-4 space-y-2">
-              <div className="flex items-start space-x-3">
-                <Avatar className="h-8 w-8">
-                  <div className="bg-primary text-white w-full h-full flex items-center justify-center text-sm">
-                    {item.userEmail?.[0]?.toUpperCase()}
+      <ScrollArea className="flex-1 pr-4">
+        {/* Display existing notes */}
+        {notesParagraphs.length > 0 && (
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold mb-2">Notes</h3>
+            <div className="space-y-2">
+              {notesParagraphs.map((note, index) => (
+                <p key={index} className="text-sm text-gray-700">{note}</p>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Display activity log */}
+        {activityLog.length > 0 && (
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold mb-2">Activity Log</h3>
+            {activityLog.map((item, index) => (
+              <div key={index} className="bg-gray-50 rounded-lg p-4 space-y-2">
+                <div className="flex items-start space-x-3">
+                  <Avatar className="h-8 w-8">
+                    <div className="bg-primary text-white w-full h-full flex items-center justify-center text-sm">
+                      {item.userEmail?.[0]?.toUpperCase()}
+                    </div>
+                  </Avatar>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-medium text-blue-600">
+                        {item.userEmail} ({item.userType})
+                      </p>
+                      <span className="text-xs text-gray-500">
+                        {new Date(item.timestamp).toLocaleString()}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-700 mt-1">{item.content}</p>
                   </div>
-                </Avatar>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-medium text-blue-600">
-                      {item.userEmail} ({item.userType})
-                    </p>
-                    <span className="text-xs text-gray-500">
-                      {new Date(item.timestamp).toLocaleString()}
-                    </span>
-                  </div>
-                  <p className="text-sm text-gray-700 mt-1">{item.content}</p>
+                </div>
+                <div className="ml-11 flex items-center space-x-2">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className={`h-7 px-2 text-xs flex items-center gap-1 ${likeStates[item.timestamp] ? 'text-blue-600' : ''}`}
+                    onClick={() => handleLike(item)}
+                  >
+                    <ThumbsUp className={`h-3 w-3 ${likeStates[item.timestamp] ? 'fill-current' : ''}`} />
+                    {likeCounts[item.timestamp] > 0 && `(${likeCounts[item.timestamp]})`}
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="h-7 px-2 text-xs flex items-center gap-1"
+                    onClick={() => onReply(item)}
+                  >
+                    <MessageSquare className="h-3 w-3" />
+                    Reply
+                  </Button>
                 </div>
               </div>
-              <div className="ml-11 flex items-center space-x-2">
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className={`h-7 px-2 text-xs flex items-center gap-1 ${likeStates[item.timestamp] ? 'text-blue-600' : ''}`}
-                  onClick={() => handleLike(item)}
-                >
-                  <ThumbsUp className={`h-3 w-3 ${likeStates[item.timestamp] ? 'fill-current' : ''}`} />
-                  {likeCounts[item.timestamp] > 0 && `(${likeCounts[item.timestamp]})`}
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="h-7 px-2 text-xs flex items-center gap-1"
-                  onClick={() => onReply(item)}
-                >
-                  <MessageSquare className="h-3 w-3" />
-                  Reply
-                </Button>
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </ScrollArea>
 
       <div className="border-t pt-4 space-y-4 mt-4">
