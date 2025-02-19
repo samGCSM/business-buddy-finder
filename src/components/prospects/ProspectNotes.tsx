@@ -1,12 +1,11 @@
+
 import { useState, useEffect } from "react";
 import { MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
-import ActivityLog from "./notes/ActivityLog";
 import NotesTabContent from "./notes/NotesTabContent";
 import NotesHeader from "./notes/NotesHeader";
-import NotificationIndicator from "./notes/NotificationIndicator";
 import { useActivityLog, setupNotificationListener } from "./notes/useActivityLog";
 import { ActivityLogItemData } from "./notes/ActivityLogItem";
 import { getCurrentUser } from "@/services/userService";
@@ -95,7 +94,7 @@ const ProspectNotes = ({ prospectId, existingNotes, onNotesUpdated }: ProspectNo
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
         <SheetContent side="right" className="w-[400px] sm:w-[540px]">
           <SheetHeader>
-            <SheetTitle>Notes & Activity</SheetTitle>
+            <SheetTitle>Notes</SheetTitle>
             {replyingTo && (
               <div className="text-sm text-gray-500">
                 Replying to {replyingTo.userEmail}'s note
@@ -129,14 +128,6 @@ const ProspectNotes = ({ prospectId, existingNotes, onNotesUpdated }: ProspectNo
                   activityLog={activityLog}
                   onReply={handleReply}
                   prospectId={prospectId}
-                />
-              </TabsContent>
-              
-              <TabsContent value="activity" className="flex-1">
-                <ActivityLog 
-                  items={activityLog} 
-                  prospectId={prospectId}
-                  onReply={handleReply}
                 />
               </TabsContent>
             </Tabs>

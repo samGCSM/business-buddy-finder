@@ -1,10 +1,10 @@
+
 import { TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const NotesHeader = () => {
   return (
-    <TabsList className="grid w-full grid-cols-2">
+    <TabsList className="grid w-full grid-cols-1">
       <TabsTrigger value="notes">Notes</TabsTrigger>
-      <TabsTrigger value="activity">Activity Log</TabsTrigger>
     </TabsList>
   );
 };
