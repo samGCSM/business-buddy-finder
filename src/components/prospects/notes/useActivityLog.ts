@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -16,19 +15,14 @@ interface ActivityLogJson {
   likes: number;
   fileUrl?: string;
   fileName?: string;
+  [key: string]: Json | undefined;
 }
 
-const isActivityLogItem = (item: Json): item is ActivityLogJson => {
-  return (
-    typeof item === 'object' &&
-    item !== null &&
-    'type' in item &&
-    'content' in item &&
-    'timestamp' in item &&
-    'userId' in item &&
-    'userEmail' in item &&
-    'userType' in item
-  );
+const isActivityLogItem = (item: Json): item is ActivityLogItemData => {
+  if (typeof item !== 'object' || item === null) return false;
+
+  const requiredFields = ['type', 'content', 'timestamp', 'userId', 'userEmail', 'userType'];
+  return requiredFields.every(field => field in item);
 };
 
 export const useActivityLog = (prospectId: string, onUpdate: () => void) => {
@@ -218,14 +212,14 @@ export const useActivityLog = (prospectId: string, onUpdate: () => void) => {
 
         return {
           type: item.type as 'note' | 'file' | 'image',
-          content: item.content,
-          timestamp: item.timestamp,
-          userId: item.userId,
-          userEmail: item.userEmail,
-          userType: item.userType,
-          likes: item.likes || 0,
-          fileUrl: item.fileUrl,
-          fileName: item.fileName,
+          content: String(item.content),
+          timestamp: String(item.timestamp),
+          userId: Number(item.userId),
+          userEmail: String(item.userEmail),
+          userType: String(item.userType),
+          likes: Number(item.likes) || 0,
+          fileUrl: item.fileUrl ? String(item.fileUrl) : undefined,
+          fileName: item.fileName ? String(item.fileName) : undefined,
         };
       });
     } catch (error) {
