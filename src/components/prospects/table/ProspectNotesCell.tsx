@@ -12,30 +12,34 @@ interface ProspectNotesCellProps {
   onUpdate: () => void;
 }
 
+interface ActivityLogJson {
+  type: string;
+  content: string;
+  timestamp: string;
+  userId: number;
+  userEmail: string;
+  userType: string;
+  likes: number;
+  fileUrl?: string;
+  fileName?: string;
+}
+
 const ProspectNotesCell = ({ prospectId, notes, activityLog, onUpdate }: ProspectNotesCellProps) => {
   // Convert activity log from Json[] to ActivityLogItemData[]
   const formattedActivityLog: ActivityLogItemData[] = activityLog?.map(item => {
-    if (typeof item === 'object' && item !== null) {
-      return {
-        type: item.type as 'note' | 'file' | 'image',
-        content: item.content as string,
-        timestamp: item.timestamp as string,
-        userId: item.userId as number,
-        userEmail: item.userEmail as string,
-        userType: item.userType as string,
-        likes: (item.likes as number) || 0,
-        fileUrl: item.fileUrl as string | undefined,
-        fileName: item.fileName as string | undefined,
-      };
-    }
+    // Cast the Json item to our expected shape
+    const logItem = item as ActivityLogJson;
+    
     return {
-      type: 'note',
-      content: '',
-      timestamp: new Date().toISOString(),
-      likes: 0,
-      userId: 0,
-      userEmail: '',
-      userType: '',
+      type: logItem.type as 'note' | 'file' | 'image',
+      content: logItem.content,
+      timestamp: logItem.timestamp,
+      userId: logItem.userId,
+      userEmail: logItem.userEmail,
+      userType: logItem.userType,
+      likes: logItem.likes || 0,
+      fileUrl: logItem.fileUrl,
+      fileName: logItem.fileName,
     };
   }) || [];
 

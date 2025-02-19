@@ -1,9 +1,22 @@
+
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { getCurrentUser } from "@/services/userService";
 import { ActivityLogItemData } from "./ActivityLogItem";
 import { Json } from "@/integrations/supabase/types";
+
+interface ActivityLogJson {
+  type: string;
+  content: string;
+  timestamp: string;
+  userId: number;
+  userEmail: string;
+  userType: string;
+  likes: number;
+  fileUrl?: string;
+  fileName?: string;
+}
 
 export const useActivityLog = (prospectId: string, onUpdate: () => void) => {
   const [isUploading, setIsUploading] = useState(false);
@@ -177,27 +190,19 @@ export const useActivityLog = (prospectId: string, onUpdate: () => void) => {
       if (error) throw error;
 
       return (data?.activity_log || []).map((item: Json) => {
-        if (typeof item === 'object' && item !== null) {
-          return {
-            type: item.type as 'note' | 'file' | 'image',
-            content: item.content as string,
-            timestamp: item.timestamp as string,
-            userId: item.userId as number,
-            userEmail: item.userEmail as string,
-            userType: item.userType as string,
-            likes: (item.likes as number) || 0,
-            fileUrl: item.fileUrl as string | undefined,
-            fileName: item.fileName as string | undefined,
-          };
-        }
+        // Ensure item is an object with the expected properties
+        const logItem = item as ActivityLogJson;
+        
         return {
-          type: 'note',
-          content: '',
-          timestamp: new Date().toISOString(),
-          likes: 0,
-          userId: 0,
-          userEmail: '',
-          userType: '',
+          type: logItem.type as 'note' | 'file' | 'image',
+          content: logItem.content,
+          timestamp: logItem.timestamp,
+          userId: logItem.userId,
+          userEmail: logItem.userEmail,
+          userType: logItem.userType,
+          likes: logItem.likes || 0,
+          fileUrl: logItem.fileUrl,
+          fileName: logItem.fileName,
         };
       });
     } catch (error) {
