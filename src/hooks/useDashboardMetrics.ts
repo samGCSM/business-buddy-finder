@@ -65,7 +65,9 @@ export const useDashboardMetrics = () => {
         if (prospect.activity_log) {
           prospect.activity_log.forEach((activity: any) => {
             if (activity.type === 'Email') emailCount++;
-            if (activity.type === 'Face To Face') faceToFaceCount++;
+            if (activity.type === 'Face To Face' || activity.type === 'Face to Face' || activity.type === 'face to face') {
+              faceToFaceCount++;
+            }
           });
         }
       });

@@ -80,7 +80,9 @@ const UserMetricsTable = ({ userRole, userId }: UserMetricsTableProps) => {
                 const activityDate = new Date(activity.timestamp);
                 if (activityDate >= sevenDaysAgo) {
                   if (activity.type === 'Email') emailCount++;
-                  if (activity.type === 'Face To Face') faceToFaceCount++;
+                  if (activity.type === 'Face To Face' || activity.type === 'Face to Face' || activity.type === 'face to face') {
+                    faceToFaceCount++;
+                  }
                   if (activity.type === 'Meeting') meetingCount++;
                 }
               });

@@ -84,7 +84,9 @@ const MetricsGraph = ({ userId, userRole }: MetricsGraphProps) => {
                 const activityDate = toZonedTime(new Date(activity.timestamp), timeZone);
                 if (activityDate >= dayStart && activityDate <= dayEnd) {
                   if (activity.type === 'Email') emailCount++;
-                  if (activity.type === 'Face To Face') faceToFaceCount++;
+                  if (activity.type === 'Face To Face' || activity.type === 'Face to Face' || activity.type === 'face to face') {
+                    faceToFaceCount++;
+                  }
                 }
               });
             }
