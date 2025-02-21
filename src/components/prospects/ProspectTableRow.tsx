@@ -19,6 +19,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { getCurrentUser } from "@/services/userService";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
 interface ProspectTableRowProps {
   prospect: Prospect;
@@ -51,6 +53,12 @@ const ProspectTableRow = ({ prospect, onEdit, onDelete, onUpdate }: ProspectTabl
         .eq('id', prospect.id);
 
       if (error) throw error;
+      
+      toast({
+        title: "Success",
+        description: "Territory updated successfully",
+      });
+      
       onUpdate();
     } catch (error) {
       console.error('Error updating territory:', error);
