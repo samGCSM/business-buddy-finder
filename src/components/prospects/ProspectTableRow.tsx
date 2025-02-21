@@ -113,13 +113,14 @@ const ProspectTableRow = ({ prospect, onEdit, onDelete, onUpdate }: ProspectTabl
           </SelectContent>
         </Select>
       </TableCell>
-      <TableCell>
+      <TableCell className="max-w-[200px]">
         {prospect.website ? (
           <a 
             href={prospect.website.startsWith('http') ? prospect.website : `https://${prospect.website}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-blue-600 hover:text-blue-800 hover:underline"
+            className="text-blue-600 hover:text-blue-800 hover:underline truncate block"
+            title={prospect.website}
           >
             {prospect.website}
           </a>
