@@ -33,6 +33,7 @@ const ProspectTableRow = ({ prospect, onEdit, onDelete, onUpdate }: ProspectTabl
   const [isInsightsOpen, setIsInsightsOpen] = useState(false);
   const [userId, setUserId] = useState<number | null>(null);
   const { territories, fetchTerritories } = useTerritories();
+  const [currentTerritory, setCurrentTerritory] = useState(prospect.territory || "");
 
   useEffect(() => {
     const initializeUser = async () => {
@@ -45,8 +46,13 @@ const ProspectTableRow = ({ prospect, onEdit, onDelete, onUpdate }: ProspectTabl
     initializeUser();
   }, [fetchTerritories]);
 
+  useEffect(() => {
+    setCurrentTerritory(prospect.territory || "");
+  }, [prospect.territory]);
+
   const handleTerritoryChange = async (value: string) => {
     try {
+      setCurrentTerritory(value);
       const { error } = await supabase
         .from('prospects')
         .update({ territory: value })
@@ -62,6 +68,7 @@ const ProspectTableRow = ({ prospect, onEdit, onDelete, onUpdate }: ProspectTabl
       onUpdate();
     } catch (error) {
       console.error('Error updating territory:', error);
+      setCurrentTerritory(prospect.territory || ""); // Reset on error
       toast({
         title: "Error",
         description: "Failed to update territory",
@@ -87,7 +94,7 @@ const ProspectTableRow = ({ prospect, onEdit, onDelete, onUpdate }: ProspectTabl
       />
       <TableCell>
         <Select
-          value={prospect.territory || ""}
+          value={currentTerritory}
           onValueChange={handleTerritoryChange}
         >
           <SelectTrigger className="w-[200px]">

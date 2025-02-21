@@ -2,14 +2,6 @@
 import BusinessInfoFields from "./form-fields/BusinessInfoFields";
 import OwnerInfoFields from "./form-fields/OwnerInfoFields";
 import NotesField from "./form-fields/NotesField";
-import { useTerritories } from "@/hooks/useTerritories";
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 interface ProspectFormData {
   business_name: string;
@@ -43,11 +35,7 @@ const ProspectFormFields = ({
   formData, 
   handleChange,
   onLocationTypeChange,
-  onTerritoryChange,
-  userId
 }: ProspectFormFieldsProps) => {
-  const { territories, isLoading } = useTerritories();
-
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
@@ -70,30 +58,6 @@ const ProspectFormFields = ({
           ownerEmail={formData.owner_email}
           onChange={handleChange}
         />
-      </div>
-      <div className="space-y-2">
-        <label htmlFor="territory" className="text-sm font-medium">
-          Territory
-        </label>
-        <Select
-          value={formData.territory || ""}
-          onValueChange={(value) => onTerritoryChange?.(value)}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Select a territory" />
-          </SelectTrigger>
-          <SelectContent>
-            {territories.map((territory) => (
-              <SelectItem 
-                key={territory.id} 
-                value={territory.name}
-                disabled={!territory.active}
-              >
-                {territory.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
       </div>
       <NotesField
         notes={formData.notes}
