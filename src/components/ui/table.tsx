@@ -5,24 +5,56 @@ import { cn } from "@/lib/utils"
 const Table = React.forwardRef<
   HTMLTableElement,
   React.HTMLAttributes<HTMLTableElement>
->(({ className, ...props }, ref) => (
-  <div className="relative w-full">
-    {/* Top scroll container */}
-    <div className="overflow-x-auto border-b mb-2">
-      <div style={{ height: '16px', minWidth: '100%' }}>
-        <div style={{ width: '200%', height: '1px' }}></div>
+>(({ className, ...props }, ref) => {
+  const topScrollRef = React.useRef<HTMLDivElement>(null);
+  const tableScrollRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    const topScroll = topScrollRef.current;
+    const tableScroll = tableScrollRef.current;
+
+    if (!topScroll || !tableScroll) return;
+
+    const handleTopScroll = () => {
+      if (tableScroll) {
+        tableScroll.scrollLeft = topScroll.scrollLeft;
+      }
+    };
+
+    const handleTableScroll = () => {
+      if (topScroll) {
+        topScroll.scrollLeft = tableScroll.scrollLeft;
+      }
+    };
+
+    topScroll.addEventListener('scroll', handleTopScroll);
+    tableScroll.addEventListener('scroll', handleTableScroll);
+
+    return () => {
+      topScroll.removeEventListener('scroll', handleTopScroll);
+      tableScroll.removeEventListener('scroll', handleTableScroll);
+    };
+  }, []);
+
+  return (
+    <div className="relative w-full">
+      {/* Top scroll container */}
+      <div ref={topScrollRef} className="overflow-x-auto border-b mb-2">
+        <div style={{ height: '16px', minWidth: '100%' }}>
+          <div style={{ width: '200%', height: '1px' }}></div>
+        </div>
+      </div>
+      {/* Main table container */}
+      <div ref={tableScrollRef} className="overflow-x-auto">
+        <table
+          ref={ref}
+          className={cn("w-full caption-bottom text-sm", className)}
+          {...props}
+        />
       </div>
     </div>
-    {/* Main table container */}
-    <div className="overflow-x-auto">
-      <table
-        ref={ref}
-        className={cn("w-full caption-bottom text-sm", className)}
-        {...props}
-      />
-    </div>
-  </div>
-))
+  );
+})
 Table.displayName = "Table"
 
 const TableHeader = React.forwardRef<
