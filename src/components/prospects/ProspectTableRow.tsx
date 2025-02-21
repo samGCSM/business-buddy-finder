@@ -1,3 +1,4 @@
+
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Brain } from "lucide-react";
@@ -8,7 +9,16 @@ import ProspectStatusCell from "./table/ProspectStatusCell";
 import ProspectPriorityCell from "./table/ProspectPriorityCell";
 import LastContactCell from "./LastContactCell";
 import CompanyInsightsDrawer from "./ai-insights/CompanyInsightsDrawer";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useTerritories } from "@/hooks/useTerritories";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { getCurrentUser } from "@/services/userService";
 
 interface ProspectTableRowProps {
   prospect: Prospect;
@@ -19,6 +29,38 @@ interface ProspectTableRowProps {
 
 const ProspectTableRow = ({ prospect, onEdit, onDelete, onUpdate }: ProspectTableRowProps) => {
   const [isInsightsOpen, setIsInsightsOpen] = useState(false);
+  const [userId, setUserId] = useState<number | null>(null);
+  const { territories, fetchTerritories } = useTerritories();
+
+  useEffect(() => {
+    const initializeUser = async () => {
+      const user = await getCurrentUser();
+      if (user) {
+        setUserId(user.id);
+        fetchTerritories(user.id);
+      }
+    };
+    initializeUser();
+  }, [fetchTerritories]);
+
+  const handleTerritoryChange = async (value: string) => {
+    try {
+      const { error } = await supabase
+        .from('prospects')
+        .update({ territory: value })
+        .eq('id', prospect.id);
+
+      if (error) throw error;
+      onUpdate();
+    } catch (error) {
+      console.error('Error updating territory:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update territory",
+        variant: "destructive",
+      });
+    }
+  };
 
   const getGoogleMapsUrl = (address: string) => {
     return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
@@ -35,7 +77,27 @@ const ProspectTableRow = ({ prospect, onEdit, onDelete, onUpdate }: ProspectTabl
         activityLog={prospect.activity_log}
         onUpdate={onUpdate}
       />
-      <TableCell>{prospect.territory || '-'}</TableCell>
+      <TableCell>
+        <Select
+          value={prospect.territory || ""}
+          onValueChange={handleTerritoryChange}
+        >
+          <SelectTrigger className="w-[200px]">
+            <SelectValue placeholder="Select a territory" />
+          </SelectTrigger>
+          <SelectContent>
+            {territories.map((territory) => (
+              <SelectItem 
+                key={territory.id} 
+                value={territory.name}
+                disabled={!territory.active}
+              >
+                {territory.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </TableCell>
       <TableCell>
         {prospect.website ? (
           <a 

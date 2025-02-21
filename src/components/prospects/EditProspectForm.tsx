@@ -1,10 +1,10 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import ProspectFormFields from "./ProspectFormFields";
 import { getCurrentUser } from "@/services/userService";
+import { useTerritories } from "@/hooks/useTerritories";
 
 interface EditProspectFormProps {
   prospect: {
@@ -31,6 +31,7 @@ interface EditProspectFormProps {
 
 const EditProspectForm = ({ prospect, onClose, onSuccess }: EditProspectFormProps) => {
   const [userId, setUserId] = useState<number | null>(null);
+  const { fetchTerritories } = useTerritories();
   const [formData, setFormData] = useState({
     business_name: prospect.business_name,
     notes: prospect.notes || "",
@@ -54,10 +55,11 @@ const EditProspectForm = ({ prospect, onClose, onSuccess }: EditProspectFormProp
       const user = await getCurrentUser();
       if (user) {
         setUserId(user.id);
+        await fetchTerritories(user.id);
       }
     };
     fetchUser();
-  }, []);
+  }, [fetchTerritories]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
