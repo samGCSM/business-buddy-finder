@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useTerritories } from "@/hooks/useTerritories";
 import { Label } from "@/components/ui/label";
 import { MapPin } from "lucide-react";
+import { useEffect } from "react";
 
 interface TerritoryManagerProps {
   userId: number;
@@ -17,13 +18,11 @@ const TerritoryManager = ({ userId }: TerritoryManagerProps) => {
   const [newTerritory, setNewTerritory] = useState("");
   const { territories, isLoading, fetchTerritories, addTerritory, updateTerritory } = useTerritories();
 
-  // Fetch territories when the dialog opens
-  const handleOpenChange = (open: boolean) => {
+  useEffect(() => {
     if (open) {
       fetchTerritories(userId);
     }
-    setOpen(open);
-  };
+  }, [open, userId, fetchTerritories]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,7 +33,7 @@ const TerritoryManager = ({ userId }: TerritoryManagerProps) => {
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="gap-2">
           <MapPin className="h-4 w-4" />

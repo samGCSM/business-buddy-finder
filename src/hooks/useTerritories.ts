@@ -1,8 +1,7 @@
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { useCallback } from "react";
 
 export interface Territory {
   id: string;
@@ -17,6 +16,7 @@ export const useTerritories = () => {
 
   const fetchTerritories = useCallback(async (userId: number) => {
     try {
+      setIsLoading(true);
       const { data, error } = await supabase
         .from('territories')
         .select('*')
@@ -42,7 +42,7 @@ export const useTerritories = () => {
     }
   }, []);
 
-  const addTerritory = async (name: string, userId: number) => {
+  const addTerritory = useCallback(async (name: string, userId: number) => {
     try {
       const { data, error } = await supabase
         .from('territories')
@@ -75,9 +75,9 @@ export const useTerritories = () => {
         variant: "destructive",
       });
     }
-  };
+  }, []);
 
-  const updateTerritory = async (id: string, active: boolean) => {
+  const updateTerritory = useCallback(async (id: string, active: boolean) => {
     try {
       const { error } = await supabase
         .from('territories')
@@ -107,7 +107,7 @@ export const useTerritories = () => {
         variant: "destructive",
       });
     }
-  };
+  }, []);
 
   return {
     territories,
