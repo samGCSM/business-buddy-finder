@@ -1,5 +1,5 @@
 
-import * as XLSX from 'xlsx';
+import { utils, writeFile } from 'xlsx';
 import type { Prospect } from '@/types/prospects';
 
 export const generateSpreadsheet = (prospects: Prospect[]) => {
@@ -21,14 +21,14 @@ export const generateSpreadsheet = (prospects: Prospect[]) => {
     }));
 
     // Create workbook and worksheet
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = utils.book_new();
+    const ws = utils.json_to_sheet(data);
 
     // Add worksheet to workbook
-    XLSX.utils.book_append_sheet(wb, ws, 'Prospects');
+    utils.book_append_sheet(wb, ws, 'Prospects');
 
     // Generate and download file
-    XLSX.writeFile(wb, 'prospects_export.xlsx');
+    writeFile(wb, 'prospects_export.xlsx');
   } catch (error) {
     console.error('Error generating spreadsheet:', error);
     throw error;
