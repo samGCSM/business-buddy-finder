@@ -1,8 +1,10 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import ProspectFormFields from "./ProspectFormFields";
+import { getCurrentUser } from "@/services/userService";
 
 interface EditProspectFormProps {
   prospect: {
@@ -28,6 +30,7 @@ interface EditProspectFormProps {
 }
 
 const EditProspectForm = ({ prospect, onClose, onSuccess }: EditProspectFormProps) => {
+  const [userId, setUserId] = useState<number | null>(null);
   const [formData, setFormData] = useState({
     business_name: prospect.business_name,
     notes: prospect.notes || "",
@@ -45,6 +48,16 @@ const EditProspectForm = ({ prospect, onClose, onSuccess }: EditProspectFormProp
     territory: prospect.territory || "",
     location_type: prospect.location_type || "Business",
   });
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const user = await getCurrentUser();
+      if (user) {
+        setUserId(user.id);
+      }
+    };
+    fetchUser();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -98,6 +111,13 @@ const EditProspectForm = ({ prospect, onClose, onSuccess }: EditProspectFormProp
     }));
   };
 
+  const handleTerritoryChange = (value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      territory: value
+    }));
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-lg p-6 max-w-2xl w-full">
@@ -107,6 +127,8 @@ const EditProspectForm = ({ prospect, onClose, onSuccess }: EditProspectFormProp
             formData={formData} 
             handleChange={handleChange}
             onLocationTypeChange={handleLocationTypeChange}
+            onTerritoryChange={handleTerritoryChange}
+            userId={userId || undefined}
           />
           <div className="flex justify-end space-x-4">
             <Button type="button" variant="outline" onClick={onClose}>
