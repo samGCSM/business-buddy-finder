@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -7,7 +7,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useTerritories } from "@/hooks/useTerritories";
 import { Label } from "@/components/ui/label";
 import { MapPin } from "lucide-react";
-import { useEffect } from "react";
 
 interface TerritoryManagerProps {
   userId: number;
@@ -19,7 +18,8 @@ const TerritoryManager = ({ userId }: TerritoryManagerProps) => {
   const { territories, isLoading, fetchTerritories, addTerritory, updateTerritory } = useTerritories();
 
   useEffect(() => {
-    if (open) {
+    if (open && userId) {
+      console.log('Dialog opened, fetching territories for user:', userId);
       fetchTerritories(userId);
     }
   }, [open, userId, fetchTerritories]);
@@ -28,8 +28,10 @@ const TerritoryManager = ({ userId }: TerritoryManagerProps) => {
     e.preventDefault();
     if (!newTerritory.trim()) return;
 
-    await addTerritory(newTerritory.trim(), userId);
-    setNewTerritory("");
+    const success = await addTerritory(newTerritory.trim(), userId);
+    if (success) {
+      setNewTerritory("");
+    }
   };
 
   return (

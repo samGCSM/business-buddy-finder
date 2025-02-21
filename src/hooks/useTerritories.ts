@@ -12,11 +12,13 @@ export interface Territory {
 
 export const useTerritories = () => {
   const [territories, setTerritories] = useState<Territory[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
   const fetchTerritories = useCallback(async (userId: number) => {
     try {
       setIsLoading(true);
+      console.log('Fetching territories for user:', userId);
+      
       const { data, error } = await supabase
         .from('territories')
         .select('*')
@@ -44,6 +46,8 @@ export const useTerritories = () => {
 
   const addTerritory = useCallback(async (name: string, userId: number) => {
     try {
+      console.log('Adding territory:', { name, userId });
+      
       const { data, error } = await supabase
         .from('territories')
         .insert({
@@ -61,10 +65,13 @@ export const useTerritories = () => {
 
       console.log('Added territory:', data);
       setTerritories(prev => [...prev, data]);
+      
       toast({
         title: "Success",
         description: "Territory added successfully",
       });
+      
+      return true;
     } catch (error: any) {
       console.error('Error adding territory:', error);
       toast({
@@ -74,11 +81,14 @@ export const useTerritories = () => {
           : "Failed to add territory",
         variant: "destructive",
       });
+      return false;
     }
   }, []);
 
   const updateTerritory = useCallback(async (id: string, active: boolean) => {
     try {
+      console.log('Updating territory:', { id, active });
+      
       const { error } = await supabase
         .from('territories')
         .update({ active })
@@ -99,6 +109,8 @@ export const useTerritories = () => {
         title: "Success",
         description: `Territory ${active ? 'activated' : 'deactivated'} successfully`,
       });
+      
+      return true;
     } catch (error) {
       console.error('Error updating territory:', error);
       toast({
@@ -106,6 +118,7 @@ export const useTerritories = () => {
         description: "Failed to update territory",
         variant: "destructive",
       });
+      return false;
     }
   }, []);
 
