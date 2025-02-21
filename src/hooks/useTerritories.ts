@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { useCallback } from "react";
 
 export interface Territory {
   id: string;
@@ -14,7 +15,7 @@ export const useTerritories = () => {
   const [territories, setTerritories] = useState<Territory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchTerritories = async (userId: number) => {
+  const fetchTerritories = useCallback(async (userId: number) => {
     try {
       const { data, error } = await supabase
         .from('territories')
@@ -22,7 +23,10 @@ export const useTerritories = () => {
         .eq('user_id', userId)
         .order('name');
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching territories:', error);
+        throw error;
+      }
 
       console.log('Fetched territories:', data);
       setTerritories(data || []);
@@ -36,7 +40,7 @@ export const useTerritories = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   const addTerritory = async (name: string, userId: number) => {
     try {
@@ -44,12 +48,16 @@ export const useTerritories = () => {
         .from('territories')
         .insert({
           name,
-          user_id: userId
+          user_id: userId,
+          active: true
         })
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error adding territory:', error);
+        throw error;
+      }
 
       console.log('Added territory:', data);
       setTerritories(prev => [...prev, data]);
@@ -76,7 +84,10 @@ export const useTerritories = () => {
         .update({ active })
         .eq('id', id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating territory:', error);
+        throw error;
+      }
 
       setTerritories(prev => 
         prev.map(territory => 
