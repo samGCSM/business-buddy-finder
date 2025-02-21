@@ -34,17 +34,24 @@ const ProspectTableRow = ({ prospect, onEdit, onDelete, onUpdate }: ProspectTabl
   const [userId, setUserId] = useState<number | null>(null);
   const { territories, fetchTerritories } = useTerritories();
   const [currentTerritory, setCurrentTerritory] = useState(prospect.territory || "");
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
     const initializeUser = async () => {
       const user = await getCurrentUser();
       if (user) {
         setUserId(user.id);
-        fetchTerritories(user.id);
+        setUserRole(user.type);
+        // If admin, fetch territories for the prospect's user_id instead of the admin's id
+        if (user.type === 'admin') {
+          await fetchTerritories(prospect.user_id);
+        } else {
+          await fetchTerritories(user.id);
+        }
       }
     };
     initializeUser();
-  }, [fetchTerritories]);
+  }, [fetchTerritories, prospect.user_id]);
 
   useEffect(() => {
     setCurrentTerritory(prospect.territory || "");
@@ -98,7 +105,9 @@ const ProspectTableRow = ({ prospect, onEdit, onDelete, onUpdate }: ProspectTabl
           onValueChange={handleTerritoryChange}
         >
           <SelectTrigger className="w-[200px]">
-            <SelectValue placeholder="Select a territory" />
+            <SelectValue placeholder="Select a territory">
+              {currentTerritory || "Select a territory"}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             {territories.map((territory) => (
