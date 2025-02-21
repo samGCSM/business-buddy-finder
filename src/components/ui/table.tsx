@@ -8,13 +8,13 @@ const Table = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div className="relative w-full">
     {/* Top scroll container */}
-    <div className="overflow-x-auto border-b">
-      <div style={{ paddingBottom: '0', height: '12px' }}>
-        <div style={{ width: '100%', height: '1px' }}></div>
+    <div className="overflow-x-auto border-b mb-2">
+      <div style={{ height: '16px', minWidth: '100%' }}>
+        <div style={{ width: '200%', height: '1px' }}></div>
       </div>
     </div>
     {/* Main table container */}
-    <div className="overflow-auto">
+    <div className="overflow-x-auto">
       <table
         ref={ref}
         className={cn("w-full caption-bottom text-sm", className)}
