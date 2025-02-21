@@ -240,6 +240,45 @@ export type Database = {
           },
         ]
       }
+      territories: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          name: string
+          user_id: number
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          name: string
+          user_id: number
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          name?: string
+          user_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "territories_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "territories_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_insights_tracking: {
         Row: {
           last_pep_talk_date: string | null

@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import ProspectsTable from "./ProspectsTable";
 import AddProspectForm from "./AddProspectForm";
@@ -80,6 +81,7 @@ const ProspectContent = ({
         onBulkUploadSuccess={onProspectAdded}
         prospects={prospects}
         showAddButton={canAddProspects}
+        userId={currentUser?.id}
       />
       {isAddFormVisible && (
         <AddProspectForm
