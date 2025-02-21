@@ -113,7 +113,7 @@ const ProspectTableRow = ({ prospect, onEdit, onDelete, onUpdate }: ProspectTabl
           </SelectContent>
         </Select>
       </TableCell>
-      <TableCell className="max-w-[200px]">
+      <TableCell className="max-w-[250px]">
         {prospect.website ? (
           <a 
             href={prospect.website.startsWith('http') ? prospect.website : `https://${prospect.website}`}
