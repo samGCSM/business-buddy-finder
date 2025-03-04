@@ -21,6 +21,7 @@ export const ContactForm = ({ onSubmit }: ContactFormProps) => {
     if (!notes.trim()) return;
 
     onSubmit({
+      // Ensure consistent naming format for "Face to Face" activities
       type: contactType,
       timestamp: formatISO(new Date()),
       notes,

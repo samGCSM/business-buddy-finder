@@ -81,11 +81,12 @@ export const useDashboardMetrics = () => {
                 console.log('Found email activity:', activity);
               }
               
-              // Normalize face to face activity types for consistent counting
+              // Use the same normalized case check as in graph and user table
               const activityType = activity.type ? activity.type.toLowerCase() : '';
               if (activityType === 'face to face') {
+                // Debug the activity to confirm what's being counted
+                console.log('Dashboard: Found face to face activity:', activity);
                 faceToFaceCount++;
-                console.log('Found face to face activity:', activity);
               }
             }
           });
