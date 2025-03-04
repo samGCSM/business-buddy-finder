@@ -6,7 +6,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { Prospect } from '@/types/prospects';
 import { Loader2, Layers } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
-import { Switch } from '@/components/ui/switch';
 
 interface MapViewProps {
   prospects: Prospect[];
@@ -70,6 +69,53 @@ const MapView = ({ prospects }: MapViewProps) => {
 
     // Add navigation controls
     map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+
+    // Add satellite toggle control
+    class SatelliteToggleControl {
+      _map: mapboxgl.Map | null = null;
+      _container: HTMLDivElement | null = null;
+      _toggleButton: HTMLButtonElement | null = null;
+
+      onAdd(map: mapboxgl.Map) {
+        this._map = map;
+        this._container = document.createElement('div');
+        this._container.className = 'mapboxgl-ctrl mapboxgl-ctrl-group';
+        
+        this._toggleButton = document.createElement('button');
+        this._toggleButton.className = 'mapboxgl-ctrl-icon satellite-toggle';
+        this._toggleButton.type = 'button';
+        this._toggleButton.setAttribute('aria-label', 'Toggle satellite view');
+        this._toggleButton.style.display = 'flex';
+        this._toggleButton.style.justifyContent = 'center';
+        this._toggleButton.style.alignItems = 'center';
+        
+        // Add Layers icon (similar to other mapbox controls)
+        this._toggleButton.innerHTML = `
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect>
+            <line x1="3" x2="21" y1="9" y2="9"></line>
+            <line x1="3" x2="21" y1="15" y2="15"></line>
+            <line x1="9" x2="9" y1="3" y2="21"></line>
+            <line x1="15" x2="15" y1="3" y2="21"></line>
+          </svg>
+        `;
+        
+        this._toggleButton.onclick = () => {
+          setIsSatelliteView(prev => !prev);
+        };
+        
+        this._container.appendChild(this._toggleButton);
+        return this._container;
+      }
+
+      onRemove() {
+        this._container?.parentNode?.removeChild(this._container);
+        this._map = null;
+      }
+    }
+    
+    // Add the satellite toggle control
+    map.current.addControl(new SatelliteToggleControl(), 'top-right');
 
     // Wait for map to load before adding data
     map.current.on('load', () => {
@@ -358,17 +404,6 @@ const MapView = ({ prospects }: MapViewProps) => {
   return (
     <div className="h-full min-h-[600px] rounded-lg overflow-hidden relative">
       <div ref={mapContainer} className="absolute inset-0" />
-      
-      {/* Satellite Toggle Control */}
-      <div className="absolute top-20 right-[10px] z-10 bg-white p-2 rounded shadow-md flex flex-col items-center gap-1">
-        <Layers className="h-4 w-4 text-gray-600" />
-        <Switch
-          checked={isSatelliteView}
-          onCheckedChange={setIsSatelliteView}
-          aria-label="Toggle satellite view"
-        />
-        <span className="text-xs text-gray-700">{isSatelliteView ? 'Satellite' : 'Street'}</span>
-      </div>
     </div>
   );
 };
