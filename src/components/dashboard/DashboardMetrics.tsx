@@ -28,12 +28,12 @@ const DashboardMetrics = ({
         icon={UserPlus}
       />
       <MetricCard
-        title="Emails Sent"
+        title="Emails Sent (7d)"
         value={emailsSent}
         icon={Mail}
       />
       <MetricCard
-        title="Face To Face"
+        title="Face To Face (7d)"
         value={faceToFace}
         icon={HandshakeIcon}
       />

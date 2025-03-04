@@ -2,6 +2,8 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { toZonedTime } from "date-fns-tz";
+import { subDays } from "date-fns";
 
 interface DashboardMetrics {
   totalProspects: number;
@@ -51,8 +53,14 @@ export const useDashboardMetrics = () => {
 
       console.log('Fetched prospects data:', prospectsData);
 
+      // For 30 days new prospects calculation
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      
+      // For 7 days emails and face-to-face calculation
+      const sevenDaysAgo = subDays(new Date(), 7);
+      const timeZone = 'America/New_York'; // EST timezone
+      const sevenDaysAgoInEST = toZonedTime(sevenDaysAgo, timeZone);
       
       const newProspectsCount = prospectsData?.filter(
         prospect => new Date(prospect.created_at) > thirtyDaysAgo
@@ -64,9 +72,14 @@ export const useDashboardMetrics = () => {
       prospectsData?.forEach(prospect => {
         if (prospect.activity_log) {
           prospect.activity_log.forEach((activity: any) => {
-            if (activity.type === 'Email') emailCount++;
-            if (activity.type === 'Face To Face' || activity.type === 'Face to Face' || activity.type === 'face to face') {
-              faceToFaceCount++;
+            const activityDate = new Date(activity.timestamp);
+            
+            // Only count activities from the last 7 days
+            if (activityDate >= sevenDaysAgoInEST) {
+              if (activity.type === 'Email') emailCount++;
+              if (activity.type === 'Face To Face' || activity.type === 'Face to Face' || activity.type === 'face to face') {
+                faceToFaceCount++;
+              }
             }
           });
         }
