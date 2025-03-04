@@ -1,3 +1,4 @@
+
 import { TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -33,6 +34,7 @@ const ProspectTableHeader = ({ onSort, sortConfig }: ProspectTableHeaderProps) =
         <TableHead>{renderSortButton("Territory", "territory")}</TableHead>
         <TableHead>{renderSortButton("Website", "website")}</TableHead>
         <TableHead>{renderSortButton("Email", "email")}</TableHead>
+        {/* Remove duplicate email cell */}
         <TableHead>{renderSortButton("Address", "business_address")}</TableHead>
         <TableHead>{renderSortButton("Location Type", "location_type")}</TableHead>
         <TableHead>{renderSortButton("Phone", "phone_number")}</TableHead>

@@ -136,7 +136,6 @@ const ProspectTableRow = ({ prospect, onEdit, onDelete, onUpdate }: ProspectTabl
         ) : null}
       </TableCell>
       <ProspectEmailCell prospect={prospect} onUpdate={onUpdate} />
-      <TableCell>{prospect.email}</TableCell>
       <TableCell>
         {prospect.business_address ? (
           <a

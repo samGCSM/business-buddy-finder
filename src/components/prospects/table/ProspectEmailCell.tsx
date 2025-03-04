@@ -23,6 +23,8 @@ const ProspectEmailCell = ({ prospect, onUpdate }: ProspectEmailCellProps) => {
     if (email) onUpdate();
   };
 
+  const isLoading = enrichingProspectId === prospect.id;
+
   return (
     <TableCell className="px-6 py-4 whitespace-nowrap text-sm">
       <div className="flex items-center gap-2">
@@ -32,17 +34,18 @@ const ProspectEmailCell = ({ prospect, onUpdate }: ProspectEmailCellProps) => {
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
-                  variant="ghost"
+                  variant="outline"
                   size="sm"
                   onClick={handleEnrichEmail}
-                  disabled={enrichingProspectId === prospect.id}
-                  className="h-8 w-8 p-0"
+                  disabled={isLoading}
+                  className="ml-2 h-8 w-8 p-0"
                 >
                   <Zap className="h-4 w-4" />
+                  <span className="sr-only">Find email</span>
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Enrich with email data</p>
+                <p>Find email with Hunter.io</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
