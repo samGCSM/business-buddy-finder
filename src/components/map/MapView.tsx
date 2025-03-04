@@ -4,8 +4,9 @@ import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { supabase } from '@/integrations/supabase/client';
 import { Prospect } from '@/types/prospects';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Layers } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { Switch } from '@/components/ui/switch';
 
 interface MapViewProps {
   prospects: Prospect[];
@@ -16,6 +17,7 @@ const MapView = ({ prospects }: MapViewProps) => {
   const map = useRef<mapboxgl.Map | null>(null);
   const [loading, setLoading] = useState(true);
   const [mapboxToken, setMapboxToken] = useState<string | null>(null);
+  const [isSatelliteView, setIsSatelliteView] = useState(false);
 
   // Fetch the Mapbox token from Supabase Edge Function
   useEffect(() => {
@@ -82,6 +84,22 @@ const MapView = ({ prospects }: MapViewProps) => {
       }
     };
   }, [mapboxToken]);
+
+  // Toggle between satellite and street views
+  useEffect(() => {
+    if (!map.current || !map.current.loaded()) return;
+    
+    const styleUrl = isSatelliteView 
+      ? 'mapbox://styles/mapbox/satellite-streets-v12' 
+      : 'mapbox://styles/mapbox/streets-v12';
+    
+    map.current.setStyle(styleUrl);
+    
+    // Re-add prospects after style change
+    map.current.once('style.load', () => {
+      addProspectsToMap();
+    });
+  }, [isSatelliteView]);
 
   // Reset the map when prospects change
   useEffect(() => {
@@ -340,6 +358,17 @@ const MapView = ({ prospects }: MapViewProps) => {
   return (
     <div className="h-full min-h-[600px] rounded-lg overflow-hidden relative">
       <div ref={mapContainer} className="absolute inset-0" />
+      
+      {/* Satellite Toggle Control */}
+      <div className="absolute top-20 right-[10px] z-10 bg-white p-2 rounded shadow-md flex flex-col items-center gap-1">
+        <Layers className="h-4 w-4 text-gray-600" />
+        <Switch
+          checked={isSatelliteView}
+          onCheckedChange={setIsSatelliteView}
+          aria-label="Toggle satellite view"
+        />
+        <span className="text-xs text-gray-700">{isSatelliteView ? 'Satellite' : 'Street'}</span>
+      </div>
     </div>
   );
 };
