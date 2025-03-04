@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -9,6 +10,7 @@ import {
 import { Input } from "@/components/ui/input";
 import type { User } from "@/types/user";
 import { useState } from "react";
+import { LastLoginStatus } from "./LastLoginStatus";
 
 interface UserTableRowProps {
   user: User;
@@ -124,7 +126,7 @@ export const UserTableRow = ({
         )}
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-        {formatDate(user.lastLogin)}
+        <LastLoginStatus lastLogin={user.lastLogin} />
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
         {getNumericValue(user.totalSearches)} (30d)
