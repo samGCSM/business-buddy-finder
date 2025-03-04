@@ -19,12 +19,16 @@ export const useEmailEnrichment = () => {
     setEnrichingProspectId(prospectId);
 
     try {
+      console.log("Enriching email for prospect:", prospectId, "domain:", domain, "company:", companyName);
+      
       const { data: enrichmentData, error: enrichmentError } = await supabase.functions
         .invoke('enrich-prospect-email', {
           body: { domain, companyName }
         });
 
       if (enrichmentError) throw enrichmentError;
+      
+      console.log("Enrichment data received:", enrichmentData);
 
       let email = null;
 
@@ -36,6 +40,8 @@ export const useEmailEnrichment = () => {
         // Handle email-finder response
         email = enrichmentData.data?.email;
       }
+
+      console.log("Extracted email:", email);
 
       if (email) {
         const { error: updateError } = await supabase

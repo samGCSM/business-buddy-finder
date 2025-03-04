@@ -24,12 +24,13 @@ const ProspectEmailCell = ({ prospect, onUpdate }: ProspectEmailCellProps) => {
   };
 
   const isLoading = enrichingProspectId === prospect.id;
+  const hasValidEmail = prospect.email && prospect.email.includes('@');
 
   return (
     <TableCell className="px-6 py-4 whitespace-nowrap text-sm">
       <div className="flex items-center gap-2">
-        <span>{prospect.email || '-'}</span>
-        {!prospect.email && (
+        <span>{hasValidEmail ? prospect.email : '-'}</span>
+        {!hasValidEmail && (
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
