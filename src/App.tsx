@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -9,6 +10,7 @@ import BulkSearch from "./pages/BulkSearch";
 import Users from "./pages/Users";
 import Profile from "./pages/Profile";
 import Prospects from "./pages/Prospects";
+import ProspectMap from "./pages/ProspectMap";
 import Notifications from "./pages/Notifications";
 
 const queryClient = new QueryClient();
@@ -26,6 +28,7 @@ const App = () => (
           <Route path="/users" element={<Users />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/prospects" element={<Prospects />} />
+          <Route path="/prospects/map" element={<ProspectMap />} />
           <Route path="/notifications" element={<Notifications />} />
         </Routes>
       </BrowserRouter>
