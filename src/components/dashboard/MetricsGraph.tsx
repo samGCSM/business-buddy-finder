@@ -91,6 +91,7 @@ const MetricsGraph = ({ userId, userRole }: MetricsGraphProps) => {
                   const activityType = activity.type ? activity.type.toLowerCase() : '';
                   if (activityType === 'face to face') {
                     faceToFaceCount++;
+                    console.log('Graph: Found face to face activity on', format(activityDate, 'yyyy-MM-dd'), ':', activity);
                   }
                 }
               });

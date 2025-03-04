@@ -56,8 +56,7 @@ const UserMetricsTable = ({ userRole, userId }: UserMetricsTableProps) => {
         const { data: prospects, error: prospectsError } = await supabase
           .from('prospects')
           .select('*')
-          .in('user_id', userIds)
-          .gte('created_at', sevenDaysAgo.toISOString());
+          .in('user_id', userIds);
         
         if (prospectsError) throw prospectsError;
         
@@ -91,6 +90,7 @@ const UserMetricsTable = ({ userRole, userId }: UserMetricsTableProps) => {
                   const activityType = activity.type ? activity.type.toLowerCase() : '';
                   if (activityType === 'face to face') {
                     faceToFaceCount++;
+                    console.log('User Table: Found face to face activity for user', user.id, ':', activity);
                   }
                   
                   if (activity.type === 'Meeting') {
