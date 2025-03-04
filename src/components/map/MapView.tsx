@@ -77,6 +77,12 @@ const MapView = ({ prospects, optimizeRoute = false, onProspectSelection }: MapV
         routeSourceRef.current = null;
         routeLayerRef.current = null;
       }
+      
+      // Clear marker styling
+      Object.values(markersRef.current).forEach(marker => {
+        const el = marker.getElement();
+        el.classList.remove('selected-marker');
+      });
     }
   }, [optimizeRoute]);
 
@@ -161,13 +167,24 @@ const MapView = ({ prospects, optimizeRoute = false, onProspectSelection }: MapV
         } else {
           el.classList.add('selected-marker');
         }
+        
+        // Update marker number
+        const markerNumberEl = el.querySelector('.marker-number');
+        if (markerNumberEl) {
+          if (!isSelected) {
+            const newIndex = newSelection.indexOf(prospectId);
+            markerNumberEl.textContent = (newIndex + 1).toString();
+          } else {
+            markerNumberEl.textContent = '';
+          }
+        }
       }
+      
+      // Reset route state when selection changes
+      setRouteOptimized(false);
       
       return newSelection;
     });
-    
-    // Reset route state when selection changes
-    setRouteOptimized(false);
   }, [optimizeRoute]);
 
   // Process prospects and add them to the map
@@ -210,10 +227,12 @@ const MapView = ({ prospects, optimizeRoute = false, onProspectSelection }: MapV
             // Create marker element
             const el = document.createElement('div');
             el.className = 'prospect-marker';
-            // Fix type error: Convert number to string before setting innerHTML
-            el.innerHTML = `<div class="marker-number">${selectedRouteProspects.indexOf(Number(prospect.id)) + 1 || ""}</div>`;
+            const prospectId = Number(prospect.id);
+            const selectedIndex = selectedRouteProspects.indexOf(prospectId);
+            // Add the marker number only if it's selected
+            el.innerHTML = `<div class="marker-number">${selectedIndex > -1 ? (selectedIndex + 1) : ''}</div>`;
             
-            if (selectedRouteProspects.includes(Number(prospect.id))) {
+            if (selectedRouteProspects.includes(prospectId)) {
               el.classList.add('selected-marker');
             }
             
@@ -224,11 +243,22 @@ const MapView = ({ prospects, optimizeRoute = false, onProspectSelection }: MapV
             
             // Add click handler
             el.addEventListener('click', () => {
-              toggleProspectSelection(Number(prospect.id));
+              toggleProspectSelection(prospectId);
             });
             
+            // Add popup with prospect details
+            const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(
+              `<div class="p-2">
+                <h3 class="font-semibold">${prospect.business_name || 'Unnamed Business'}</h3>
+                <p class="text-sm">${prospect.business_address}</p>
+                <p class="text-xs mt-1">Click to ${selectedRouteProspects.includes(prospectId) ? 'remove from' : 'add to'} route</p>
+              </div>`
+            );
+            
+            marker.setPopup(popup);
+            
             // Store reference to marker
-            markersRef.current[Number(prospect.id)] = marker;
+            markersRef.current[prospectId] = marker;
           }
           
           // Create feature for this prospect
@@ -609,6 +639,7 @@ const MapView = ({ prospects, optimizeRoute = false, onProspectSelection }: MapV
           cursor: pointer;
           border: 2px solid white;
           box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+          transition: all 0.2s ease;
         }
         
         .prospect-marker.selected-marker {

@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Header from "@/components/layout/Header";
 import { Button } from "@/components/ui/button";
@@ -136,13 +136,18 @@ const ProspectMap = () => {
   );
   
   const handleToggleOptimizeRoute = () => {
+    // Clear selected prospects when toggling off route optimization
+    if (optimizeRoute) {
+      setSelectedProspects([]);
+    }
+    
     setOptimizeRoute(!optimizeRoute);
+    
     if (!optimizeRoute) {
       toast({
         title: "Route Optimization",
         description: "Select prospects on the map to optimize your route",
       });
-      setSelectedProspects([]);
     }
   };
   
