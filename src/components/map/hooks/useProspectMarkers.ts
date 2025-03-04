@@ -1,9 +1,10 @@
-
 import { useEffect, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import { Prospect } from '@/types/prospects';
 import { toast } from '@/hooks/use-toast';
-import { geocodeAddress, createProspectFeature, createPopupContent } from '../utils/mapUtils';
+import { geocodeAddress, createProspectFeature } from '../utils/mapUtils';
+import { setupMapInteractions } from '../utils/mapInteractions';
+import { removeExistingLayers, addMarkersToMap, fitMapToBounds } from '../utils/mapLayers';
 
 export const useProspectMarkers = (
   map: mapboxgl.Map | null, 
@@ -23,15 +24,7 @@ export const useProspectMarkers = (
         setIsPlacingMarkers(true);
         
         // Remove existing sources and layers
-        if (map.getSource('prospects')) {
-          // Remove related layers first
-          if (map.getLayer('clusters')) map.removeLayer('clusters');
-          if (map.getLayer('cluster-count')) map.removeLayer('cluster-count');
-          if (map.getLayer('unclustered-point')) map.removeLayer('unclustered-point');
-          
-          // Then remove the source
-          map.removeSource('prospects');
-        }
+        removeExistingLayers(map);
         
         // Filter out prospects without addresses
         const mappableProspects = prospects.filter(p => p.business_address);
@@ -69,103 +62,14 @@ export const useProspectMarkers = (
         
         // Add markers to map once we have processed all prospects
         if (features.length > 0) {
-          // Add source for markers
-          map.addSource('prospects', {
-            type: 'geojson',
-            data: {
-              type: 'FeatureCollection',
-              features
-            },
-            cluster: true,
-            clusterMaxZoom: 14,
-            clusterRadius: 50
-          });
+          // Add clustered markers to map
+          addMarkersToMap(map, features);
           
-          // Add clusters layer
-          map.addLayer({
-            id: 'clusters',
-            type: 'circle',
-            source: 'prospects',
-            filter: ['has', 'point_count'],
-            paint: {
-              'circle-color': [
-                'step',
-                ['get', 'point_count'],
-                '#51bbd6',
-                10,
-                '#f1f075',
-                30,
-                '#f28cb1'
-              ],
-              'circle-radius': [
-                'step',
-                ['get', 'point_count'],
-                20,
-                10,
-                30,
-                30,
-                40
-              ]
-            }
-          });
-          
-          // Add cluster count labels
-          map.addLayer({
-            id: 'cluster-count',
-            type: 'symbol',
-            source: 'prospects',
-            filter: ['has', 'point_count'],
-            layout: {
-              'text-field': '{point_count_abbreviated}',
-              'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
-              'text-size': 12
-            }
-          });
-          
-          // Add individual prospect markers
-          map.addLayer({
-            id: 'unclustered-point',
-            type: 'circle',
-            source: 'prospects',
-            filter: ['!', ['has', 'point_count']],
-            paint: {
-              'circle-color': [
-                'match',
-                ['get', 'status'],
-                'active', '#22c55e',
-                'pending', '#f59e0b',
-                'contacted', '#3b82f6',
-                'inactive', '#6b7280',
-                '#ef4444' // default color
-              ],
-              'circle-radius': 8,
-              'circle-stroke-width': 2,
-              'circle-stroke-color': '#ffffff'
-            }
-          });
-          
-          // Add click handlers for markers and clusters
+          // Set up interactions with markers
           setupMapInteractions(map);
           
-          // Fit map to bounds of all prospects with better padding and max zoom
-          if (!bounds.isEmpty()) {
-            console.log('Fitting map to bounds:', bounds);
-            
-            // Use a timeout to ensure the map has time to process before fitting bounds
-            setTimeout(() => {
-              map.fitBounds(bounds, {
-                padding: 80, // Increased padding for better visibility
-                maxZoom: 12, // Limit max zoom level when fitting bounds
-                duration: 1500 // Longer animation for smoother transition
-              });
-              // Set loading to false after map has fit to bounds
-              setTimeout(() => {
-                setIsPlacingMarkers(false);
-              }, 1500);
-            }, 300);
-          } else {
-            setIsPlacingMarkers(false);
-          }
+          // Fit map to bounds and turn off loading when done
+          fitMapToBounds(map, bounds, () => setIsPlacingMarkers(false));
         } else {
           setIsPlacingMarkers(false);
         }
@@ -191,56 +95,3 @@ export const useProspectMarkers = (
   
   return { isPlacingMarkers };
 };
-
-function setupMapInteractions(map: mapboxgl.Map) {
-  // Add click event for clusters
-  map.on('click', 'clusters', (e) => {
-    const features = map.queryRenderedFeatures(e.point, { layers: ['clusters'] });
-    if (!features?.length) return;
-    
-    const clusterId = features[0].properties?.cluster_id;
-    (map.getSource('prospects') as mapboxgl.GeoJSONSource).getClusterExpansionZoom(
-      clusterId,
-      (err, zoom) => {
-        if (err) return;
-        
-        map.easeTo({
-          center: (features[0].geometry as any).coordinates,
-          zoom: zoom
-        });
-      }
-    );
-  });
-  
-  // Add click event for individual points
-  map.on('click', 'unclustered-point', (e) => {
-    if (!e.features?.length) return;
-    
-    const feature = e.features[0];
-    const props = feature.properties;
-    const coordinates = (feature.geometry as any).coordinates.slice();
-    
-    // Create the popup
-    new mapboxgl.Popup({ closeButton: true, maxWidth: '300px' })
-      .setLngLat(coordinates)
-      .setDOMContent(createPopupContent(props))
-      .addTo(map);
-  });
-  
-  // Change cursor when hovering over points
-  map.on('mouseenter', 'clusters', () => {
-    map.getCanvas().style.cursor = 'pointer';
-  });
-  
-  map.on('mouseleave', 'clusters', () => {
-    map.getCanvas().style.cursor = '';
-  });
-  
-  map.on('mouseenter', 'unclustered-point', () => {
-    map.getCanvas().style.cursor = 'pointer';
-  });
-  
-  map.on('mouseleave', 'unclustered-point', () => {
-    map.getCanvas().style.cursor = '';
-  });
-}
