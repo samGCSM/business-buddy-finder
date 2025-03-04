@@ -23,8 +23,8 @@ const MapInitializer = ({ mapboxToken, setMap, setIsSatelliteView }: MapInitiali
     const mapInstance = new mapboxgl.Map({
       container: mapContainer.current,
       style: 'mapbox://styles/mapbox/streets-v12',
-      zoom: 3,
-      center: [-95.7129, 37.0902], // Center on US
+      zoom: 5, // Increased from 3 to 5 for better initial zoom
+      center: [-85.7129, 32.0902], // Center on Southeastern US (roughly Alabama/Georgia area)
     });
 
     // Set map in parent component

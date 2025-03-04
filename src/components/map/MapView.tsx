@@ -1,5 +1,5 @@
 
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Prospect } from '@/types/prospects';
@@ -30,6 +30,11 @@ const MapView = ({ prospects }: MapViewProps) => {
           setMap={setMap} 
           setIsSatelliteView={setIsSatelliteView} 
         />
+      )}
+      {!mapboxToken && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+          <p className="text-gray-500">Unable to load map. Please check your Mapbox configuration.</p>
+        </div>
       )}
     </div>
   );

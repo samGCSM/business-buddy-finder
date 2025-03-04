@@ -1,4 +1,3 @@
-
 import { useEffect } from 'react';
 import mapboxgl from 'mapbox-gl';
 import { Prospect } from '@/types/prospects';
@@ -12,140 +11,168 @@ export const useProspectMarkers = (
 ) => {
   // Add prospects to map when prospects or map changes
   useEffect(() => {
-    if (!map || !map.loaded() || !mapboxToken) return;
+    if (!map || !mapboxToken) return;
     
-    const addProspectsToMap = async () => {
-      // Remove existing sources and layers
-      if (map.getSource('prospects')) {
-        // Remove related layers first
-        if (map.getLayer('clusters')) map.removeLayer('clusters');
-        if (map.getLayer('cluster-count')) map.removeLayer('cluster-count');
-        if (map.getLayer('unclustered-point')) map.removeLayer('unclustered-point');
+    // We need to wait for the map to be fully loaded before adding markers
+    const handleMapLoad = () => {
+      const addProspectsToMap = async () => {
+        console.log('Adding prospects to map:', prospects.length);
         
-        // Then remove the source
-        map.removeSource('prospects');
-      }
-      
-      // Filter out prospects without addresses
-      const mappableProspects = prospects.filter(p => p.business_address);
-      
-      if (mappableProspects.length === 0) {
-        toast({
-          title: "No Mappable Prospects",
-          description: "No prospects have addresses that can be mapped",
-        });
-        return;
-      }
-
-      // Create a feature collection for the map
-      const features: any[] = [];
-      const bounds = new mapboxgl.LngLatBounds();
-      
-      // Process each prospect
-      for (const prospect of mappableProspects) {
-        if (!prospect.business_address) continue;
-        
-        const coordinates = await geocodeAddress(prospect.business_address, mapboxToken);
-        if (coordinates) {
-          // Add to bounds for auto-fitting the view
-          bounds.extend(coordinates);
+        // Remove existing sources and layers
+        if (map.getSource('prospects')) {
+          // Remove related layers first
+          if (map.getLayer('clusters')) map.removeLayer('clusters');
+          if (map.getLayer('cluster-count')) map.removeLayer('cluster-count');
+          if (map.getLayer('unclustered-point')) map.removeLayer('unclustered-point');
           
-          // Create feature for this prospect
-          features.push(createProspectFeature(prospect, coordinates));
+          // Then remove the source
+          map.removeSource('prospects');
         }
-      }
-      
-      // Add markers to map once we have processed all prospects
-      if (features.length > 0) {
-        // Add source for markers
-        map.addSource('prospects', {
-          type: 'geojson',
-          data: {
-            type: 'FeatureCollection',
-            features
-          },
-          cluster: true,
-          clusterMaxZoom: 14,
-          clusterRadius: 50
-        });
         
-        // Add clusters layer
-        map.addLayer({
-          id: 'clusters',
-          type: 'circle',
-          source: 'prospects',
-          filter: ['has', 'point_count'],
-          paint: {
-            'circle-color': [
-              'step',
-              ['get', 'point_count'],
-              '#51bbd6',
-              10,
-              '#f1f075',
-              30,
-              '#f28cb1'
-            ],
-            'circle-radius': [
-              'step',
-              ['get', 'point_count'],
-              20,
-              10,
-              30,
-              30,
-              40
-            ]
-          }
-        });
+        // Filter out prospects without addresses
+        const mappableProspects = prospects.filter(p => p.business_address);
         
-        // Add cluster count labels
-        map.addLayer({
-          id: 'cluster-count',
-          type: 'symbol',
-          source: 'prospects',
-          filter: ['has', 'point_count'],
-          layout: {
-            'text-field': '{point_count_abbreviated}',
-            'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
-            'text-size': 12
-          }
-        });
-        
-        // Add individual prospect markers
-        map.addLayer({
-          id: 'unclustered-point',
-          type: 'circle',
-          source: 'prospects',
-          filter: ['!', ['has', 'point_count']],
-          paint: {
-            'circle-color': [
-              'match',
-              ['get', 'status'],
-              'active', '#22c55e',
-              'pending', '#f59e0b',
-              'contacted', '#3b82f6',
-              'inactive', '#6b7280',
-              '#ef4444' // default color
-            ],
-            'circle-radius': 8,
-            'circle-stroke-width': 2,
-            'circle-stroke-color': '#ffffff'
-          }
-        });
-        
-        // Add click handlers for markers and clusters
-        setupMapInteractions(map);
-        
-        // Fit map to bounds of all prospects
-        if (!bounds.isEmpty()) {
-          map.fitBounds(bounds, {
-            padding: 50,
-            maxZoom: 15
+        if (mappableProspects.length === 0) {
+          toast({
+            title: "No Mappable Prospects",
+            description: "No prospects have addresses that can be mapped",
           });
+          return;
         }
-      }
+
+        // Create a feature collection for the map
+        const features: any[] = [];
+        const bounds = new mapboxgl.LngLatBounds();
+        let geocodedCount = 0;
+        
+        // Process each prospect
+        for (const prospect of mappableProspects) {
+          if (!prospect.business_address) continue;
+          
+          const coordinates = await geocodeAddress(prospect.business_address, mapboxToken);
+          if (coordinates) {
+            // Add to bounds for auto-fitting the view
+            bounds.extend(coordinates);
+            geocodedCount++;
+            
+            // Create feature for this prospect
+            features.push(createProspectFeature(prospect, coordinates));
+          }
+        }
+        
+        console.log(`Successfully geocoded ${geocodedCount}/${mappableProspects.length} prospects`);
+        
+        // Add markers to map once we have processed all prospects
+        if (features.length > 0) {
+          // Add source for markers
+          map.addSource('prospects', {
+            type: 'geojson',
+            data: {
+              type: 'FeatureCollection',
+              features
+            },
+            cluster: true,
+            clusterMaxZoom: 14,
+            clusterRadius: 50
+          });
+          
+          // Add clusters layer
+          map.addLayer({
+            id: 'clusters',
+            type: 'circle',
+            source: 'prospects',
+            filter: ['has', 'point_count'],
+            paint: {
+              'circle-color': [
+                'step',
+                ['get', 'point_count'],
+                '#51bbd6',
+                10,
+                '#f1f075',
+                30,
+                '#f28cb1'
+              ],
+              'circle-radius': [
+                'step',
+                ['get', 'point_count'],
+                20,
+                10,
+                30,
+                30,
+                40
+              ]
+            }
+          });
+          
+          // Add cluster count labels
+          map.addLayer({
+            id: 'cluster-count',
+            type: 'symbol',
+            source: 'prospects',
+            filter: ['has', 'point_count'],
+            layout: {
+              'text-field': '{point_count_abbreviated}',
+              'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
+              'text-size': 12
+            }
+          });
+          
+          // Add individual prospect markers
+          map.addLayer({
+            id: 'unclustered-point',
+            type: 'circle',
+            source: 'prospects',
+            filter: ['!', ['has', 'point_count']],
+            paint: {
+              'circle-color': [
+                'match',
+                ['get', 'status'],
+                'active', '#22c55e',
+                'pending', '#f59e0b',
+                'contacted', '#3b82f6',
+                'inactive', '#6b7280',
+                '#ef4444' // default color
+              ],
+              'circle-radius': 8,
+              'circle-stroke-width': 2,
+              'circle-stroke-color': '#ffffff'
+            }
+          });
+          
+          // Add click handlers for markers and clusters
+          setupMapInteractions(map);
+          
+          // Fit map to bounds of all prospects with better padding and max zoom
+          if (!bounds.isEmpty()) {
+            console.log('Fitting map to bounds:', bounds);
+            
+            // Use a timeout to ensure the map has time to process before fitting bounds
+            setTimeout(() => {
+              map.fitBounds(bounds, {
+                padding: 80, // Increased padding for better visibility
+                maxZoom: 12, // Limit max zoom level when fitting bounds
+                duration: 1500 // Longer animation for smoother transition
+              });
+            }, 300);
+          }
+        }
+      };
+      
+      addProspectsToMap();
     };
     
-    addProspectsToMap();
+    // If map is already loaded, add prospects immediately
+    if (map.loaded()) {
+      handleMapLoad();
+    } else {
+      // Otherwise wait for the load event
+      map.once('load', handleMapLoad);
+    }
+    
+    // Cleanup function
+    return () => {
+      map.off('load', handleMapLoad);
+    };
   }, [map, prospects, mapboxToken]);
 };
 
