@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+
+import { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Header from "@/components/layout/Header";
 import { Button } from "@/components/ui/button";
@@ -6,11 +7,12 @@ import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from '@supabase/auth-helpers-react';
 import { getCurrentUser } from "@/services/userService";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Search, Route } from "lucide-react";
 import MapView from "@/components/map/MapView";
 import type { Prospect } from "@/types/prospects";
 import type { User } from "@/types/user";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 
 const ProspectMap = () => {
   const location = useLocation();
@@ -22,6 +24,9 @@ const ProspectMap = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [selectedTerritory, setSelectedTerritory] = useState<string>("all");
   const [isLoading, setIsLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [optimizeRoute, setOptimizeRoute] = useState(false);
+  const [selectedProspects, setSelectedProspects] = useState<number[]>([]);
   
   useEffect(() => {
     const initializePage = async () => {
@@ -110,14 +115,40 @@ const ProspectMap = () => {
   const mappableProspects = prospects.filter(p => p.business_address);
   
   // Filter by territory if selected
-  const filteredProspects = selectedTerritory === "all"
+  let filteredProspects = selectedTerritory === "all"
     ? mappableProspects
     : mappableProspects.filter(p => p.territory === selectedTerritory);
+  
+  // Apply search filter if terms exist
+  if (searchTerm) {
+    const terms = searchTerm.toLowerCase();
+    filteredProspects = filteredProspects.filter(p => 
+      (p.business_name && p.business_name.toLowerCase().includes(terms)) ||
+      (p.business_address && p.business_address.toLowerCase().includes(terms)) ||
+      (p.owner_name && p.owner_name.toLowerCase().includes(terms)) ||
+      (p.notes && p.notes.toLowerCase().includes(terms))
+    );
+  }
   
   // Get unique territories from prospects
   const territories = Array.from(
     new Set(mappableProspects.map(p => p.territory).filter(Boolean))
   );
+  
+  const handleToggleOptimizeRoute = () => {
+    setOptimizeRoute(!optimizeRoute);
+    if (!optimizeRoute) {
+      toast({
+        title: "Route Optimization",
+        description: "Select prospects on the map to optimize your route",
+      });
+      setSelectedProspects([]);
+    }
+  };
+  
+  const handleProspectSelection = (prospectIds: number[]) => {
+    setSelectedProspects(prospectIds);
+  };
   
   if (isLoading) {
     return <div className="flex justify-center items-center min-h-screen">Loading...</div>;
@@ -138,27 +169,57 @@ const ProspectMap = () => {
             </h1>
           </div>
           
-          <Select
-            value={selectedTerritory}
-            onValueChange={setSelectedTerritory}
+          <Button 
+            variant={optimizeRoute ? "default" : "outline"} 
+            onClick={handleToggleOptimizeRoute}
+            className="gap-2"
           >
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Filter by Territory" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Territories</SelectItem>
-              {territories.map((territory) => (
-                <SelectItem key={territory} value={territory}>
-                  {territory}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            <Route className="h-4 w-4" />
+            {optimizeRoute ? `Optimize (${selectedProspects.length} selected)` : 'Optimize Route'}
+          </Button>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+          <div className="relative md:col-span-3">
+            <div className="absolute left-4 top-4 z-10 w-72">
+              <div className="bg-white p-3 rounded-lg shadow-lg space-y-3">
+                <div className="relative">
+                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
+                  <Input 
+                    placeholder="Search prospects..." 
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-8"
+                  />
+                </div>
+                <Select
+                  value={selectedTerritory}
+                  onValueChange={setSelectedTerritory}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Filter by Territory" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Territories</SelectItem>
+                    {territories.map((territory) => (
+                      <SelectItem key={territory} value={territory}>
+                        {territory}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
         </div>
         
         {filteredProspects.length > 0 ? (
           <div className="bg-white p-4 rounded-lg shadow">
-            <MapView prospects={filteredProspects} />
+            <MapView 
+              prospects={filteredProspects} 
+              optimizeRoute={optimizeRoute}
+              onProspectSelection={handleProspectSelection}
+            />
           </div>
         ) : (
           <div className="bg-white p-8 rounded-lg shadow flex flex-col items-center justify-center">
