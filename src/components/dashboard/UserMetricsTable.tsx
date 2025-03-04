@@ -3,6 +3,9 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { format, subDays } from 'date-fns';
 import { fromZonedTime, toZonedTime } from 'date-fns-tz';
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Users } from "lucide-react";
 
 interface UserMetric {
   id: number;
@@ -130,7 +133,15 @@ const UserMetricsTable = ({ userRole, userId }: UserMetricsTableProps) => {
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 mt-8">
-      <h3 className="text-lg font-semibold mb-4">Team Performance (Last 7 Days)</h3>
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-lg font-semibold">Team Performance (Last 7 Days)</h3>
+        <Link to="/users">
+          <Button variant="outline" size="sm" className="flex items-center gap-2">
+            <Users className="h-4 w-4" />
+            <span>View Team Details</span>
+          </Button>
+        </Link>
+      </div>
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>

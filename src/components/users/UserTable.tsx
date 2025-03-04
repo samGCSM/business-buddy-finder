@@ -1,4 +1,3 @@
-
 import type { User } from "@/types/user";
 import { UserTableHeader } from "./UserTableHeader";
 import { UserTableRow } from "./UserTableRow";
@@ -20,18 +19,22 @@ interface UserTableProps {
   users: User[];
   setUsers: (users: User[]) => void;
   setSelectedUserId: (id: string | null) => void;
+  userRole?: string | null;
+  userId?: number | null;
 }
 
 type SortField = 'email' | 'full_name' | 'type' | 'lastLogin' | 'totalSearches' | 'savedSearches' | 'totalProspects';
 type SortDirection = 'asc' | 'desc';
 type LoginFilter = 'all' | 'recent' | 'inactive' | 'never';
 
-export const UserTable = ({ users, setUsers, setSelectedUserId }: UserTableProps) => {
+export const UserTable = ({ users, setUsers, setSelectedUserId, userRole = 'admin', userId }: UserTableProps) => {
   const { isLoading } = useUserData(setUsers);
   const { handleDeleteUser, handleUpdateUser } = useUserActions(users, setUsers);
   const [sortField, setSortField] = useState<SortField>('email');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [loginFilter, setLoginFilter] = useState<LoginFilter>('all');
+  
+  const isSupervisor = userRole === 'supervisor';
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -43,8 +46,13 @@ export const UserTable = ({ users, setUsers, setSelectedUserId }: UserTableProps
   };
 
   const filteredAndSortedUsers = useMemo(() => {
-    // First filter the users
+    // First filter the users based on supervisor relationship if applicable
     let filtered = [...users];
+    
+    // If logged in as supervisor, only show team members
+    if (isSupervisor && userId) {
+      filtered = filtered.filter(user => user.supervisor_id === userId);
+    }
     
     if (loginFilter !== 'all') {
       const now = new Date();
@@ -95,7 +103,7 @@ export const UserTable = ({ users, setUsers, setSelectedUserId }: UserTableProps
         return valueA < valueB ? 1 : valueA > valueB ? -1 : 0;
       }
     });
-  }, [users, sortField, sortDirection, loginFilter]);
+  }, [users, sortField, sortDirection, loginFilter, isSupervisor, userId]);
 
   if (isLoading) {
     return <div className="flex justify-center items-center">Loading...</div>;
@@ -129,7 +137,7 @@ export const UserTable = ({ users, setUsers, setSelectedUserId }: UserTableProps
               <SelectContent>
                 <SelectItem value="email">Email</SelectItem>
                 <SelectItem value="full_name">Full Name</SelectItem>
-                <SelectItem value="type">Role</SelectItem>
+                {!isSupervisor && <SelectItem value="type">Role</SelectItem>}
                 <SelectItem value="lastLogin">Last Login</SelectItem>
                 <SelectItem value="totalSearches">Searches (30d)</SelectItem>
                 <SelectItem value="savedSearches">Saved Searches</SelectItem>
@@ -152,7 +160,12 @@ export const UserTable = ({ users, setUsers, setSelectedUserId }: UserTableProps
       
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
-          <UserTableHeader onSort={handleSort} sortField={sortField} sortDirection={sortDirection} />
+          <UserTableHeader 
+            onSort={handleSort} 
+            sortField={sortField} 
+            sortDirection={sortDirection}
+            isSupervisor={isSupervisor}
+          />
           <tbody className="bg-white divide-y divide-gray-200">
             {filteredAndSortedUsers.map((user) => (
               <UserTableRow
@@ -164,6 +177,8 @@ export const UserTable = ({ users, setUsers, setSelectedUserId }: UserTableProps
                 onDelete={handleDeleteUser}
                 onChangePassword={() => setSelectedUserId(user.id.toString())}
                 onUpdateUser={handleUpdateUser}
+                isSupervisor={isSupervisor}
+                currentUserId={userId}
               />
             ))}
           </tbody>

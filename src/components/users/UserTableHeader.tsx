@@ -8,9 +8,10 @@ interface UserTableHeaderProps {
   onSort?: (field: SortField) => void;
   sortField?: SortField;
   sortDirection?: SortDirection;
+  isSupervisor?: boolean; // Added prop to adapt header for supervisor view
 }
 
-export const UserTableHeader = ({ onSort, sortField, sortDirection }: UserTableHeaderProps) => {
+export const UserTableHeader = ({ onSort, sortField, sortDirection, isSupervisor = false }: UserTableHeaderProps) => {
   const renderSortIcon = (field: SortField) => {
     if (sortField !== field) return null;
     
@@ -36,10 +37,12 @@ export const UserTableHeader = ({ onSort, sortField, sortDirection }: UserTableH
       <tr>
         {renderSortableHeader('email', 'Email')}
         {renderSortableHeader('full_name', 'Full Name')}
-        {renderSortableHeader('type', 'Type')}
-        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-          Supervisor
-        </th>
+        {!isSupervisor && renderSortableHeader('type', 'Type')}
+        {!isSupervisor && (
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            Supervisor
+          </th>
+        )}
         {renderSortableHeader('lastLogin', 'Last Login')}
         {renderSortableHeader('totalSearches', 'Searches (30d)')}
         {renderSortableHeader('savedSearches', 'Saved Searches')}
