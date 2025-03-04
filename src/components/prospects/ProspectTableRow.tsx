@@ -1,4 +1,3 @@
-
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Brain } from "lucide-react";
@@ -21,6 +20,7 @@ import {
 import { getCurrentUser } from "@/services/userService";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import ProspectEmailCell from "./table/ProspectEmailCell";
 
 interface ProspectTableRowProps {
   prospect: Prospect;
@@ -135,6 +135,7 @@ const ProspectTableRow = ({ prospect, onEdit, onDelete, onUpdate }: ProspectTabl
           </a>
         ) : null}
       </TableCell>
+      <ProspectEmailCell prospect={prospect} onUpdate={onUpdate} />
       <TableCell>{prospect.email}</TableCell>
       <TableCell>
         {prospect.business_address ? (
