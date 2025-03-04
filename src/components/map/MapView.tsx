@@ -210,9 +210,10 @@ const MapView = ({ prospects, optimizeRoute = false, onProspectSelection }: MapV
             // Create marker element
             const el = document.createElement('div');
             el.className = 'prospect-marker';
-            el.innerHTML = `<div class="marker-number">${selectedRouteProspects.indexOf(prospect.id) + 1 || ""}</div>`;
+            // Fix type error: Convert number to string before setting innerHTML
+            el.innerHTML = `<div class="marker-number">${selectedRouteProspects.indexOf(Number(prospect.id)) + 1 || ""}</div>`;
             
-            if (selectedRouteProspects.includes(prospect.id)) {
+            if (selectedRouteProspects.includes(Number(prospect.id))) {
               el.classList.add('selected-marker');
             }
             
@@ -223,11 +224,11 @@ const MapView = ({ prospects, optimizeRoute = false, onProspectSelection }: MapV
             
             // Add click handler
             el.addEventListener('click', () => {
-              toggleProspectSelection(prospect.id);
+              toggleProspectSelection(Number(prospect.id));
             });
             
             // Store reference to marker
-            markersRef.current[prospect.id] = marker;
+            markersRef.current[Number(prospect.id)] = marker;
           }
           
           // Create feature for this prospect
@@ -593,7 +594,8 @@ const MapView = ({ prospects, optimizeRoute = false, onProspectSelection }: MapV
       )}
       
       {/* CSS for markers in route optimization mode */}
-      <style jsx="true">{`
+      <style>
+        {`
         .prospect-marker {
           width: 30px;
           height: 30px;
@@ -617,7 +619,8 @@ const MapView = ({ prospects, optimizeRoute = false, onProspectSelection }: MapV
         .marker-number {
           font-size: 12px;
         }
-      `}</style>
+        `}
+      </style>
     </div>
   );
 };
