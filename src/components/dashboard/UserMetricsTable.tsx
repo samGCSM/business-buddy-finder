@@ -1,3 +1,4 @@
+
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -82,11 +83,19 @@ const UserMetricsTable = ({ userRole, userId }: UserMetricsTableProps) => {
               prospect.activity_log.forEach((activity: any) => {
                 const activityDate = new Date(activity.timestamp);
                 if (activityDate >= sevenDaysAgo) {
-                  if (activity.type === 'Email') emailCount++;
-                  if (activity.type === 'Face To Face' || activity.type === 'Face to Face' || activity.type === 'face to face') {
+                  if (activity.type === 'Email') {
+                    emailCount++;
+                  }
+                  
+                  // Normalize face to face activity types for consistent counting
+                  const activityType = activity.type ? activity.type.toLowerCase() : '';
+                  if (activityType === 'face to face') {
                     faceToFaceCount++;
                   }
-                  if (activity.type === 'Meeting') meetingCount++;
+                  
+                  if (activity.type === 'Meeting') {
+                    meetingCount++;
+                  }
                 }
               });
             }

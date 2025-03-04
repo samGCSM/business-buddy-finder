@@ -76,9 +76,16 @@ export const useDashboardMetrics = () => {
             
             // Only count activities from the last 7 days
             if (activityDate >= sevenDaysAgoInEST) {
-              if (activity.type === 'Email') emailCount++;
-              if (activity.type === 'Face To Face' || activity.type === 'Face to Face' || activity.type === 'face to face') {
+              if (activity.type === 'Email') {
+                emailCount++;
+                console.log('Found email activity:', activity);
+              }
+              
+              // Normalize face to face activity types for consistent counting
+              const activityType = activity.type ? activity.type.toLowerCase() : '';
+              if (activityType === 'face to face') {
                 faceToFaceCount++;
+                console.log('Found face to face activity:', activity);
               }
             }
           });

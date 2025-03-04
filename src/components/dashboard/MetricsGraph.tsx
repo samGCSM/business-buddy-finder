@@ -83,8 +83,13 @@ const MetricsGraph = ({ userId, userRole }: MetricsGraphProps) => {
               prospect.activity_log.forEach((activity: any) => {
                 const activityDate = toZonedTime(new Date(activity.timestamp), timeZone);
                 if (activityDate >= dayStart && activityDate <= dayEnd) {
-                  if (activity.type === 'Email') emailCount++;
-                  if (activity.type === 'Face To Face' || activity.type === 'Face to Face' || activity.type === 'face to face') {
+                  if (activity.type === 'Email') {
+                    emailCount++;
+                  }
+                  
+                  // Normalize face to face activity types for consistent counting
+                  const activityType = activity.type ? activity.type.toLowerCase() : '';
+                  if (activityType === 'face to face') {
                     faceToFaceCount++;
                   }
                 }

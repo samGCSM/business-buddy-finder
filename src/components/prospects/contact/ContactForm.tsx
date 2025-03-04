@@ -1,82 +1,72 @@
+
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { PhoneCall, Mail, MessageSquare, User } from "lucide-react";
-import { format } from "date-fns";
-import { ContactType, ContactFormProps } from "./types";
+import { Button } from "@/components/ui/button";
+import { formatISO } from "date-fns";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { ContactFormProps, ContactType } from "./types";
 
 export const ContactForm = ({ onSubmit }: ContactFormProps) => {
-  const [selectedType, setSelectedType] = useState<ContactType | null>(null);
-  const [contactDate, setContactDate] = useState(format(new Date(), "yyyy-MM-dd'T'HH:mm"));
   const [notes, setNotes] = useState("");
+  const [contactType, setContactType] = useState<ContactType>("Phone Call");
 
-  const contactTypes = [
-    { type: 'Phone Call' as ContactType, icon: PhoneCall },
-    { type: 'Email' as ContactType, icon: Mail },
-    { type: 'Text Message' as ContactType, icon: MessageSquare },
-    { type: 'Face to Face' as ContactType, icon: User },
-  ];
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!notes.trim()) return;
 
-  const handleSubmit = () => {
-    if (!selectedType) return;
-    
     onSubmit({
-      type: selectedType,
-      timestamp: new Date(contactDate).toISOString(),
+      type: contactType,
+      timestamp: formatISO(new Date()),
       notes,
     });
 
-    setSelectedType(null);
-    setContactDate(format(new Date(), "yyyy-MM-dd'T'HH:mm"));
     setNotes("");
   };
 
   return (
-    <div className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <h3 className="text-sm font-medium mb-2">Contact Type</h3>
-        <div className="grid grid-cols-2 gap-4">
-          {contactTypes.map(({ type, icon: Icon }) => (
-            <Button
-              key={type}
-              variant={selectedType === type ? "default" : "outline"}
-              className="flex items-center gap-2 h-12"
-              onClick={() => setSelectedType(type)}
-            >
-              <Icon className="h-4 w-4" />
-              {type}
-            </Button>
-          ))}
-        </div>
+        <label htmlFor="contact-type" className="block text-sm font-medium mb-1">
+          Contact Type
+        </label>
+        <Select
+          value={contactType}
+          onValueChange={(value) => setContactType(value as ContactType)}
+        >
+          <SelectTrigger id="contact-type">
+            <SelectValue placeholder="Select contact type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="Phone Call">Phone Call</SelectItem>
+            <SelectItem value="Email">Email</SelectItem>
+            <SelectItem value="Text Message">Text Message</SelectItem>
+            <SelectItem value="Face to Face">Face to Face</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <div>
-        <h3 className="text-sm font-medium mb-2">Contact Date & Time</h3>
-        <input
-          type="datetime-local"
-          value={contactDate}
-          onChange={(e) => setContactDate(e.target.value)}
-          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-        />
-      </div>
-
-      <div>
-        <h3 className="text-sm font-medium mb-2">Notes</h3>
+        <label htmlFor="notes" className="block text-sm font-medium mb-1">
+          Notes
+        </label>
         <Textarea
+          id="notes"
+          placeholder="Enter contact notes..."
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
-          placeholder="Enter details about the contact..."
-          className="min-h-[100px]"
+          rows={4}
         />
       </div>
 
-      <Button
-        className="w-full"
-        onClick={handleSubmit}
-        disabled={!selectedType}
-      >
+      <Button type="submit" className="w-full">
         Log Contact
       </Button>
-    </div>
+    </form>
   );
 };
