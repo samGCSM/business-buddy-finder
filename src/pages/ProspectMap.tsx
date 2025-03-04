@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Header from "@/components/layout/Header";
@@ -7,7 +6,7 @@ import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from '@supabase/auth-helpers-react';
 import { getCurrentUser } from "@/services/userService";
-import { ArrowLeft, Search, Route } from "lucide-react";
+import { ArrowLeft, Search } from "lucide-react";
 import MapView from "@/components/map/MapView";
 import type { Prospect } from "@/types/prospects";
 import type { User } from "@/types/user";
@@ -25,8 +24,6 @@ const ProspectMap = () => {
   const [selectedTerritory, setSelectedTerritory] = useState<string>("all");
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [optimizeRoute, setOptimizeRoute] = useState(false);
-  const [selectedProspects, setSelectedProspects] = useState<number[]>([]);
   
   useEffect(() => {
     const initializePage = async () => {
@@ -135,26 +132,6 @@ const ProspectMap = () => {
     new Set(mappableProspects.map(p => p.territory).filter(Boolean))
   );
   
-  const handleToggleOptimizeRoute = () => {
-    // Clear selected prospects when toggling off route optimization
-    if (optimizeRoute) {
-      setSelectedProspects([]);
-    }
-    
-    setOptimizeRoute(!optimizeRoute);
-    
-    if (!optimizeRoute) {
-      toast({
-        title: "Route Optimization",
-        description: "Select prospects on the map to optimize your route",
-      });
-    }
-  };
-  
-  const handleProspectSelection = (prospectIds: number[]) => {
-    setSelectedProspects(prospectIds);
-  };
-  
   if (isLoading) {
     return <div className="flex justify-center items-center min-h-screen">Loading...</div>;
   }
@@ -173,15 +150,6 @@ const ProspectMap = () => {
               Prospect Map ({filteredProspects.length} locations)
             </h1>
           </div>
-          
-          <Button 
-            variant={optimizeRoute ? "default" : "outline"} 
-            onClick={handleToggleOptimizeRoute}
-            className="gap-2"
-          >
-            <Route className="h-4 w-4" />
-            {optimizeRoute ? `Optimize (${selectedProspects.length} selected)` : 'Optimize Route'}
-          </Button>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
@@ -220,11 +188,7 @@ const ProspectMap = () => {
         
         {filteredProspects.length > 0 ? (
           <div className="bg-white p-4 rounded-lg shadow">
-            <MapView 
-              prospects={filteredProspects} 
-              optimizeRoute={optimizeRoute}
-              onProspectSelection={handleProspectSelection}
-            />
+            <MapView prospects={filteredProspects} />
           </div>
         ) : (
           <div className="bg-white p-8 rounded-lg shadow flex flex-col items-center justify-center">
