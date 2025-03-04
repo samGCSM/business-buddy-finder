@@ -1,4 +1,5 @@
-import { useEffect } from 'react';
+
+import { useEffect, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import { Prospect } from '@/types/prospects';
 import { toast } from '@/hooks/use-toast';
@@ -9,6 +10,8 @@ export const useProspectMarkers = (
   prospects: Prospect[], 
   mapboxToken: string | null
 ) => {
+  const [isPlacingMarkers, setIsPlacingMarkers] = useState(false);
+  
   // Add prospects to map when prospects or map changes
   useEffect(() => {
     if (!map || !mapboxToken) return;
@@ -17,6 +20,7 @@ export const useProspectMarkers = (
     const handleMapLoad = () => {
       const addProspectsToMap = async () => {
         console.log('Adding prospects to map:', prospects.length);
+        setIsPlacingMarkers(true);
         
         // Remove existing sources and layers
         if (map.getSource('prospects')) {
@@ -37,6 +41,7 @@ export const useProspectMarkers = (
             title: "No Mappable Prospects",
             description: "No prospects have addresses that can be mapped",
           });
+          setIsPlacingMarkers(false);
           return;
         }
 
@@ -153,8 +158,16 @@ export const useProspectMarkers = (
                 maxZoom: 12, // Limit max zoom level when fitting bounds
                 duration: 1500 // Longer animation for smoother transition
               });
+              // Set loading to false after map has fit to bounds
+              setTimeout(() => {
+                setIsPlacingMarkers(false);
+              }, 1500);
             }, 300);
+          } else {
+            setIsPlacingMarkers(false);
           }
+        } else {
+          setIsPlacingMarkers(false);
         }
       };
       
@@ -172,8 +185,11 @@ export const useProspectMarkers = (
     // Cleanup function
     return () => {
       map.off('load', handleMapLoad);
+      setIsPlacingMarkers(false);
     };
   }, [map, prospects, mapboxToken]);
+  
+  return { isPlacingMarkers };
 };
 
 function setupMapInteractions(map: mapboxgl.Map) {
