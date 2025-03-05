@@ -1,3 +1,4 @@
+
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Brain } from "lucide-react";
@@ -90,7 +91,7 @@ const ProspectTableRow = ({ prospect, onEdit, onDelete, onUpdate }: ProspectTabl
 
   return (
     <TableRow key={prospect.id}>
-      <TableCell className="sticky left-0 bg-white font-medium whitespace-nowrap">
+      <TableCell className="sticky left-0 bg-white font-medium whitespace-nowrap z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
         {prospect.business_name}
       </TableCell>
       <ProspectNotesCell
