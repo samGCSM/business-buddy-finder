@@ -6,6 +6,9 @@ import { supabase } from "@/integrations/supabase/client";
 import ProspectFormFields from "./ProspectFormFields";
 import { getCurrentUser } from "@/services/userService";
 import { useTerritories } from "@/hooks/useTerritories";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import ProspectFormContainer from "./form/ProspectFormContainer";
+import ProspectFormActions from "./form/ProspectFormActions";
 
 interface EditProspectFormProps {
   prospect: {
@@ -122,29 +125,24 @@ const EditProspectForm = ({ prospect, onClose, onSuccess }: EditProspectFormProp
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg p-6 max-w-2xl w-full">
-        <h3 className="text-lg font-semibold mb-4">Edit Prospect</h3>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <ProspectFormFields 
-            formData={formData} 
-            handleChange={handleChange}
-            onLocationTypeChange={handleLocationTypeChange}
-            onTerritoryChange={handleTerritoryChange}
-            territories={territories}
-            userId={userId || undefined}
-          />
-          <div className="flex justify-end space-x-4">
-            <Button type="button" variant="outline" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button type="submit">
-              Save Changes
-            </Button>
+    <ProspectFormContainer title="Edit Prospect" onClose={onClose}>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <ScrollArea className="h-[calc(80vh-10rem)] pr-4">
+          <div className="pb-4">
+            <ProspectFormFields 
+              formData={formData} 
+              handleChange={handleChange}
+              onLocationTypeChange={handleLocationTypeChange}
+              onTerritoryChange={handleTerritoryChange}
+              territories={territories}
+              userId={userId || undefined}
+            />
           </div>
-        </form>
-      </div>
-    </div>
+        </ScrollArea>
+        
+        <ProspectFormActions onClose={onClose} submitLabel="Save Changes" />
+      </form>
+    </ProspectFormContainer>
   );
 };
 
