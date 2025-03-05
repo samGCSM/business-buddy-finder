@@ -1,6 +1,15 @@
+
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import type { Territory } from "@/hooks/useTerritories";
 
 interface BusinessInfoProps {
   businessName: string;
@@ -11,9 +20,11 @@ interface BusinessInfoProps {
   rating: string;
   reviewCount: string;
   territory: string;
+  territories?: Territory[];
   locationType?: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onLocationTypeChange?: (value: string) => void;
+  onTerritoryChange?: (value: string) => void;
 }
 
 const BusinessInfoFields = ({
@@ -25,9 +36,11 @@ const BusinessInfoFields = ({
   rating,
   reviewCount,
   territory,
+  territories = [],
   locationType = 'Business',
   onChange,
-  onLocationTypeChange
+  onLocationTypeChange,
+  onTerritoryChange
 }: BusinessInfoProps) => {
   return (
     <>
@@ -43,12 +56,36 @@ const BusinessInfoFields = ({
       </div>
       <div>
         <Label htmlFor="territory">Territory</Label>
-        <Input
-          id="territory"
-          name="territory"
-          value={territory}
-          onChange={onChange}
-        />
+        {territories.length > 0 ? (
+          <Select
+            value={territory}
+            onValueChange={onTerritoryChange}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select a territory">
+                {territory || "Select a territory"}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {territories.map((territory) => (
+                <SelectItem 
+                  key={territory.id} 
+                  value={territory.name}
+                  disabled={!territory.active}
+                >
+                  {territory.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : (
+          <Input
+            id="territory"
+            name="territory"
+            value={territory}
+            onChange={onChange}
+          />
+        )}
       </div>
       <div>
         <Label htmlFor="website">Website</Label>

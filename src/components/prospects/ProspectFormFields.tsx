@@ -2,6 +2,7 @@
 import BusinessInfoFields from "./form-fields/BusinessInfoFields";
 import OwnerInfoFields from "./form-fields/OwnerInfoFields";
 import NotesField from "./form-fields/NotesField";
+import type { Territory } from "@/hooks/useTerritories";
 
 interface ProspectFormData {
   business_name: string;
@@ -28,6 +29,7 @@ interface ProspectFormFieldsProps {
   onPriorityChange?: (value: string) => void;
   onLocationTypeChange?: (value: string) => void;
   onTerritoryChange?: (value: string) => void;
+  territories?: Territory[];
   userId?: number;
 }
 
@@ -35,6 +37,8 @@ const ProspectFormFields = ({
   formData, 
   handleChange,
   onLocationTypeChange,
+  onTerritoryChange,
+  territories,
 }: ProspectFormFieldsProps) => {
   return (
     <div className="space-y-4">
@@ -48,9 +52,11 @@ const ProspectFormFields = ({
           rating={formData.rating}
           reviewCount={formData.review_count}
           territory={formData.territory}
+          territories={territories}
           locationType={formData.location_type}
           onChange={handleChange}
           onLocationTypeChange={onLocationTypeChange}
+          onTerritoryChange={onTerritoryChange}
         />
         <OwnerInfoFields
           ownerName={formData.owner_name}

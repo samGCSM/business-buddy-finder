@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
@@ -31,7 +32,7 @@ interface EditProspectFormProps {
 
 const EditProspectForm = ({ prospect, onClose, onSuccess }: EditProspectFormProps) => {
   const [userId, setUserId] = useState<number | null>(null);
-  const { fetchTerritories } = useTerritories();
+  const { territories, fetchTerritories } = useTerritories();
   const [formData, setFormData] = useState({
     business_name: prospect.business_name,
     notes: prospect.notes || "",
@@ -130,6 +131,7 @@ const EditProspectForm = ({ prospect, onClose, onSuccess }: EditProspectFormProp
             handleChange={handleChange}
             onLocationTypeChange={handleLocationTypeChange}
             onTerritoryChange={handleTerritoryChange}
+            territories={territories}
             userId={userId || undefined}
           />
           <div className="flex justify-end space-x-4">
