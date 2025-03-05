@@ -101,7 +101,9 @@ const BusinessInfoFields = ({
         <Input
           id="email"
           name="email"
-          type="email"
+          type="text"
+          inputMode="email"
+          pattern={email ? "[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,}$" : ".*"}
           value={email}
           onChange={onChange}
         />
