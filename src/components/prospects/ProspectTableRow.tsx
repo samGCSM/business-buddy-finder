@@ -1,14 +1,11 @@
 
 import { TableCell, TableRow } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Brain } from "lucide-react";
 import type { Prospect } from "@/types/prospects";
 import ProspectActions from "./table/ProspectActions";
 import ProspectNotesCell from "./table/ProspectNotesCell";
 import ProspectStatusCell from "./table/ProspectStatusCell";
 import ProspectPriorityCell from "./table/ProspectPriorityCell";
 import LastContactCell from "./LastContactCell";
-import CompanyInsightsDrawer from "./ai-insights/CompanyInsightsDrawer";
 import { useState, useEffect } from "react";
 import { useTerritories } from "@/hooks/useTerritories";
 import { 
@@ -31,7 +28,6 @@ interface ProspectTableRowProps {
 }
 
 const ProspectTableRow = ({ prospect, onEdit, onDelete, onUpdate }: ProspectTableRowProps) => {
-  const [isInsightsOpen, setIsInsightsOpen] = useState(false);
   const [userId, setUserId] = useState<number | null>(null);
   const { territories, fetchTerritories } = useTerritories();
   const [currentTerritory, setCurrentTerritory] = useState(prospect.territory || "");
@@ -172,24 +168,6 @@ const ProspectTableRow = ({ prospect, onEdit, onDelete, onUpdate }: ProspectTabl
           prospectName={prospect.business_name}
           lastContact={prospect.last_contact}
           onUpdate={onUpdate}
-        />
-      </TableCell>
-      <TableCell>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setIsInsightsOpen(true)}
-          className="hover:bg-accent"
-        >
-          <Brain className="h-4 w-4" />
-        </Button>
-        <CompanyInsightsDrawer
-          isOpen={isInsightsOpen}
-          onClose={() => setIsInsightsOpen(false)}
-          prospectId={prospect.id}
-          businessName={prospect.business_name}
-          website={prospect.website || ''}
-          onInsightGenerated={onUpdate}
         />
       </TableCell>
       <TableCell>

@@ -45,7 +45,6 @@ const ProspectTableHeader = ({ onSort, sortConfig }: ProspectTableHeaderProps) =
         <TableHead>{renderSortButton("Owner Phone", "owner_phone")}</TableHead>
         <TableHead>{renderSortButton("Owner Email", "owner_email")}</TableHead>
         <TableHead>{renderSortButton("Last Contact", "last_contact")}</TableHead>
-        <TableHead>AI Insights</TableHead>
         <TableHead>Actions</TableHead>
       </TableRow>
     </TableHeader>
