@@ -73,10 +73,37 @@ const BusinessTableActions = ({ results, location, keyword, onExport }: Business
         location_type: "Business"
       }));
 
-      // Insert prospects into the database
+      // Get existing prospects for this user
+      const { data: existingProspects, error: fetchError } = await supabase
+        .from('prospects')
+        .select('business_name, business_address')
+        .eq('user_id', currentUser.id);
+
+      if (fetchError) {
+        console.error('Error fetching existing prospects:', fetchError);
+        throw fetchError;
+      }
+
+      // Filter out prospects that already exist (based on name and address)
+      const uniqueProspects = prospects.filter(newProspect => {
+        return !existingProspects?.some(existing => 
+          existing.business_name === newProspect.business_name && 
+          existing.business_address === newProspect.business_address
+        );
+      });
+
+      if (uniqueProspects.length === 0) {
+        toast({
+          title: "Info",
+          description: "All businesses are already in your prospects list.",
+        });
+        return;
+      }
+
+      // Insert unique prospects into the database
       const { data, error } = await supabase
         .from('prospects')
-        .insert(prospects)
+        .insert(uniqueProspects)
         .select();
 
       if (error) {
@@ -85,9 +112,16 @@ const BusinessTableActions = ({ results, location, keyword, onExport }: Business
       }
 
       console.log('Exported prospects:', data);
+      const skippedCount = prospects.length - uniqueProspects.length;
+      
+      let message = `${uniqueProspects.length} businesses exported to Prospects`;
+      if (skippedCount > 0) {
+        message += `, ${skippedCount} skipped (already in your list)`;
+      }
+      
       toast({
         title: "Success",
-        description: `${prospects.length} businesses exported to Prospects`,
+        description: message,
       });
     } catch (error) {
       console.error('Export to prospects error:', error);
