@@ -1,12 +1,50 @@
-const BusinessTableHeader = () => {
+
+interface BusinessTableHeaderProps {
+  showDeleteColumn?: boolean;
+}
+
+const BusinessTableHeader = ({ showDeleteColumn = false }: BusinessTableHeaderProps) => {
   return (
     <thead className="bg-gray-50">
       <tr>
-        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Business Name</th>
-        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Website</th>
-        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone Number</th>
-        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Review Rating</th>
-        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Number of Reviews</th>
+        <th
+          scope="col"
+          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+        >
+          Business Name
+        </th>
+        <th
+          scope="col"
+          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+        >
+          Website
+        </th>
+        <th
+          scope="col"
+          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+        >
+          Phone
+        </th>
+        <th
+          scope="col"
+          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+        >
+          Rating
+        </th>
+        <th
+          scope="col"
+          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+        >
+          Reviews
+        </th>
+        {showDeleteColumn && (
+          <th
+            scope="col"
+            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+          >
+            Actions
+          </th>
+        )}
       </tr>
     </thead>
   );

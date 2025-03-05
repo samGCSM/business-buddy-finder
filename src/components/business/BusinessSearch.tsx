@@ -101,6 +101,10 @@ const BusinessSearch = ({ onShowSavedSearches, initialSearch }: BusinessSearchPr
     setResults(prev => [...prev, ...nextResults]);
   };
 
+  const handleResultsChange = (updatedResults: Business[]) => {
+    setResults(updatedResults);
+  };
+
   const showLoadMore = allResults.length > 20 && results.length < 40;
 
   return (
@@ -125,6 +129,7 @@ const BusinessSearch = ({ onShowSavedSearches, initialSearch }: BusinessSearchPr
             results={results}
             location={currentLocation}
             keyword={currentKeyword}
+            onResultsChange={handleResultsChange}
           />
           {showLoadMore && (
             <div className="flex justify-center mt-4">

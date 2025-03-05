@@ -1,4 +1,6 @@
+
 import * as XLSX from 'xlsx';
+import { useState } from "react";
 import { toast } from "@/hooks/use-toast";
 import type { Business } from "@/types/business";
 import BusinessTableActions from "./BusinessTableActions";
@@ -9,12 +11,20 @@ interface BusinessResultsTableProps {
   results: Business[];
   location: string;
   keyword: string;
+  onResultsChange?: (results: Business[]) => void;
 }
 
-const BusinessResultsTable = ({ results, location, keyword }: BusinessResultsTableProps) => {
+const BusinessResultsTable = ({ 
+  results, 
+  location, 
+  keyword, 
+  onResultsChange 
+}: BusinessResultsTableProps) => {
+  const [currentResults, setCurrentResults] = useState<Business[]>(results);
+
   const handleExport = () => {
     try {
-      const exportData = results.map(business => ({
+      const exportData = currentResults.map(business => ({
         'Business Name': business.name,
         'Phone': business.phone,
         'Email': business.email,
@@ -43,20 +53,38 @@ const BusinessResultsTable = ({ results, location, keyword }: BusinessResultsTab
     }
   };
 
+  const handleDeleteBusiness = (id: string) => {
+    const updatedResults = currentResults.filter(business => business.id !== id);
+    setCurrentResults(updatedResults);
+    
+    if (onResultsChange) {
+      onResultsChange(updatedResults);
+    }
+    
+    toast({
+      title: "Business removed",
+      description: "The business has been removed from your results",
+    });
+  };
+
   return (
     <div className="space-y-4">
       <BusinessTableActions 
-        results={results}
+        results={currentResults}
         location={location}
         keyword={keyword}
         onExport={handleExport}
       />
       <div className="overflow-x-auto bg-white rounded-lg shadow">
         <table className="min-w-full divide-y divide-gray-200">
-          <BusinessTableHeader />
+          <BusinessTableHeader showDeleteColumn={true} />
           <tbody className="bg-white divide-y divide-gray-200">
-            {results.map((business) => (
-              <BusinessTableRow key={business.id} business={business} />
+            {currentResults.map((business) => (
+              <BusinessTableRow 
+                key={business.id} 
+                business={business} 
+                onDelete={handleDeleteBusiness}
+              />
             ))}
           </tbody>
         </table>
