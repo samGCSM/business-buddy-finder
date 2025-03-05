@@ -88,7 +88,12 @@ const ProspectTableRow = ({ prospect, onEdit, onDelete, onUpdate }: ProspectTabl
   return (
     <TableRow key={prospect.id}>
       <TableCell className="sticky left-0 bg-white font-medium whitespace-nowrap z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
-        {prospect.business_name}
+        <button 
+          onClick={() => onEdit(prospect)}
+          className="text-left hover:text-blue-600 hover:underline cursor-pointer w-full"
+        >
+          {prospect.business_name}
+        </button>
       </TableCell>
       <ProspectNotesCell
         prospectId={prospect.id}
