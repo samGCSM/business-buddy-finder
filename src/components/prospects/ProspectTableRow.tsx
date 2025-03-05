@@ -1,24 +1,22 @@
 
-import { TableCell, TableRow } from "@/components/ui/table";
+import { TableRow, TableCell } from "@/components/ui/table";
 import type { Prospect } from "@/types/prospects";
+import { useState, useEffect } from "react";
+import { useTerritories } from "@/hooks/useTerritories";
+import { getCurrentUser } from "@/services/userService";
+
+// Import the new components
 import ProspectActions from "./table/ProspectActions";
 import ProspectNotesCell from "./table/ProspectNotesCell";
 import ProspectStatusCell from "./table/ProspectStatusCell";
 import ProspectPriorityCell from "./table/ProspectPriorityCell";
-import LastContactCell from "./LastContactCell";
-import { useState, useEffect } from "react";
-import { useTerritories } from "@/hooks/useTerritories";
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { getCurrentUser } from "@/services/userService";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/hooks/use-toast";
 import ProspectEmailCell from "./table/ProspectEmailCell";
+import LastContactCell from "./LastContactCell";
+import BusinessNameCell from "./table/BusinessNameCell";
+import WebsiteCell from "./table/WebsiteCell";
+import AddressCell from "./table/AddressCell";
+import TerritorySelectCell from "./table/TerritorySelectCell";
+import BasicInfoCell from "./table/BasicInfoCell";
 
 interface ProspectTableRowProps {
   prospect: Prospect;
@@ -30,7 +28,6 @@ interface ProspectTableRowProps {
 const ProspectTableRow = ({ prospect, onEdit, onDelete, onUpdate }: ProspectTableRowProps) => {
   const [userId, setUserId] = useState<number | null>(null);
   const { territories, fetchTerritories } = useTerritories();
-  const [currentTerritory, setCurrentTerritory] = useState(prospect.territory || "");
   const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
@@ -50,110 +47,28 @@ const ProspectTableRow = ({ prospect, onEdit, onDelete, onUpdate }: ProspectTabl
     initializeUser();
   }, [fetchTerritories, prospect.user_id]);
 
-  useEffect(() => {
-    setCurrentTerritory(prospect.territory || "");
-  }, [prospect.territory]);
-
-  const handleTerritoryChange = async (value: string) => {
-    try {
-      setCurrentTerritory(value);
-      const { error } = await supabase
-        .from('prospects')
-        .update({ territory: value })
-        .eq('id', prospect.id);
-
-      if (error) throw error;
-      
-      toast({
-        title: "Success",
-        description: "Territory updated successfully",
-      });
-      
-      onUpdate();
-    } catch (error) {
-      console.error('Error updating territory:', error);
-      setCurrentTerritory(prospect.territory || ""); // Reset on error
-      toast({
-        title: "Error",
-        description: "Failed to update territory",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const getGoogleMapsUrl = (address: string) => {
-    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
-  };
-
   return (
     <TableRow key={prospect.id}>
-      <TableCell className="sticky left-0 bg-white font-medium whitespace-nowrap z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
-        <button 
-          onClick={() => onEdit(prospect)}
-          className="text-left hover:text-blue-600 hover:underline cursor-pointer w-full"
-        >
-          {prospect.business_name}
-        </button>
-      </TableCell>
+      <BusinessNameCell prospect={prospect} onEdit={onEdit} />
       <ProspectNotesCell
         prospectId={prospect.id}
         notes={prospect.notes}
         activityLog={prospect.activity_log}
         onUpdate={onUpdate}
       />
-      <TableCell>
-        <Select
-          value={currentTerritory}
-          onValueChange={handleTerritoryChange}
-        >
-          <SelectTrigger className="w-[200px]">
-            <SelectValue placeholder="Select a territory">
-              {currentTerritory || "Select a territory"}
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            {territories.map((territory) => (
-              <SelectItem 
-                key={territory.id} 
-                value={territory.name}
-                disabled={!territory.active}
-              >
-                {territory.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </TableCell>
-      <TableCell className="max-w-[250px]">
-        {prospect.website ? (
-          <a 
-            href={prospect.website.startsWith('http') ? prospect.website : `https://${prospect.website}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-600 hover:text-blue-800 hover:underline truncate block"
-            title={prospect.website}
-          >
-            {prospect.website}
-          </a>
-        ) : null}
-      </TableCell>
+      <TerritorySelectCell
+        prospectId={prospect.id}
+        territory={prospect.territory}
+        territories={territories}
+        onUpdate={onUpdate}
+      />
+      <WebsiteCell website={prospect.website} />
       <ProspectEmailCell prospect={prospect} onUpdate={onUpdate} />
-      <TableCell>
-        {prospect.business_address ? (
-          <a
-            href={getGoogleMapsUrl(prospect.business_address)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-600 hover:text-blue-800 hover:underline"
-          >
-            {prospect.business_address}
-          </a>
-        ) : null}
-      </TableCell>
-      <TableCell>{prospect.location_type || 'Business'}</TableCell>
-      <TableCell>{prospect.phone_number}</TableCell>
-      <TableCell>{prospect.rating || '0.0'}</TableCell>
-      <TableCell>{prospect.review_count || '0'}</TableCell>
+      <AddressCell address={prospect.business_address} />
+      <BasicInfoCell value={prospect.location_type || 'Business'} />
+      <BasicInfoCell value={prospect.phone_number} />
+      <BasicInfoCell value={prospect.rating || '0.0'} />
+      <BasicInfoCell value={prospect.review_count || '0'} />
       <ProspectStatusCell
         prospectId={prospect.id}
         status={prospect.status}
@@ -164,9 +79,9 @@ const ProspectTableRow = ({ prospect, onEdit, onDelete, onUpdate }: ProspectTabl
         priority={prospect.priority}
         onUpdate={onUpdate}
       />
-      <TableCell>{prospect.owner_name}</TableCell>
-      <TableCell>{prospect.owner_phone}</TableCell>
-      <TableCell>{prospect.owner_email}</TableCell>
+      <BasicInfoCell value={prospect.owner_name} />
+      <BasicInfoCell value={prospect.owner_phone} />
+      <BasicInfoCell value={prospect.owner_email} />
       <TableCell>
         <LastContactCell
           prospectId={prospect.id}
