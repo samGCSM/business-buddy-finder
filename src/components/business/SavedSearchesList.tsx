@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { Business } from "@/types/business";
@@ -55,7 +56,7 @@ const SavedSearchesList = ({ savedSearches, onLoadSearch, onBackToSearch, onExpo
                     variant="outline"
                     onClick={onExport}
                   >
-                    Export
+                    Export to Excel
                   </Button>
                 </div>
               </div>
