@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
@@ -127,7 +126,7 @@ const EditProspectForm = ({ prospect, onClose, onSuccess }: EditProspectFormProp
   return (
     <ProspectFormContainer title="Edit Prospect" onClose={onClose}>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <ScrollArea className="h-[calc(80vh-10rem)] pr-4">
+        <ScrollArea className="h-[calc(80vh-10rem)] pr-4 overflow-visible">
           <div className="pb-4">
             <ProspectFormFields 
               formData={formData} 

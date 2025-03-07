@@ -1,4 +1,3 @@
-
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -54,7 +53,7 @@ const BusinessInfoFields = ({
           required
         />
       </div>
-      <div>
+      <div className="z-10">
         <Label htmlFor="territory">Territory</Label>
         {territories.length > 0 ? (
           <Select
@@ -66,7 +65,11 @@ const BusinessInfoFields = ({
                 {territory || "Select a territory"}
               </SelectValue>
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent 
+              position="popper" 
+              className="z-50"
+              sideOffset={5}
+            >
               {territories.map((territory) => (
                 <SelectItem 
                   key={territory.id} 
