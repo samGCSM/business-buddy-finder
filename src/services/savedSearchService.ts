@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import type { Business } from "@/types/business";
 import type { Json } from "@/integrations/supabase/types";
@@ -7,6 +8,7 @@ export interface SavedSearch {
   date: string;
   location: string;
   keyword: string;
+  radius?: number;
   results: Business[];
 }
 
@@ -62,6 +64,7 @@ export const getSavedSearches = async (userId: string): Promise<SavedSearch[]> =
       date: new Date(search.created_at || '').toLocaleDateString(),
       location: search.location,
       keyword: search.keyword,
+      radius: search.radius || 10, // Add default radius of 10 if it doesn't exist
       results: results
     };
   });
@@ -71,6 +74,7 @@ export const saveSearch = async (
   userId: string,
   location: string,
   keyword: string,
+  radius: number = 10,
   results: Business[]
 ): Promise<void> => {
   console.log('Attempting to save search for user:', userId);
@@ -88,6 +92,7 @@ export const saveSearch = async (
       user_id: userIdNumber,
       location,
       keyword,
+      radius,
       results: results as unknown as Json,
       created_at: new Date().toISOString()
     };

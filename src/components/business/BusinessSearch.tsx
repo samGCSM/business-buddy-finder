@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
 import { searchBusinesses } from "@/utils/googleApi";
@@ -29,7 +30,7 @@ const BusinessSearch = ({ onShowSavedSearches, initialSearch }: BusinessSearchPr
       setAllResults(initialSearch.results);
       setCurrentLocation(initialSearch.location);
       setCurrentKeyword(initialSearch.keyword);
-      setCurrentRadius(initialSearch.radius || 10);
+      setCurrentRadius(initialSearch.radius || 10); // Use default of 10 if radius is undefined
     }
   }, [initialSearch]);
 
