@@ -1,6 +1,6 @@
 
 import * as XLSX from 'xlsx';
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
 import type { Business } from "@/types/business";
 import BusinessTableActions from "./BusinessTableActions";
@@ -21,6 +21,12 @@ const BusinessResultsTable = ({
   onResultsChange 
 }: BusinessResultsTableProps) => {
   const [currentResults, setCurrentResults] = useState<Business[]>(results);
+  
+  // Synchronize internal state with incoming props
+  useEffect(() => {
+    console.log('BusinessResultsTable received new results:', results.length);
+    setCurrentResults(results);
+  }, [results]);
 
   const handleExport = () => {
     try {
