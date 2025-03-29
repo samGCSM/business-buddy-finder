@@ -8,6 +8,7 @@ import type { SavedSearch } from "@/services/savedSearchService";
 import BusinessSearchForm from "./BusinessSearchForm";
 import BusinessResultsTable from "./BusinessResultsTable";
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface BusinessSearchProps {
   onShowSavedSearches: () => void;
@@ -101,6 +102,10 @@ const BusinessSearch = ({ onShowSavedSearches, initialSearch }: BusinessSearchPr
     
     if (allResults.length <= results.length) {
       console.log('No more results to load');
+      toast({
+        title: "Info",
+        description: "No more results to load",
+      });
       return;
     }
     
@@ -109,8 +114,9 @@ const BusinessSearch = ({ onShowSavedSearches, initialSearch }: BusinessSearchPr
     console.log('Next batch length:', nextBatch.length);
     
     if (nextBatch.length > 0) {
-      setResults(prev => [...prev, ...nextBatch]);
-      console.log('Results updated to:', currentLength + nextBatch.length);
+      const updatedResults = [...results, ...nextBatch];
+      console.log('Setting updated results with length:', updatedResults.length);
+      setResults(updatedResults);
     }
   };
 
@@ -118,7 +124,7 @@ const BusinessSearch = ({ onShowSavedSearches, initialSearch }: BusinessSearchPr
     setResults(updatedResults);
   };
 
-  const showLoadMore = allResults.length > results.length && results.length < allResults.length;
+  const showLoadMore = allResults.length > results.length;
 
   return (
     <div className="space-y-6">
@@ -137,25 +143,28 @@ const BusinessSearch = ({ onShowSavedSearches, initialSearch }: BusinessSearchPr
       />
       
       {results.length > 0 && (
-        <div className="space-y-4">
-          <BusinessResultsTable 
-            results={results}
-            location={currentLocation}
-            keyword={currentKeyword}
-            onResultsChange={handleResultsChange}
-          />
-          {showLoadMore && (
-            <div className="flex justify-center mt-4">
-              <Button 
-                onClick={handleLoadMore} 
-                disabled={isLoading}
-                className="w-full md:w-auto"
-              >
-                Load More Results ({results.length}/{allResults.length})
-              </Button>
-            </div>
-          )}
-        </div>
+        <ScrollArea className="max-h-full overflow-visible">
+          <div className="space-y-4">
+            <BusinessResultsTable 
+              results={results}
+              location={currentLocation}
+              keyword={currentKeyword}
+              onResultsChange={handleResultsChange}
+            />
+            {showLoadMore && (
+              <div className="flex justify-center mt-4 pb-4">
+                <Button 
+                  onClick={handleLoadMore} 
+                  disabled={isLoading}
+                  className="w-full md:w-auto"
+                  variant="default"
+                >
+                  Load More Results ({results.length}/{allResults.length})
+                </Button>
+              </div>
+            )}
+          </div>
+        </ScrollArea>
       )}
     </div>
   );
