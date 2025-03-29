@@ -113,7 +113,7 @@ const BusinessSearchForm = ({
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between min-h-[32px]">
             <label htmlFor="location" className="text-sm font-medium">
               Location
             </label>
@@ -148,10 +148,12 @@ const BusinessSearchForm = ({
           />
         </div>
         <div className="space-y-2">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between min-h-[32px]">
             <label htmlFor="keyword" className="text-sm font-medium">
               Business Type
             </label>
+            {/* This is an invisible spacer that helps align with the "My Location" button */}
+            <div className="opacity-0 h-8 w-0 pointer-events-none"></div>
           </div>
           <Input
             id="keyword"
@@ -196,4 +198,3 @@ const BusinessSearchForm = ({
 };
 
 export default BusinessSearchForm;
-
