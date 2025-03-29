@@ -113,7 +113,7 @@ const BusinessSearchForm = ({
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
-          <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center justify-between">
             <label htmlFor="location" className="text-sm font-medium">
               Location
             </label>
@@ -144,11 +144,12 @@ const BusinessSearchForm = ({
             value={location}
             onChange={(e) => setLocation(e.target.value)}
             required
+            className="w-full"
           />
         </div>
         <div className="space-y-2">
-          <div className="mb-2">
-            <label htmlFor="keyword" className="text-sm font-medium block">
+          <div className="flex items-center justify-between">
+            <label htmlFor="keyword" className="text-sm font-medium">
               Business Type
             </label>
           </div>
@@ -158,6 +159,7 @@ const BusinessSearchForm = ({
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
             required
+            className="w-full"
           />
         </div>
       </div>
@@ -180,11 +182,18 @@ const BusinessSearchForm = ({
         />
       </div>
       
-      <Button type="submit" disabled={isLoading} className="w-full md:w-auto">
-        {isLoading ? "Searching..." : "Search"}
-      </Button>
+      <div className="flex justify-end">
+        <Button 
+          type="submit" 
+          disabled={isLoading} 
+          className="w-full md:w-auto"
+        >
+          {isLoading ? "Searching..." : "Search"}
+        </Button>
+      </div>
     </form>
   );
 };
 
 export default BusinessSearchForm;
+
