@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
 import { searchBusinesses } from "@/utils/googleApi";
@@ -94,18 +95,30 @@ const BusinessSearch = ({ onShowSavedSearches, initialSearch }: BusinessSearchPr
   };
 
   const handleLoadMore = () => {
-    if (isLoading || results.length >= 40) return;
+    console.log('Load more clicked');
+    console.log('Current results length:', results.length);
+    console.log('All results length:', allResults.length);
+    
+    if (allResults.length <= results.length) {
+      console.log('No more results to load');
+      return;
+    }
     
     const currentLength = results.length;
-    const nextResults = allResults.slice(currentLength, currentLength + 20);
-    setResults(prev => [...prev, ...nextResults]);
+    const nextBatch = allResults.slice(currentLength, currentLength + 20);
+    console.log('Next batch length:', nextBatch.length);
+    
+    if (nextBatch.length > 0) {
+      setResults(prev => [...prev, ...nextBatch]);
+      console.log('Results updated to:', currentLength + nextBatch.length);
+    }
   };
 
   const handleResultsChange = (updatedResults: Business[]) => {
     setResults(updatedResults);
   };
 
-  const showLoadMore = allResults.length > 20 && results.length < 40;
+  const showLoadMore = allResults.length > results.length && results.length < allResults.length;
 
   return (
     <div className="space-y-6">
@@ -138,7 +151,7 @@ const BusinessSearch = ({ onShowSavedSearches, initialSearch }: BusinessSearchPr
                 disabled={isLoading}
                 className="w-full md:w-auto"
               >
-                Load More Results
+                Load More Results ({results.length}/{allResults.length})
               </Button>
             </div>
           )}
