@@ -97,10 +97,8 @@ const BusinessSearch = ({ onShowSavedSearches, initialSearch }: BusinessSearchPr
 
   const handleLoadMore = () => {
     console.log('Load more clicked');
-    console.log('Current results length:', results.length);
-    console.log('All results length:', allResults.length);
     
-    if (allResults.length <= results.length) {
+    if (results.length >= allResults.length) {
       console.log('No more results to load');
       toast({
         title: "Info",
@@ -110,21 +108,35 @@ const BusinessSearch = ({ onShowSavedSearches, initialSearch }: BusinessSearchPr
     }
     
     const currentLength = results.length;
+    console.log('Current results length:', currentLength);
+    console.log('All results length:', allResults.length);
+    
     const nextBatch = allResults.slice(currentLength, currentLength + 20);
     console.log('Next batch length:', nextBatch.length);
     
     if (nextBatch.length > 0) {
-      const updatedResults = [...results, ...nextBatch];
-      console.log('Setting updated results with length:', updatedResults.length);
-      setResults(updatedResults);
+      // Create a completely new array for React to detect the change
+      const newResults = [...results, ...nextBatch];
+      console.log('Setting updated results with length:', newResults.length);
+      
+      // Force a complete re-render by creating a new state
+      setResults(newResults);
+      
+      // Add a confirmation toast
+      toast({
+        title: "Success",
+        description: `Loaded ${nextBatch.length} more results`,
+      });
     }
   };
 
   const handleResultsChange = (updatedResults: Business[]) => {
+    console.log('Results changed by child component, new length:', updatedResults.length);
     setResults(updatedResults);
   };
 
-  const showLoadMore = allResults.length > results.length;
+  // Only show load more if there are more results to load
+  const showLoadMore = results.length < allResults.length;
 
   return (
     <div className="space-y-6">
@@ -143,28 +155,28 @@ const BusinessSearch = ({ onShowSavedSearches, initialSearch }: BusinessSearchPr
       />
       
       {results.length > 0 && (
-        <ScrollArea className="max-h-full overflow-visible">
-          <div className="space-y-4">
-            <BusinessResultsTable 
-              results={results}
-              location={currentLocation}
-              keyword={currentKeyword}
-              onResultsChange={handleResultsChange}
-            />
-            {showLoadMore && (
-              <div className="flex justify-center mt-4 pb-4">
-                <Button 
-                  onClick={handleLoadMore} 
-                  disabled={isLoading}
-                  className="w-full md:w-auto"
-                  variant="default"
-                >
-                  Load More Results ({results.length}/{allResults.length})
-                </Button>
-              </div>
-            )}
-          </div>
-        </ScrollArea>
+        <div className="space-y-4">
+          <BusinessResultsTable 
+            results={results}
+            location={currentLocation}
+            keyword={currentKeyword}
+            onResultsChange={handleResultsChange}
+          />
+          
+          {showLoadMore && (
+            <div className="flex justify-center mt-4 pb-4">
+              <Button 
+                onClick={handleLoadMore} 
+                disabled={isLoading}
+                className="w-full md:w-auto"
+                variant="default"
+                size="lg"
+              >
+                Load More Results ({results.length}/{allResults.length})
+              </Button>
+            </div>
+          )}
+        </div>
       )}
     </div>
   );
