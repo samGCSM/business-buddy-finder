@@ -113,7 +113,7 @@ const BusinessSearchForm = ({
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between mb-2">
             <label htmlFor="location" className="text-sm font-medium">
               Location
             </label>
@@ -147,9 +147,11 @@ const BusinessSearchForm = ({
           />
         </div>
         <div className="space-y-2">
-          <label htmlFor="keyword" className="text-sm font-medium">
-            Business Type
-          </label>
+          <div className="mb-2">
+            <label htmlFor="keyword" className="text-sm font-medium block">
+              Business Type
+            </label>
+          </div>
           <Input
             id="keyword"
             placeholder="Enter business type..."
@@ -178,7 +180,7 @@ const BusinessSearchForm = ({
         />
       </div>
       
-      <Button type="submit" disabled={isLoading}>
+      <Button type="submit" disabled={isLoading} className="w-full md:w-auto">
         {isLoading ? "Searching..." : "Search"}
       </Button>
     </form>
