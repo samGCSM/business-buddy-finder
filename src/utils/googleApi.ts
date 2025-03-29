@@ -1,3 +1,4 @@
+
 import axios from 'axios';
 
 declare global {
@@ -34,8 +35,11 @@ const loadGoogleMapsScript = () => {
   });
 };
 
-export const searchBusinesses = async (location: string, keyword: string) => {
-  console.log('Fetching businesses for:', { location, keyword });
+export const searchBusinesses = async (location: string, keyword: string, radiusMiles: number = 10) => {
+  console.log('Fetching businesses for:', { location, keyword, radiusMiles });
+  
+  // Convert miles to meters for the API
+  const radiusInMeters = radiusMiles * 1609.34;
   
   try {
     await loadGoogleMapsScript();
@@ -65,7 +69,7 @@ export const searchBusinesses = async (location: string, keyword: string) => {
         service.textSearch({
           query: keyword,
           location: geocodeResult,
-          radius: 50000,
+          radius: radiusInMeters, // Use the radius in meters
           pageToken: pageToken
         }, (results: any, status: any, pagination: any) => {
           if (status === 'OK') {

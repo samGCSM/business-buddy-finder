@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
 import { searchBusinesses } from "@/utils/googleApi";
@@ -21,6 +20,7 @@ const BusinessSearch = ({ onShowSavedSearches, initialSearch }: BusinessSearchPr
   const [isLoading, setIsLoading] = useState(false);
   const [currentLocation, setCurrentLocation] = useState("");
   const [currentKeyword, setCurrentKeyword] = useState("");
+  const [currentRadius, setCurrentRadius] = useState(10); // Default radius of 10 miles
 
   useEffect(() => {
     if (initialSearch) {
@@ -29,6 +29,7 @@ const BusinessSearch = ({ onShowSavedSearches, initialSearch }: BusinessSearchPr
       setAllResults(initialSearch.results);
       setCurrentLocation(initialSearch.location);
       setCurrentKeyword(initialSearch.keyword);
+      setCurrentRadius(initialSearch.radius || 10);
     }
   }, [initialSearch]);
 
@@ -63,14 +64,15 @@ const BusinessSearch = ({ onShowSavedSearches, initialSearch }: BusinessSearchPr
     }
   };
 
-  const handleSearch = async (location: string, keyword: string) => {
+  const handleSearch = async (location: string, keyword: string, radius: number) => {
     setIsLoading(true);
     setCurrentLocation(location);
     setCurrentKeyword(keyword);
+    setCurrentRadius(radius);
     
     try {
-      console.log('Searching businesses:', { location, keyword });
-      const businesses = await searchBusinesses(location, keyword);
+      console.log('Searching businesses:', { location, keyword, radius });
+      const businesses = await searchBusinesses(location, keyword, radius);
       console.log('Search results:', businesses);
       setAllResults(businesses); // Store all results
       setResults(businesses.slice(0, 20)); // Display first 20
@@ -135,7 +137,6 @@ const BusinessSearch = ({ onShowSavedSearches, initialSearch }: BusinessSearchPr
     setResults(updatedResults);
   };
 
-  // Only show load more if there are more results to load
   const showLoadMore = results.length < allResults.length;
 
   return (
@@ -152,6 +153,7 @@ const BusinessSearch = ({ onShowSavedSearches, initialSearch }: BusinessSearchPr
         isLoading={isLoading}
         initialLocation={currentLocation}
         initialKeyword={currentKeyword}
+        initialRadius={currentRadius}
       />
       
       {results.length > 0 && (
