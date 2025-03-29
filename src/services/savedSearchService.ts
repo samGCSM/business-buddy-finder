@@ -64,7 +64,7 @@ export const getSavedSearches = async (userId: string): Promise<SavedSearch[]> =
       date: new Date(search.created_at || '').toLocaleDateString(),
       location: search.location,
       keyword: search.keyword,
-      radius: search.radius || 10, // Add default radius of 10 if it doesn't exist
+      radius: search.radius || 10, // Use default radius of 10 if not defined
       results: results
     };
   });

@@ -204,6 +204,7 @@ export type Database = {
           id: string
           keyword: string
           location: string
+          radius: number | null
           results: Json
           user_id: number | null
         }
@@ -212,6 +213,7 @@ export type Database = {
           id?: string
           keyword: string
           location: string
+          radius?: number | null
           results: Json
           user_id?: number | null
         }
@@ -220,6 +222,7 @@ export type Database = {
           id?: string
           keyword?: string
           location?: string
+          radius?: number | null
           results?: Json
           user_id?: number | null
         }

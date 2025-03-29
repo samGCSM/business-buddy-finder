@@ -11,7 +11,7 @@ interface BusinessResultsTableProps {
   results: Business[];
   location: string;
   keyword: string;
-  radius?: number; // Add radius to the props
+  radius?: number; // Ensure radius is in the props
   onResultsChange?: (results: Business[]) => void;
 }
 
