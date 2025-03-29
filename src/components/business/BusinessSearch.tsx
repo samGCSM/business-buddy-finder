@@ -163,6 +163,7 @@ const BusinessSearch = ({ onShowSavedSearches, initialSearch }: BusinessSearchPr
             results={results}
             location={currentLocation}
             keyword={currentKeyword}
+            radius={currentRadius}
             onResultsChange={handleResultsChange}
           />
           

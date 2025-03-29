@@ -11,13 +11,15 @@ interface BusinessResultsTableProps {
   results: Business[];
   location: string;
   keyword: string;
+  radius?: number; // Add radius to the props
   onResultsChange?: (results: Business[]) => void;
 }
 
 const BusinessResultsTable = ({ 
   results, 
   location, 
-  keyword, 
+  keyword,
+  radius = 10, // Default radius if not provided
   onResultsChange 
 }: BusinessResultsTableProps) => {
   const [currentResults, setCurrentResults] = useState<Business[]>(results);
@@ -79,6 +81,7 @@ const BusinessResultsTable = ({
         results={currentResults}
         location={location}
         keyword={keyword}
+        radius={radius}
         onExport={handleExport}
       />
       <div className="overflow-x-auto bg-white rounded-lg shadow">

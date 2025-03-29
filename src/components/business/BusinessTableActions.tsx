@@ -11,9 +11,10 @@ interface BusinessTableActionsProps {
   location: string;
   keyword: string;
   onExport: () => void;
+  radius?: number; // Add radius to the props interface
 }
 
-const BusinessTableActions = ({ results, location, keyword, onExport }: BusinessTableActionsProps) => {
+const BusinessTableActions = ({ results, location, keyword, radius = 10, onExport }: BusinessTableActionsProps) => {
   const handleSaveSearch = async () => {
     try {
       const currentUser = await getCurrentUser();
@@ -30,7 +31,7 @@ const BusinessTableActions = ({ results, location, keyword, onExport }: Business
       }
 
       console.log('Saving search for user:', currentUser.id);
-      await saveSearch(currentUser.id.toString(), location, keyword, results);
+      await saveSearch(currentUser.id.toString(), location, keyword, radius, results);
       toast({
         title: "Success",
         description: "Search saved successfully",
