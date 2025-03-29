@@ -1,17 +1,9 @@
-
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { getCurrentUser } from "@/services/userService";
 import { Business } from "@/types/business";
-
-interface SavedSearch {
-  id: string;
-  date: string;
-  location: string;
-  keyword: string;
-  results: Business[];
-}
+import type { SavedSearch } from "@/services/savedSearchService";
 
 interface SavedSearchesListProps {
   savedSearches: SavedSearch[];
@@ -134,6 +126,11 @@ const SavedSearchesList = ({ savedSearches, onLoadSearch, onBackToSearch, onExpo
                   <p className="text-sm text-gray-500">
                     Saved on: {search.date}
                   </p>
+                  {search.radius && (
+                    <p className="text-xs text-gray-500">
+                      Radius: {search.radius} miles
+                    </p>
+                  )}
                 </div>
                 <div className="space-x-2">
                   <Button
