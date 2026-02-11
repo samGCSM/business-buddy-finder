@@ -1,37 +1,50 @@
 
 
-## Manage Users Table Improvements
+## Bulk Search Improvements
 
-### Changes Overview
+### 1. Strict Radius Filtering
 
-**1. Hide the Email column**
-Remove the Email column from both the header and rows to free up horizontal space.
+Google Places API treats radius as a preference, not a hard limit, so results outside your specified radius can appear. We will add client-side distance filtering.
 
-**2. Supervisor column: show name instead of email**
-The Supervisor column currently displays the supervisor's email. It will be changed to show `full_name` instead (falling back to email if no name is set).
+**How it works:**
+- After geocoding the search location, store the center coordinates (lat/lng)
+- After fetching all results, calculate the distance from each business to the center using the Haversine formula
+- Drop any business whose distance exceeds the user's selected radius
+- This means you may get fewer than 20 results, but every result will genuinely be within your radius
 
-**3. Fix "Searches (30d)" to show correct data**
-Currently the table displays `user.totalSearches` which is a lifetime cumulative counter stored on the `users` table. This will be changed to `user.stats?.searches_last_30_days` which comes from the `user_stats` view and reflects actual 30-day activity. Most users will correctly show 0 since they haven't been active recently.
+### 2. Email Enrichment via Hunter.io
 
-**4. Reduce column padding**
-Shrink cell padding from `px-6 py-4` (rows) and `px-6 py-3` (headers) down to `px-3 py-2` so more columns fit without horizontal scrolling and the action buttons (Edit, Change Password, Delete) are visible without scrolling.
+Google Places does not provide emails. We will use your existing Hunter.io integration to look up emails using the business website domain.
+
+**How it works:**
+- After the Places search returns results, for each business that has a website (not "N/A"), extract the domain
+- Call the existing `enrich-prospect-email` edge function with each domain
+- Populate the email field with the first result found (or keep "N/A" if nothing is found)
+- Show a loading indicator while enrichment is in progress so the user isn't waiting with no feedback
 
 ---
 
 ### Technical Details
 
-**Files to modify:**
+**File: `src/utils/googleApi.ts`**
+- Add a `haversineDistance(lat1, lon1, lat2, lon2)` helper function that returns distance in miles
+- After geocoding the search location, capture the center lat/lng
+- After fetching place details, use `place.geometry.location.lat()` and `.lng()` for each result
+- Filter out any result where `haversineDistance(center, result) > radiusMiles`
+- Return the `distance` as part of each Business object so it can optionally be displayed
 
-- **`src/components/users/UserTableHeader.tsx`**
-  - Remove the Email header column
-  - Change header padding from `px-6 py-3` to `px-3 py-2`
+**File: `src/types/business.ts`**
+- Add optional `distance?: number` field to the Business interface
 
-- **`src/components/users/UserTableRow.tsx`**
-  - Remove the Email `<td>` (line 85-87)
-  - Change `getSupervisorEmail()` to `getSupervisorName()` -- return `supervisor.full_name || supervisor.email` instead of just email
-  - In the supervisor edit dropdown, show `full_name || email` for each option
-  - Fix line 149: change `getNumericValue(user.totalSearches)` to `user.stats?.searches_last_30_days || 0`
-  - Change all cell padding from `px-6 py-4` to `px-3 py-2`
+**File: `src/components/business/BusinessSearch.tsx`**
+- After `searchBusinesses()` returns, run email enrichment for businesses with websites
+- Call the `enrich-prospect-email` edge function for each domain (batched with reasonable concurrency)
+- Update results as emails are found (progressive update so users see results immediately, emails fill in as they load)
+- Add a small "Enriching emails..." indicator
 
-- **`src/components/users/UserTable.tsx`**
-  - Remove "email" from the sort field options since the column is hidden
+**File: `src/components/business/BusinessTableRow.tsx`**
+- Display the email column value (it already exists in the table but always shows "N/A" -- now it will show real emails when found)
+
+**File: `src/components/business/BusinessResultsTable.tsx`**
+- Optionally show the distance column so users can see how far each result is
+
