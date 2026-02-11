@@ -1,24 +1,26 @@
 
 
-## Move Territory Dropdown Next to User Dropdown
+## Split Header Into Two Rows
 
-### Current Layout
-The page has two rows:
-- Row 1: User dropdown + Territory dropdown (lines 70-96 in ProspectContent.tsx)
-- Row 2: ProspectHeader (Add Prospect, Manage Territories, Search, Enrich, etc.)
-
-### Change
-Remove the separate first row and move the territory dropdown into the ProspectHeader row, right after the user filter. This puts everything on one row and eliminates the extra vertical space.
-
-### File: `src/components/prospects/ProspectContent.tsx`
-- Remove the entire `<div className="flex items-center justify-between">` block (lines 70-96) containing the territory Select
-- Pass `selectedTerritory`, `setSelectedTerritory`, `territories`, `userRole`, `supervisedUsers`, `currentUser`, and `onUserSelect` as props to `ProspectHeader`
+### Problem
+Currently everything is jammed into one row. You want two distinct rows:
+- **Row 1**: User dropdown + Territory dropdown (filters only)
+- **Row 2**: Add Prospect button, Manage Territories button, Search prospects input, then the right-side action buttons (Bulk Upload, Enrich, Delete, Map, Export)
 
 ### File: `src/components/prospects/ProspectHeader.tsx`
-- Accept new props: `selectedTerritory`, `onTerritoryChange`, `territories`, `userRole`, `supervisedUsers`, `currentUser`, `onUserSelect`
-- Add the `UserProspectFilter` and territory `Select` dropdown at the beginning of the left-side controls (before Add Prospect button)
-- Import `Select`, `SelectContent`, `SelectItem`, `SelectTrigger`, `SelectValue` and `UserProspectFilter`
 
-### Result
-One single row containing: [User Dropdown] [Territory Dropdown] [Add Prospect] [Manage Territories] [Search] ... [action buttons on the right]
+Restructure the JSX from one single flex row into two stacked rows:
+
+**Row 1** (filters):
+- `UserProspectFilter` (admin/supervisor only)
+- Territory `Select` dropdown
+
+**Row 2** (actions + search):
+- Left side: Add Prospect button, TerritoryManager button, Search input
+- Right side: Bulk Upload, Enrich, Delete, Map, Export buttons
+
+The outer container changes from a single `flex-row` to a vertical `space-y-4` wrapper containing two rows.
+
+### No other files change
+`ProspectContent.tsx` already passes all necessary props -- no changes needed there.
 
