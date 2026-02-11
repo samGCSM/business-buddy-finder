@@ -31,6 +31,7 @@ const ProspectContent = ({
 }: ProspectContentProps) => {
   const [isAddFormVisible, setIsAddFormVisible] = useState(showAddForm);
   const [selectedTerritory, setSelectedTerritory] = useState<string>("all");
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const handleAddClick = () => {
     setIsAddFormVisible(true);
@@ -43,6 +44,9 @@ const ProspectContent = ({
   const filteredProspects = selectedTerritory === "all"
     ? prospects
     : prospects.filter(p => p.territory === selectedTerritory);
+
+  // Get selected prospects for header actions
+  const selectedProspects = filteredProspects.filter(p => selectedIds.has(p.id));
 
   // Allow all users to add prospects
   const canAddProspects = true;
@@ -79,7 +83,8 @@ const ProspectContent = ({
       <ProspectHeader 
         onAddClick={handleAddClick}
         onBulkUploadSuccess={onProspectAdded}
-        prospects={prospects}
+        prospects={filteredProspects}
+        selectedProspects={selectedProspects}
         showAddButton={canAddProspects}
         userId={currentUser?.id}
       />
@@ -99,6 +104,7 @@ const ProspectContent = ({
       <ProspectsTable 
         prospects={filteredProspects}
         onUpdate={onProspectAdded}
+        onSelectionChange={setSelectedIds}
       />
     </div>
   );
