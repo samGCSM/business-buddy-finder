@@ -92,7 +92,9 @@ const ProspectHeader = ({
           <Zap className="h-4 w-4" />
           {isEnriching
             ? `Enriching ${progress.current}/${progress.total}...`
-            : `Enrich Emails${enrichableCount > 0 ? ` (${enrichableCount})` : ''}`
+            : hasSelection
+              ? `Enrich (${enrichableCount})`
+              : `Enrich All${enrichableCount > 0 ? ` (${enrichableCount})` : ''}`
           }
         </Button>
 
