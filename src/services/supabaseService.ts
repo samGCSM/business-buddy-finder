@@ -16,7 +16,7 @@ export const getUsers = async (): Promise<User[]> => {
   try {
     const { data, error } = await supabase
       .from('users')
-      .select('*');
+      .select('id, email, type, full_name, lastLogin, totalSearches, savedSearches, supervisor_id, role, created_at');
 
     if (error) {
       console.error('Error fetching users:', error);
