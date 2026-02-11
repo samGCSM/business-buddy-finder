@@ -1,38 +1,37 @@
 
 
-## Two-Part Plan
+## Manage Users Table Improvements
 
-### Part 1: Immediate Data Transfer (one-time action)
-Move all prospects from Tom Goins (id: 15, 59 prospects) and Olivia Wrozier (id: 25, 19 prospects) to Diane Frederick (id: 14, currently 113 prospects). This will be done by updating the `user_id` column on the prospects table directly. After transferring, both Tom and Olivia can be deleted from the users table.
+### Changes Overview
 
-### Part 2: Build "Delete User with Prospect Reassignment" Feature
-When an admin clicks "Delete" on a user, instead of immediately deleting them, a dialog will appear that:
-1. Shows how many prospects that user currently has
-2. If they have prospects, asks the admin to pick another user to receive those prospects
-3. If they have zero prospects, allows direct deletion
-4. On confirm: reassigns all prospects to the chosen user, then deletes the user
+**1. Hide the Email column**
+Remove the Email column from both the header and rows to free up horizontal space.
+
+**2. Supervisor column: show name instead of email**
+The Supervisor column currently displays the supervisor's email. It will be changed to show `full_name` instead (falling back to email if no name is set).
+
+**3. Fix "Searches (30d)" to show correct data**
+Currently the table displays `user.totalSearches` which is a lifetime cumulative counter stored on the `users` table. This will be changed to `user.stats?.searches_last_30_days` which comes from the `user_stats` view and reflects actual 30-day activity. Most users will correctly show 0 since they haven't been active recently.
+
+**4. Reduce column padding**
+Shrink cell padding from `px-6 py-4` (rows) and `px-6 py-3` (headers) down to `px-3 py-2` so more columns fit without horizontal scrolling and the action buttons (Edit, Change Password, Delete) are visible without scrolling.
 
 ---
 
 ### Technical Details
 
-**Data migration (Part 1):**
-- Run two SQL updates to set `user_id = 14` on all prospects where `user_id` is 15 or 25
-- Delete users with id 15 and 25 from the users table
-
-**New component: `DeleteUserDialog`**
-- A confirmation dialog triggered from the existing Delete button in `UserTableRow.tsx`
-- Fetches the prospect count for the user being deleted
-- If count > 0, shows a dropdown to select the recipient user (filtered to exclude the user being deleted)
-- On confirm, calls Supabase to:
-  1. Update all prospects `SET user_id = [selected_user_id] WHERE user_id = [deleted_user_id]`
-  2. Delete the user from the `users` table
-  3. Refresh the user list
-
-**Files to create:**
-- `src/components/users/DeleteUserDialog.tsx` -- the reassignment dialog
-
 **Files to modify:**
-- `src/components/users/UserTableRow.tsx` -- replace direct delete with dialog trigger
-- `src/components/users/UserActions.tsx` -- add `handleReassignAndDelete` function that does the prospect transfer then user deletion
 
+- **`src/components/users/UserTableHeader.tsx`**
+  - Remove the Email header column
+  - Change header padding from `px-6 py-3` to `px-3 py-2`
+
+- **`src/components/users/UserTableRow.tsx`**
+  - Remove the Email `<td>` (line 85-87)
+  - Change `getSupervisorEmail()` to `getSupervisorName()` -- return `supervisor.full_name || supervisor.email` instead of just email
+  - In the supervisor edit dropdown, show `full_name || email` for each option
+  - Fix line 149: change `getNumericValue(user.totalSearches)` to `user.stats?.searches_last_30_days || 0`
+  - Change all cell padding from `px-6 py-4` to `px-3 py-2`
+
+- **`src/components/users/UserTable.tsx`**
+  - Remove "email" from the sort field options since the column is hidden
