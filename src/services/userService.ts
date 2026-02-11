@@ -19,7 +19,7 @@ export const getUsers = async (): Promise<User[]> => {
   console.log('Getting users from service');
   const { data, error } = await supabase
     .from('users')
-    .select('*');
+    .select('id, email, type, full_name, lastLogin, totalSearches, savedSearches, supervisor_id, role, created_at');
 
   if (error) {
     console.error('Error fetching users:', error);
@@ -66,7 +66,7 @@ export const setCurrentUser = async (user: User | null) => {
 export const fetchUserFromSupabase = async (email: string): Promise<User | null> => {
   const { data, error } = await supabase
     .from('users')
-    .select('*')
+    .select('id, email, type, full_name, lastLogin, totalSearches, savedSearches, supervisor_id, role, created_at')
     .eq('email', email)
     .single();
 
