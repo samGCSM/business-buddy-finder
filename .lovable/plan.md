@@ -1,61 +1,23 @@
 
 
-## Add Prospect Search + Tighten Table Columns
+## Move Search Input Next to Manage Territories Button
 
-### 1. Prospect Search Input
+### Change
 
-Add a search input next to the territory filter dropdown in `ProspectContent.tsx`. It will filter the prospect list by matching the search term against `business_name`, `email`, `owner_name`, `phone_number`, and `business_address` (case-insensitive).
+Move the search input from its current location (top of `ProspectContent`, next to the territory filter dropdown) to `ProspectHeader`, placed immediately to the right of the "Manage Territories" button.
 
-**File: `src/components/prospects/ProspectContent.tsx`**
-- Add a `searchQuery` state variable
-- Import `Input` from `@/components/ui/input` and `Search` icon from `lucide-react`
-- Place a search input with a search icon next to the territory dropdown
-- Apply search filtering after territory filtering so both filters work together
+### Files Changed
 
-### 2. Tighten Table Column Widths and Padding
+**`src/components/prospects/ProspectContent.tsx`**
+- Remove the search input JSX (the `<div className="relative">` block with the Search icon and Input)
+- Keep the `searchQuery` state and filtering logic
+- Pass `searchQuery` and `setSearchQuery` as props to `ProspectHeader`
 
-Reduce padding and constrain widths on several columns to make the table more compact.
+**`src/components/prospects/ProspectHeader.tsx`**
+- Accept new props: `searchQuery: string` and `onSearchChange: (query: string) => void`
+- Add the search input immediately after the `TerritoryManager` button (inside the left-side `div` on line 74)
+- Import `Input` from `@/components/ui/input` and `Search` from `lucide-react`
 
-**File: `src/components/ui/table.tsx`**
-- Reduce default `TableCell` padding from `p-4` to `px-2 py-2` and add `text-sm`
-- Reduce `TableHead` padding from `px-4` to `px-2`
+### Result
 
-**File: `src/components/prospects/ProspectTableHeader.tsx`**
-- Add max-width constraints to specific columns:
-  - Notes: `w-[60px]`
-  - Email: `max-w-[150px]`
-  - Location Type: `max-w-[100px]`
-  - Rating: `w-[80px]`
-  - Reviews: `w-[80px]`
-- Shrink the sort button padding slightly
-
-**File: `src/components/prospects/table/BasicInfoCell.tsx`**
-- Add `truncate` and `max-w` classes so long text is truncated with ellipsis instead of expanding the column
-
-**File: `src/components/prospects/table/ProspectNotesCell.tsx`**
-- Constrain the notes cell width
-
----
-
-### Technical Details
-
-**Files modified:**
-- `src/components/prospects/ProspectContent.tsx` -- add search state, input UI, and filtering logic
-- `src/components/ui/table.tsx` -- reduce default cell/head padding
-- `src/components/prospects/ProspectTableHeader.tsx` -- add width constraints to specific columns
-- `src/components/prospects/table/BasicInfoCell.tsx` -- add truncation
-- `src/components/prospects/table/ProspectNotesCell.tsx` -- constrain width
-
-**Search behavior:**
-- Case-insensitive partial match
-- Searches across: business_name, email, owner_name, phone_number, business_address
-- Combines with existing territory filter (both filters apply)
-- Clears when user empties the input
-
-**Column width targets:**
-- Notes: ~60px (icon only)
-- Email: max 150px with truncation
-- Location Type: max 100px
-- Rating: ~80px
-- Reviews: ~80px
-- All cells: reduced horizontal padding from 16px to 8px
+The search bar will sit right next to the "Manage Territories" button on the left side of the header row, alongside the "Add Prospect" button -- keeping all primary controls together.
