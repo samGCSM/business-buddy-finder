@@ -21,7 +21,7 @@ const ProspectTableHeader = ({ onSort, sortConfig, allSelected, someSelected, on
     <Button
       variant="ghost"
       onClick={() => onSort(key)}
-      className="h-8 px-2 lg:px-3"
+      className="h-7 px-1.5 text-xs"
     >
       {label}
       <ArrowUpDown className="ml-2 h-4 w-4" />
@@ -40,15 +40,15 @@ const ProspectTableHeader = ({ onSort, sortConfig, allSelected, someSelected, on
         <TableHead className="w-[200px] min-w-[200px] sticky left-0 bg-white z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
           {renderSortButton("Business Name", "business_name")}
         </TableHead>
-        <TableHead className="min-w-[100px]">Notes</TableHead>
+        <TableHead className="w-[60px]">Notes</TableHead>
         <TableHead>{renderSortButton("Territory", "territory")}</TableHead>
         <TableHead>{renderSortButton("Website", "website")}</TableHead>
-        <TableHead>{renderSortButton("Email", "email")}</TableHead>
+        <TableHead className="max-w-[150px]">{renderSortButton("Email", "email")}</TableHead>
         <TableHead>{renderSortButton("Address", "business_address")}</TableHead>
-        <TableHead>{renderSortButton("Location Type", "location_type")}</TableHead>
+        <TableHead className="max-w-[100px]">{renderSortButton("Type", "location_type")}</TableHead>
         <TableHead>{renderSortButton("Phone", "phone_number")}</TableHead>
-        <TableHead>{renderSortButton("Rating", "rating")}</TableHead>
-        <TableHead>{renderSortButton("Reviews", "review_count")}</TableHead>
+        <TableHead className="w-[80px]">{renderSortButton("Rating", "rating")}</TableHead>
+        <TableHead className="w-[80px]">{renderSortButton("Reviews", "review_count")}</TableHead>
         <TableHead>{renderSortButton("Status", "status")}</TableHead>
         <TableHead>{renderSortButton("Priority", "priority")}</TableHead>
         <TableHead>{renderSortButton("Owner Name", "owner_name")}</TableHead>

@@ -7,7 +7,9 @@ interface BasicInfoCellProps {
 
 const BasicInfoCell = ({ value }: BasicInfoCellProps) => {
   return (
-    <TableCell>{value || ''}</TableCell>
+    <TableCell>
+      <span className="block truncate max-w-[180px]">{value || ''}</span>
+    </TableCell>
   );
 };
 

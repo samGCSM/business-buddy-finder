@@ -5,6 +5,8 @@ import AddProspectForm from "./AddProspectForm";
 import ProspectHeader from "./ProspectHeader";
 import UserProspectFilter from "./UserProspectFilter";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Search } from "lucide-react";
 import type { Prospect } from "@/types/prospects";
 import type { User } from "@/types/user";
 
@@ -32,6 +34,7 @@ const ProspectContent = ({
   const [isAddFormVisible, setIsAddFormVisible] = useState(showAddForm);
   const [selectedTerritory, setSelectedTerritory] = useState<string>("all");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [searchQuery, setSearchQuery] = useState("");
 
   const handleAddClick = () => {
     setIsAddFormVisible(true);
@@ -40,10 +43,23 @@ const ProspectContent = ({
   // Get unique territories from prospects
   const territories = Array.from(new Set(prospects.map(p => p.territory).filter(Boolean)));
 
-  // Filter prospects by territory
-  const filteredProspects = selectedTerritory === "all"
+  // Filter prospects by territory then search
+  const territoryFiltered = selectedTerritory === "all"
     ? prospects
     : prospects.filter(p => p.territory === selectedTerritory);
+
+  const filteredProspects = searchQuery.trim()
+    ? territoryFiltered.filter(p => {
+        const q = searchQuery.toLowerCase();
+        return (
+          p.business_name?.toLowerCase().includes(q) ||
+          p.email?.toLowerCase().includes(q) ||
+          p.owner_name?.toLowerCase().includes(q) ||
+          p.phone_number?.toLowerCase().includes(q) ||
+          p.business_address?.toLowerCase().includes(q)
+        );
+      })
+    : territoryFiltered;
 
   // Get selected prospects for header actions
   const selectedProspects = filteredProspects.filter(p => selectedIds.has(p.id));
@@ -54,7 +70,7 @@ const ProspectContent = ({
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 flex-wrap">
           {(userRole === 'admin' || userRole === 'supervisor') && supervisedUsers.length > 0 && (
             <UserProspectFilter 
               users={supervisedUsers}
@@ -62,6 +78,15 @@ const ProspectContent = ({
               currentUser={currentUser}
             />
           )}
+          <div className="relative">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search prospects..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-8 w-[220px]"
+            />
+          </div>
           <Select
             value={selectedTerritory}
             onValueChange={setSelectedTerritory}

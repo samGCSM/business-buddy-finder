@@ -65,7 +65,7 @@ const ProspectNotesCell = ({ prospectId, notes, activityLog, onUpdate }: Prospec
   ).length || 0;
 
   return (
-    <TableCell>
+    <TableCell className="w-[60px]">
       <div className="relative inline-flex">
         <ProspectNotes
           prospectId={prospectId}
