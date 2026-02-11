@@ -1,96 +1,93 @@
 
 
-## Firecrawl + Hunter.io Enrichment with Bulk Email Button
+## Bulk Email Enrichment + Checkbox Selection for Prospects
 
 ### Overview
 
-This plan adds three capabilities to the Prospects page:
+Two features for the Prospects page:
 
-1. **Firecrawl website scraping** -- a new per-prospect button that scrapes the prospect's website to find owner name, owner email, owner phone, and business email from About/Contact/Team pages
-2. **Keep existing Hunter.io** -- the current Zap button stays as-is for quick email lookup
-3. **Bulk Email Enrichment** -- a new button in the ProspectHeader that runs Hunter.io email lookup on all prospects missing emails at once
+1. **Bulk Email Enrichment button** -- runs Hunter.io email lookup on all (or selected) prospects missing emails
+2. **Checkbox selection** -- select individual rows or all rows, then use selection for Export, Map, Delete, or Bulk Enrich actions
 
 ---
 
-### Step 1: Connect Firecrawl
+### Feature 1: Checkbox Selection System
 
-Firecrawl is available as a connector. We will link it to the project so the `FIRECRAWL_API_KEY` secret becomes available to edge functions.
+**Selection state lives in `ProspectsTable.tsx`** since it manages the sorted list and renders rows.
 
-### Step 2: Create new edge function `enrich-prospect-firecrawl`
+- Add `selectedIds: Set<string>` state
+- Pass `selectedIds`, `onToggleSelect`, and `onToggleAll` down to header and rows
 
-**File: `supabase/functions/enrich-prospect-firecrawl/index.ts`**
+**`ProspectTableHeader.tsx`**
+- Add a new first `<TableHead>` column with a Checkbox component
+- Checkbox is checked when all visible prospects are selected, indeterminate when some are selected
+- Clicking toggles select-all / deselect-all
 
-This edge function will:
-- Accept a `url` (the prospect's website)
-- Use Firecrawl to scrape the website with `formats: ['markdown']` and `onlyMainContent: true`
-- Also attempt to scrape common contact pages (`/about`, `/contact`, `/team`) by using Firecrawl's map feature to find those URLs first
-- Parse the markdown content to extract:
-  - Email addresses (regex)
-  - Phone numbers (regex)
-  - Owner/founder names (look for patterns like "Founded by", "Owner:", "CEO:", etc.)
-- Return the extracted contact info
+**`ProspectTableRow.tsx`**
+- Add a new first `<TableCell>` with a Checkbox
+- Checked state driven by whether the prospect's ID is in `selectedIds`
+- Clicking toggles that prospect in/out of selection
 
-### Step 3: Create `useFirecrawlEnrichment` hook
+**`ProspectsTable.tsx`**
+- Manage `selectedIds` state
+- Pass selected prospect IDs up to parent via a new `onSelectionChange` callback
+- Clear selection when prospects list changes
 
-**File: `src/hooks/useFirecrawlEnrichment.ts`**
+**`ProspectContent.tsx`**
+- Receive `selectedIds` from `ProspectsTable`
+- Pass selected prospects to `ProspectHeader` so the action buttons can operate on selection
 
-- Accepts a prospect ID and website URL
-- Calls the `enrich-prospect-firecrawl` edge function
-- Updates the prospect record in Supabase with any found data (email, owner_name, owner_phone, owner_email)
-- Tracks loading state per prospect ID
+**`ProspectHeader.tsx`**
+- Update Export button: if prospects are selected, export only those; otherwise export all
+- Update "Map These" button: if selected, map only those; otherwise map all with addresses
+- Add a "Delete Selected" button that appears only when prospects are selected
+- Button labels update to show count, e.g. "Export (5)" or "Export All"
 
-### Step 4: Update ProspectEmailCell with dual enrichment buttons
+### Feature 2: Bulk Email Enrichment
 
-**File: `src/components/prospects/table/ProspectEmailCell.tsx`**
-
-- Keep the existing Hunter.io Zap button
-- Add a second button (Globe icon) for Firecrawl website scraping
-- Firecrawl button only shows if the prospect has a website
-- Both buttons shown when prospect has no email; Firecrawl also updates owner fields
-
-### Step 5: Add Bulk Email Enrichment button
-
-**File: `src/components/prospects/ProspectHeader.tsx`**
-
-- Add a "Bulk Enrich Emails" button (with Zap icon) next to the existing Export button
-- Shows count of prospects missing emails, e.g. "Enrich Emails (12)"
-- On click, sequentially calls the existing `enrich-prospect-email` (Hunter.io) edge function for each prospect missing an email that has a website or business name
-- Shows a progress toast as it processes
-- Calls `onBulkUploadSuccess` (which triggers a refresh) when done
-
-**File: `src/hooks/useBulkEmailEnrichment.ts`**
-
-- New hook that manages bulk enrichment state
-- Iterates through prospects missing emails
-- Calls Hunter.io for each with a small delay to avoid rate limiting
-- Tracks progress (processed count / total)
+**New file: `src/hooks/useBulkEmailEnrichment.ts`**
+- Hook that accepts a list of prospects
+- Filters to those missing valid emails but having a website or business_name
+- Iterates through them, calling the existing `enrich-prospect-email` edge function for each
+- Adds a 500ms delay between calls to avoid rate limiting
+- Tracks `isEnriching`, `progress` (current/total), and `foundCount`
 - Updates each prospect in the DB as emails are found
+- Shows toast with summary when complete
 
-### Step 6: Update config.toml
-
-Add JWT verification disabled for the new function:
-
-```text
-[functions.enrich-prospect-firecrawl]
-verify_jwt = false
-```
+**`ProspectHeader.tsx`**
+- Add a "Bulk Enrich Emails" button with a Zap icon
+- Shows count of enrichable prospects, e.g. "Enrich Emails (12)"
+- When prospects are selected, only enriches those selected that are missing emails
+- Disabled while enrichment is in progress; shows progress text like "Enriching 3/12..."
+- Calls `onBulkUploadSuccess` when done to refresh the list
 
 ---
 
 ### Technical Details
 
 **New files:**
-- `supabase/functions/enrich-prospect-firecrawl/index.ts` -- Firecrawl scraping edge function
-- `src/hooks/useFirecrawlEnrichment.ts` -- Hook for per-prospect Firecrawl enrichment
-- `src/hooks/useBulkEmailEnrichment.ts` -- Hook for bulk Hunter.io enrichment
+- `src/hooks/useBulkEmailEnrichment.ts`
 
 **Modified files:**
-- `supabase/config.toml` -- Add function config
-- `src/components/prospects/table/ProspectEmailCell.tsx` -- Add Firecrawl button alongside Hunter.io
-- `src/components/prospects/ProspectHeader.tsx` -- Add "Bulk Enrich Emails" button
-- `src/components/prospects/ProspectContent.tsx` -- Pass prospects to header (already done)
+- `src/components/prospects/ProspectTableHeader.tsx` -- add checkbox column
+- `src/components/prospects/ProspectTableRow.tsx` -- add checkbox column
+- `src/components/prospects/ProspectsTable.tsx` -- manage selection state, pass to children and parent
+- `src/components/prospects/ProspectContent.tsx` -- bridge selection between table and header
+- `src/components/prospects/ProspectHeader.tsx` -- add bulk enrich button, selection-aware actions
 
-**Dependencies:** No new npm packages needed. Firecrawl is called via edge function.
+**Props flow:**
 
-**Connector:** Firecrawl connector will be linked to provide the `FIRECRAWL_API_KEY` environment variable to edge functions.
+```text
+ProspectContent
+  |-- ProspectHeader (receives selectedProspects for context-aware actions)
+  |-- ProspectsTable (manages selectedIds, reports via onSelectionChange)
+        |-- ProspectTableHeader (select-all checkbox)
+        |-- ProspectTableRow (per-row checkbox)
+```
+
+**Selection-aware behavior:**
+- Export: selected only, or all if none selected
+- Map These: selected with addresses, or all with addresses if none selected
+- Delete: only appears when selection exists, deletes all selected with confirmation
+- Bulk Enrich: selected missing emails, or all missing emails if none selected
 
