@@ -5,8 +5,6 @@ import AddProspectForm from "./AddProspectForm";
 import ProspectHeader from "./ProspectHeader";
 import UserProspectFilter from "./UserProspectFilter";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
 import type { Prospect } from "@/types/prospects";
 import type { User } from "@/types/user";
 
@@ -78,15 +76,6 @@ const ProspectContent = ({
               currentUser={currentUser}
             />
           )}
-          <div className="relative">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search prospects..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-8 w-[220px]"
-            />
-          </div>
           <Select
             value={selectedTerritory}
             onValueChange={setSelectedTerritory}
@@ -112,6 +101,8 @@ const ProspectContent = ({
         selectedProspects={selectedProspects}
         showAddButton={canAddProspects}
         userId={currentUser?.id}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
       />
       {isAddFormVisible && (
         <AddProspectForm

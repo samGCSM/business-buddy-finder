@@ -1,7 +1,8 @@
 
 import { Button } from "@/components/ui/button";
 import BulkUploadProspects from "./BulkUploadProspects";
-import { PlusCircle, Download, MapPin, Trash2, Zap } from "lucide-react";
+import { PlusCircle, Download, MapPin, Trash2, Zap, Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { generateSpreadsheet } from "@/utils/exportData";
 import type { Prospect } from "@/types/prospects";
 import TerritoryManager from "./TerritoryManager";
@@ -17,6 +18,8 @@ interface ProspectHeaderProps {
   selectedProspects: Prospect[];
   showAddButton?: boolean;
   userId?: number;
+  searchQuery?: string;
+  onSearchChange?: (query: string) => void;
 }
 
 const ProspectHeader = ({ 
@@ -25,7 +28,9 @@ const ProspectHeader = ({
   prospects,
   selectedProspects,
   showAddButton = true,
-  userId
+  userId,
+  searchQuery = "",
+  onSearchChange
 }: ProspectHeaderProps) => {
   const navigate = useNavigate();
   const { isEnriching, progress, enrichProspects } = useBulkEmailEnrichment();
@@ -79,6 +84,15 @@ const ProspectHeader = ({
           </Button>
         )}
         {userId && <TerritoryManager userId={userId} />}
+        <div className="relative">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search prospects..."
+            value={searchQuery}
+            onChange={(e) => onSearchChange?.(e.target.value)}
+            className="pl-8 w-[220px]"
+          />
+        </div>
       </div>
       <div className="flex items-center gap-2 flex-wrap">
         <BulkUploadProspects onSuccess={onBulkUploadSuccess} />
