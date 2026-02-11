@@ -135,7 +135,6 @@ export const UserTable = ({ users, setUsers, setSelectedUserId, userRole = 'admi
                 <SelectValue placeholder="Sort by" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="email">Email</SelectItem>
                 <SelectItem value="full_name">Full Name</SelectItem>
                 {!isSupervisor && <SelectItem value="type">Role</SelectItem>}
                 <SelectItem value="lastLogin">Last Login</SelectItem>
