@@ -1,50 +1,96 @@
 
 
-## Bulk Search Improvements
+## Firecrawl + Hunter.io Enrichment with Bulk Email Button
 
-### 1. Strict Radius Filtering
+### Overview
 
-Google Places API treats radius as a preference, not a hard limit, so results outside your specified radius can appear. We will add client-side distance filtering.
+This plan adds three capabilities to the Prospects page:
 
-**How it works:**
-- After geocoding the search location, store the center coordinates (lat/lng)
-- After fetching all results, calculate the distance from each business to the center using the Haversine formula
-- Drop any business whose distance exceeds the user's selected radius
-- This means you may get fewer than 20 results, but every result will genuinely be within your radius
+1. **Firecrawl website scraping** -- a new per-prospect button that scrapes the prospect's website to find owner name, owner email, owner phone, and business email from About/Contact/Team pages
+2. **Keep existing Hunter.io** -- the current Zap button stays as-is for quick email lookup
+3. **Bulk Email Enrichment** -- a new button in the ProspectHeader that runs Hunter.io email lookup on all prospects missing emails at once
 
-### 2. Email Enrichment via Hunter.io
+---
 
-Google Places does not provide emails. We will use your existing Hunter.io integration to look up emails using the business website domain.
+### Step 1: Connect Firecrawl
 
-**How it works:**
-- After the Places search returns results, for each business that has a website (not "N/A"), extract the domain
-- Call the existing `enrich-prospect-email` edge function with each domain
-- Populate the email field with the first result found (or keep "N/A" if nothing is found)
-- Show a loading indicator while enrichment is in progress so the user isn't waiting with no feedback
+Firecrawl is available as a connector. We will link it to the project so the `FIRECRAWL_API_KEY` secret becomes available to edge functions.
+
+### Step 2: Create new edge function `enrich-prospect-firecrawl`
+
+**File: `supabase/functions/enrich-prospect-firecrawl/index.ts`**
+
+This edge function will:
+- Accept a `url` (the prospect's website)
+- Use Firecrawl to scrape the website with `formats: ['markdown']` and `onlyMainContent: true`
+- Also attempt to scrape common contact pages (`/about`, `/contact`, `/team`) by using Firecrawl's map feature to find those URLs first
+- Parse the markdown content to extract:
+  - Email addresses (regex)
+  - Phone numbers (regex)
+  - Owner/founder names (look for patterns like "Founded by", "Owner:", "CEO:", etc.)
+- Return the extracted contact info
+
+### Step 3: Create `useFirecrawlEnrichment` hook
+
+**File: `src/hooks/useFirecrawlEnrichment.ts`**
+
+- Accepts a prospect ID and website URL
+- Calls the `enrich-prospect-firecrawl` edge function
+- Updates the prospect record in Supabase with any found data (email, owner_name, owner_phone, owner_email)
+- Tracks loading state per prospect ID
+
+### Step 4: Update ProspectEmailCell with dual enrichment buttons
+
+**File: `src/components/prospects/table/ProspectEmailCell.tsx`**
+
+- Keep the existing Hunter.io Zap button
+- Add a second button (Globe icon) for Firecrawl website scraping
+- Firecrawl button only shows if the prospect has a website
+- Both buttons shown when prospect has no email; Firecrawl also updates owner fields
+
+### Step 5: Add Bulk Email Enrichment button
+
+**File: `src/components/prospects/ProspectHeader.tsx`**
+
+- Add a "Bulk Enrich Emails" button (with Zap icon) next to the existing Export button
+- Shows count of prospects missing emails, e.g. "Enrich Emails (12)"
+- On click, sequentially calls the existing `enrich-prospect-email` (Hunter.io) edge function for each prospect missing an email that has a website or business name
+- Shows a progress toast as it processes
+- Calls `onBulkUploadSuccess` (which triggers a refresh) when done
+
+**File: `src/hooks/useBulkEmailEnrichment.ts`**
+
+- New hook that manages bulk enrichment state
+- Iterates through prospects missing emails
+- Calls Hunter.io for each with a small delay to avoid rate limiting
+- Tracks progress (processed count / total)
+- Updates each prospect in the DB as emails are found
+
+### Step 6: Update config.toml
+
+Add JWT verification disabled for the new function:
+
+```text
+[functions.enrich-prospect-firecrawl]
+verify_jwt = false
+```
 
 ---
 
 ### Technical Details
 
-**File: `src/utils/googleApi.ts`**
-- Add a `haversineDistance(lat1, lon1, lat2, lon2)` helper function that returns distance in miles
-- After geocoding the search location, capture the center lat/lng
-- After fetching place details, use `place.geometry.location.lat()` and `.lng()` for each result
-- Filter out any result where `haversineDistance(center, result) > radiusMiles`
-- Return the `distance` as part of each Business object so it can optionally be displayed
+**New files:**
+- `supabase/functions/enrich-prospect-firecrawl/index.ts` -- Firecrawl scraping edge function
+- `src/hooks/useFirecrawlEnrichment.ts` -- Hook for per-prospect Firecrawl enrichment
+- `src/hooks/useBulkEmailEnrichment.ts` -- Hook for bulk Hunter.io enrichment
 
-**File: `src/types/business.ts`**
-- Add optional `distance?: number` field to the Business interface
+**Modified files:**
+- `supabase/config.toml` -- Add function config
+- `src/components/prospects/table/ProspectEmailCell.tsx` -- Add Firecrawl button alongside Hunter.io
+- `src/components/prospects/ProspectHeader.tsx` -- Add "Bulk Enrich Emails" button
+- `src/components/prospects/ProspectContent.tsx` -- Pass prospects to header (already done)
 
-**File: `src/components/business/BusinessSearch.tsx`**
-- After `searchBusinesses()` returns, run email enrichment for businesses with websites
-- Call the `enrich-prospect-email` edge function for each domain (batched with reasonable concurrency)
-- Update results as emails are found (progressive update so users see results immediately, emails fill in as they load)
-- Add a small "Enriching emails..." indicator
+**Dependencies:** No new npm packages needed. Firecrawl is called via edge function.
 
-**File: `src/components/business/BusinessTableRow.tsx`**
-- Display the email column value (it already exists in the table but always shows "N/A" -- now it will show real emails when found)
-
-**File: `src/components/business/BusinessResultsTable.tsx`**
-- Optionally show the distance column so users can see how far each result is
+**Connector:** Firecrawl connector will be linked to provide the `FIRECRAWL_API_KEY` environment variable to edge functions.
 
