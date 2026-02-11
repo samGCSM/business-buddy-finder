@@ -1,26 +1,53 @@
 
 
-## Split Header Into Two Rows
+## Make Prospects Page Responsive for Mobile and Tablet
 
 ### Problem
-Currently everything is jammed into one row. You want two distinct rows:
-- **Row 1**: User dropdown + Territory dropdown (filters only)
-- **Row 2**: Add Prospect button, Manage Territories button, Search prospects input, then the right-side action buttons (Bulk Upload, Enrich, Delete, Map, Export)
+The header buttons overflow and get cut off on smaller screens, and the table doesn't scroll far enough to reveal the Actions column (Edit/Delete) on tablets.
 
-### File: `src/components/prospects/ProspectHeader.tsx`
+### Changes
 
-Restructure the JSX from one single flex row into two stacked rows:
+#### 1. `src/components/prospects/ProspectHeader.tsx` -- Responsive header rows
 
-**Row 1** (filters):
-- `UserProspectFilter` (admin/supervisor only)
-- Territory `Select` dropdown
+**Row 1 (Filters):** Change the territory `SelectTrigger` from fixed `w-[200px]` to `w-full sm:w-[200px]` so it fills the width on mobile. Wrap the row so items stack vertically on very small screens.
 
-**Row 2** (actions + search):
-- Left side: Add Prospect button, TerritoryManager button, Search input
-- Right side: Bulk Upload, Enrich, Delete, Map, Export buttons
+**Row 2 (Actions + Search):**
+- Make the search input responsive: `w-full sm:w-[220px]` instead of fixed `w-[220px]`
+- On mobile, both the left group (Add, Territories, Search) and right group (Bulk Upload, Enrich, Map, Export) will stack vertically since `flex-col sm:flex-row` is already in place
+- Shrink button text on mobile by hiding labels and showing only icons on small screens using `hidden sm:inline` on button text and keeping icons always visible
+- Action buttons in the right group: use `w-full sm:w-auto` so they fill the row on mobile
 
-The outer container changes from a single `flex-row` to a vertical `space-y-4` wrapper containing two rows.
+#### 2. `src/components/prospects/ProspectsTable.tsx` -- Fix table scroll
 
-### No other files change
-`ProspectContent.tsx` already passes all necessary props -- no changes needed there.
+- Add `min-w-[1200px]` to the `<Table>` element so the table has a guaranteed minimum width, ensuring the horizontal scroll container always allows scrolling to the Actions column
+- The existing `overflow-x-auto` wrapper will then properly enable full horizontal scrolling on tablet/mobile
+
+#### 3. `src/components/prospects/table/ProspectActions.tsx` -- Make Actions column sticky
+
+- Make the Actions column sticky on the right side (mirroring how Business Name is sticky on the left) by adding `sticky right-0 bg-white z-20 shadow-[-2px_0_5px_-2px_rgba(0,0,0,0.1)]` to the Actions `TableCell` in `ProspectTableRow.tsx`
+- Apply matching sticky styling to the Actions `TableHead` in `ProspectTableHeader.tsx`
+
+This ensures Edit and Delete are always visible regardless of scroll position.
+
+### Technical Details
+
+**ProspectHeader.tsx:**
+- Territory select: `w-[200px]` becomes `w-full sm:w-[200px]`
+- Search input: `w-[220px]` becomes `w-full sm:w-[220px]`
+- Right-side action buttons: add `text-xs sm:text-sm` for smaller text on mobile
+
+**ProspectsTable.tsx (line 110):**
+- Add `className="min-w-[1200px]"` to `<Table>`
+
+**ProspectTableHeader.tsx (line 58):**
+- Actions TableHead: add `sticky right-0 bg-white z-20 shadow-[-2px_0_5px_-2px_rgba(0,0,0,0.1)]`
+
+**ProspectTableRow.tsx (Actions TableCell):**
+- Add `sticky right-0 bg-white z-20 shadow-[-2px_0_5px_-2px_rgba(0,0,0,0.1)]` to the Actions cell wrapper
+
+### Files Modified
+- `src/components/prospects/ProspectHeader.tsx`
+- `src/components/prospects/ProspectsTable.tsx`
+- `src/components/prospects/ProspectTableHeader.tsx`
+- `src/components/prospects/ProspectTableRow.tsx`
 
