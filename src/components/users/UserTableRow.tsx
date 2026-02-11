@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import type { User } from "@/types/user";
 import { useState } from "react";
 import { LastLoginStatus } from "./LastLoginStatus";
+import { DeleteUserDialog } from "./DeleteUserDialog";
 
 interface UserTableRowProps {
   user: User;
@@ -18,6 +19,7 @@ interface UserTableRowProps {
   formatDate: (date: string | null) => string;
   getNumericValue: (value: number | null | undefined) => number;
   onDelete: (id: number) => void;
+  onReassignAndDelete: (userId: number, reassignToId: number | null) => Promise<void>;
   onChangePassword: (id: string) => void;
   onUpdateUser: (id: number, updates: Partial<User>) => Promise<void>;
   isSupervisor?: boolean;
@@ -29,12 +31,14 @@ export const UserTableRow = ({
   users,
   formatDate, 
   getNumericValue, 
-  onDelete, 
+  onDelete,
+  onReassignAndDelete,
   onChangePassword,
   onUpdateUser,
   isSupervisor = false,
   currentUserId
 }: UserTableRowProps) => {
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [fullName, setFullName] = useState(user.full_name || '');
 
@@ -176,7 +180,7 @@ export const UserTableRow = ({
               </Button>
               <Button
                 variant="destructive"
-                onClick={() => onDelete(user.id)}
+                onClick={() => setShowDeleteDialog(true)}
               >
                 Delete
               </Button>
@@ -184,6 +188,13 @@ export const UserTableRow = ({
           )
         )}
       </td>
+      <DeleteUserDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        user={user}
+        users={users}
+        onConfirm={onReassignAndDelete}
+      />
     </tr>
   );
 };
