@@ -1,28 +1,38 @@
 
 
-## Fix: Enrich Emails Button Count Behavior
+## Fix: Enrich Emails Count Not Reflecting Selection or "N/A" Emails
 
-### Problem
+### Root Cause
 
-The "Enrich Emails" button always shows a number (e.g., "Enrich Emails (2)") based on ALL prospects, even when none are selected. When prospects are selected, the count doesn't visually match the selection count like Export and Delete buttons do.
+Prospects in the database have `email: "N/A"` instead of `null` or empty string. The enrichable filter uses `!p.email` which only catches falsy values (`null`, `""`, `undefined`). The string `"N/A"` is truthy, so those prospects are excluded from the enrichable count -- giving a small "random" number that doesn't change with selection because the same few null-email prospects are counted either way.
 
-### Solution
+### Fix
 
-Update the button label in `ProspectHeader.tsx` to follow the same pattern as Export and Map:
+Update the enrichable filter in two places to treat `"N/A"` (case-insensitive) as "no email":
 
-- **No selection**: Show "Enrich All (X)" where X is the count of all enrichable prospects
-- **With selection**: Show "Enrich (X)" where X is the count of selected prospects that are enrichable
+**File 1: `src/components/prospects/ProspectHeader.tsx` (line 70)**
 
-This makes the button behavior consistent with Export ("Export All" vs "Export (5)") and Map ("Map These (X)" vs "Map (X)").
+Change:
+```
+const enrichableCount = actionProspects.filter(p => !p.email && (p.website || p.business_name)).length;
+```
+To:
+```
+const enrichableCount = actionProspects.filter(p => (!p.email || p.email.toLowerCase() === 'n/a') && (p.website && p.website.toLowerCase() !== 'n/a' || p.business_name)).length;
+```
 
-### Technical Changes
+**File 2: `src/hooks/useBulkEmailEnrichment.ts` (line 24)**
 
-**File: `src/components/prospects/ProspectHeader.tsx`**
+Change:
+```
+const enrichable = prospects.filter((p) => !p.email && (p.website || p.business_name));
+```
+To:
+```
+const enrichable = prospects.filter((p) => (!p.email || p.email.toLowerCase() === 'n/a') && (p.website && p.website.toLowerCase() !== 'n/a' || p.business_name));
+```
 
-Update the Enrich Emails button label (around line 93-96) to use selection-aware text:
-
-- When not enriching:
-  - No selection: `Enrich All (enrichableCount)` or just `Enrich Emails` if zero
-  - With selection: `Enrich (enrichableCount)` showing only selected enrichable count
-- The `enrichableCount` computation on line 70 already uses `actionProspects` which switches correctly between selected and all prospects, so counts are accurate -- the fix is purely in the label text to make it clear what scope is being acted on
-
+This ensures:
+- Prospects with `"N/A"` email are treated as needing enrichment
+- Prospects with `"N/A"` website are not sent to Hunter.io (only business_name would be used)
+- The count updates correctly when selecting/deselecting prospects
