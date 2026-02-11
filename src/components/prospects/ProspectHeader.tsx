@@ -3,9 +3,12 @@ import { Button } from "@/components/ui/button";
 import BulkUploadProspects from "./BulkUploadProspects";
 import { PlusCircle, Download, MapPin, Trash2, Zap, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { generateSpreadsheet } from "@/utils/exportData";
 import type { Prospect } from "@/types/prospects";
+import type { User } from "@/types/user";
 import TerritoryManager from "./TerritoryManager";
+import UserProspectFilter from "./UserProspectFilter";
 import { useNavigate } from "react-router-dom";
 import { useBulkEmailEnrichment } from "@/hooks/useBulkEmailEnrichment";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,6 +23,13 @@ interface ProspectHeaderProps {
   userId?: number;
   searchQuery?: string;
   onSearchChange?: (query: string) => void;
+  selectedTerritory?: string;
+  onTerritoryChange?: (territory: string) => void;
+  territories?: string[];
+  userRole?: 'admin' | 'supervisor' | 'user' | null;
+  supervisedUsers?: User[];
+  currentUser?: User | null;
+  onUserSelect?: (userId: number) => void;
 }
 
 const ProspectHeader = ({ 
@@ -30,7 +40,14 @@ const ProspectHeader = ({
   showAddButton = true,
   userId,
   searchQuery = "",
-  onSearchChange
+  onSearchChange,
+  selectedTerritory = "all",
+  onTerritoryChange,
+  territories = [],
+  userRole,
+  supervisedUsers = [],
+  currentUser,
+  onUserSelect
 }: ProspectHeaderProps) => {
   const navigate = useNavigate();
   const { isEnriching, progress, enrichProspects } = useBulkEmailEnrichment();
@@ -76,7 +93,27 @@ const ProspectHeader = ({
 
   return (
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 flex-wrap">
+        {(userRole === 'admin' || userRole === 'supervisor') && supervisedUsers.length > 0 && (
+          <UserProspectFilter 
+            users={supervisedUsers}
+            onUserSelect={onUserSelect}
+            currentUser={currentUser ?? null}
+          />
+        )}
+        <Select value={selectedTerritory} onValueChange={(v) => onTerritoryChange?.(v)}>
+          <SelectTrigger className="w-[200px]">
+            <SelectValue placeholder="Filter by Territory" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Territories</SelectItem>
+            {territories.map((territory) => (
+              <SelectItem key={territory} value={territory}>
+                {territory}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         {showAddButton && (
           <Button onClick={onAddClick} className="gap-2">
             <PlusCircle className="h-4 w-4" />
