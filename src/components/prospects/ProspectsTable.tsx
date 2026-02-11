@@ -107,7 +107,7 @@ const ProspectsTable = ({ prospects, onUpdate, onSelectionChange }: ProspectsTab
         />
       )}
       <div className="overflow-x-auto">
-        <Table>
+        <Table className="min-w-[1200px]">
           <ProspectTableHeader
             onSort={handleSort}
             sortConfig={sortConfig}

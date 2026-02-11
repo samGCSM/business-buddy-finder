@@ -55,7 +55,7 @@ const ProspectTableHeader = ({ onSort, sortConfig, allSelected, someSelected, on
         <TableHead>{renderSortButton("Owner Phone", "owner_phone")}</TableHead>
         <TableHead>{renderSortButton("Owner Email", "owner_email")}</TableHead>
         <TableHead>{renderSortButton("Last Contact", "last_contact")}</TableHead>
-        <TableHead>Actions</TableHead>
+        <TableHead className="sticky right-0 bg-white z-20 shadow-[-2px_0_5px_-2px_rgba(0,0,0,0.1)]">Actions</TableHead>
       </TableRow>
     </TableHeader>
   );
