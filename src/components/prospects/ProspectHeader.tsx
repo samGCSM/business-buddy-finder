@@ -103,7 +103,7 @@ const ProspectHeader = ({
           />
         )}
         <Select value={selectedTerritory} onValueChange={(v) => onTerritoryChange?.(v)}>
-          <SelectTrigger className="w-[200px]">
+          <SelectTrigger className="w-full sm:w-[200px]">
             <SelectValue placeholder="Filter by Territory" />
           </SelectTrigger>
           <SelectContent>
@@ -127,13 +127,13 @@ const ProspectHeader = ({
             </Button>
           )}
           {userId && <TerritoryManager userId={userId} />}
-          <div className="relative">
+          <div className="relative w-full sm:w-auto">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search prospects..."
               value={searchQuery}
               onChange={(e) => onSearchChange?.(e.target.value)}
-              className="pl-8 w-[220px]"
+              className="pl-8 w-full sm:w-[220px]"
             />
           </div>
         </div>
@@ -143,33 +143,41 @@ const ProspectHeader = ({
           <Button
             variant="outline"
             onClick={handleBulkEnrich}
-            className="gap-2"
+            className="gap-2 text-xs sm:text-sm"
             disabled={isEnriching || enrichableCount === 0}
           >
             <Zap className="h-4 w-4" />
-            {isEnriching
-              ? `Enriching ${progress.current}/${progress.total}...`
-              : hasSelection
-                ? `Enrich (${enrichableCount})`
-                : `Enrich All${enrichableCount > 0 ? ` (${enrichableCount})` : ''}`
-            }
+            <span className="hidden sm:inline">
+              {isEnriching
+                ? `Enriching ${progress.current}/${progress.total}...`
+                : hasSelection
+                  ? `Enrich (${enrichableCount})`
+                  : `Enrich All${enrichableCount > 0 ? ` (${enrichableCount})` : ''}`
+              }
+            </span>
+            <span className="sm:hidden">
+              {isEnriching ? `${progress.current}/${progress.total}` : `Enrich`}
+            </span>
           </Button>
 
           {hasSelection && (
-            <Button variant="destructive" onClick={handleDeleteSelected} className="gap-2">
+            <Button variant="destructive" onClick={handleDeleteSelected} className="gap-2 text-xs sm:text-sm">
               <Trash2 className="h-4 w-4" />
-              Delete ({selectedProspects.length})
+              <span className="hidden sm:inline">Delete ({selectedProspects.length})</span>
+              <span className="sm:hidden">{selectedProspects.length}</span>
             </Button>
           )}
 
-          <Button variant="outline" onClick={handleMapView} className="gap-2">
+          <Button variant="outline" onClick={handleMapView} className="gap-2 text-xs sm:text-sm">
             <MapPin className="h-4 w-4" />
-            {hasSelection ? `Map (${mappableCount})` : `Map These (${mappableCount})`}
+            <span className="hidden sm:inline">{hasSelection ? `Map (${mappableCount})` : `Map These (${mappableCount})`}</span>
+            <span className="sm:hidden">Map</span>
           </Button>
 
-          <Button variant="outline" onClick={handleExport} className="gap-2">
+          <Button variant="outline" onClick={handleExport} className="gap-2 text-xs sm:text-sm">
             <Download className="h-4 w-4" />
-            {hasSelection ? `Export (${selectedProspects.length})` : 'Export All'}
+            <span className="hidden sm:inline">{hasSelection ? `Export (${selectedProspects.length})` : 'Export All'}</span>
+            <span className="sm:hidden">Export</span>
           </Button>
         </div>
       </div>

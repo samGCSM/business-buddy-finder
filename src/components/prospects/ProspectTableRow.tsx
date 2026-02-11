@@ -99,7 +99,7 @@ const ProspectTableRow = ({ prospect, onEdit, onDelete, onUpdate, isSelected, on
           onUpdate={onUpdate}
         />
       </TableCell>
-      <TableCell>
+      <TableCell className="sticky right-0 bg-white z-20 shadow-[-2px_0_5px_-2px_rgba(0,0,0,0.1)]">
         <ProspectActions
           prospect={prospect}
           onEdit={onEdit}
