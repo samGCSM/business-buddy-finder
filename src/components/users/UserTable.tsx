@@ -29,7 +29,7 @@ type LoginFilter = 'all' | 'recent' | 'inactive' | 'never';
 
 export const UserTable = ({ users, setUsers, setSelectedUserId, userRole = 'admin', userId }: UserTableProps) => {
   const { isLoading } = useUserData(setUsers);
-  const { handleDeleteUser, handleUpdateUser } = useUserActions(users, setUsers);
+  const { handleDeleteUser, handleReassignAndDelete, handleUpdateUser } = useUserActions(users, setUsers);
   const [sortField, setSortField] = useState<SortField>('email');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [loginFilter, setLoginFilter] = useState<LoginFilter>('all');
@@ -175,6 +175,7 @@ export const UserTable = ({ users, setUsers, setSelectedUserId, userRole = 'admi
                 formatDate={formatDate}
                 getNumericValue={getNumericValue}
                 onDelete={handleDeleteUser}
+                onReassignAndDelete={handleReassignAndDelete}
                 onChangePassword={() => setSelectedUserId(user.id.toString())}
                 onUpdateUser={handleUpdateUser}
                 isSupervisor={isSupervisor}
