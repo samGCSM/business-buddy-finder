@@ -22,7 +22,7 @@ export const UserTableHeader = ({ onSort, sortField, sortDirection, isSupervisor
   
   const renderSortableHeader = (field: SortField, label: string) => (
     <th 
-      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+      className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
       onClick={() => onSort && onSort(field)}
     >
       <div className="flex items-center">
@@ -35,11 +35,10 @@ export const UserTableHeader = ({ onSort, sortField, sortDirection, isSupervisor
   return (
     <thead className="bg-gray-50">
       <tr>
-        {renderSortableHeader('email', 'Email')}
         {renderSortableHeader('full_name', 'Full Name')}
         {!isSupervisor && renderSortableHeader('type', 'Type')}
         {!isSupervisor && (
-          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+          <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
             Supervisor
           </th>
         )}
@@ -47,7 +46,7 @@ export const UserTableHeader = ({ onSort, sortField, sortDirection, isSupervisor
         {renderSortableHeader('totalSearches', 'Searches (30d)')}
         {renderSortableHeader('savedSearches', 'Saved Searches')}
         {renderSortableHeader('totalProspects', 'Total Prospects')}
-        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+        <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
           Actions
         </th>
       </tr>

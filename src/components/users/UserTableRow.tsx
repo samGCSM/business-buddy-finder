@@ -72,20 +72,17 @@ export const UserTableRow = ({
     }
   };
 
-  const getSupervisorEmail = () => {
+  const getSupervisorName = () => {
     if (!user.supervisor_id) return 'None';
     const supervisor = users.find(u => u.id === user.supervisor_id);
-    return supervisor ? supervisor.email : 'Unknown';
+    return supervisor ? (supervisor.full_name || supervisor.email) : 'Unknown';
   };
 
   const supervisors = users.filter(u => u.type === 'supervisor' || u.type === 'admin');
 
   return (
     <tr key={user.id}>
-      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-        {user.email}
-      </td>
-      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+      <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
         {isEditing ? (
           <div className="flex gap-2">
             <Input
@@ -101,7 +98,7 @@ export const UserTableRow = ({
         )}
       </td>
       {!isSupervisor && (
-        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+        <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
           {isEditing ? (
             <Select defaultValue={user.type} onValueChange={handleRoleChange}>
               <SelectTrigger className="w-[180px]">
@@ -119,7 +116,7 @@ export const UserTableRow = ({
         </td>
       )}
       {!isSupervisor && (
-        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+        <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
           {isEditing ? (
             <Select 
               defaultValue={user.supervisor_id?.toString() || "none"} 
@@ -132,29 +129,29 @@ export const UserTableRow = ({
                 <SelectItem value="none">None</SelectItem>
                 {supervisors.map((supervisor) => (
                   <SelectItem key={supervisor.id} value={supervisor.id.toString()}>
-                    {supervisor.email}
+                    {supervisor.full_name || supervisor.email}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           ) : (
-            getSupervisorEmail()
+            getSupervisorName()
           )}
         </td>
       )}
-      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+      <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
         <LastLoginStatus lastLogin={user.lastLogin} />
       </td>
-      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-        {getNumericValue(user.totalSearches)} (30d)
+      <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
+        {user.stats?.searches_last_30_days || 0}
       </td>
-      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+      <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
         {getNumericValue(user.savedSearches)}
       </td>
-      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+      <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
         {user.stats?.total_prospects || 0}
       </td>
-      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+      <td className="px-3 py-2 whitespace-nowrap text-right text-sm font-medium space-x-2">
         {/* Supervisors can only edit their team members, not delete them or change passwords */}
         {isSupervisor ? (
           <Button
