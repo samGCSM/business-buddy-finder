@@ -92,7 +92,8 @@ const ProspectHeader = ({
   const enrichableCount = actionProspects.filter(p => (!p.email || p.email.toLowerCase() === 'n/a') && ((p.website && p.website.toLowerCase() !== 'n/a') || p.business_name)).length;
 
   return (
-    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+    <div className="space-y-4 mb-6">
+      {/* Row 1: Filters */}
       <div className="flex items-center gap-4 flex-wrap">
         {(userRole === 'admin' || userRole === 'supervisor') && supervisedUsers.length > 0 && (
           <UserProspectFilter 
@@ -114,57 +115,63 @@ const ProspectHeader = ({
             ))}
           </SelectContent>
         </Select>
-        {showAddButton && (
-          <Button onClick={onAddClick} className="gap-2">
-            <PlusCircle className="h-4 w-4" />
-            Add Prospect
-          </Button>
-        )}
-        {userId && <TerritoryManager userId={userId} />}
-        <div className="relative">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search prospects..."
-            value={searchQuery}
-            onChange={(e) => onSearchChange?.(e.target.value)}
-            className="pl-8 w-[220px]"
-          />
-        </div>
       </div>
-      <div className="flex items-center gap-2 flex-wrap">
-        <BulkUploadProspects onSuccess={onBulkUploadSuccess} />
 
-        <Button
-          variant="outline"
-          onClick={handleBulkEnrich}
-          className="gap-2"
-          disabled={isEnriching || enrichableCount === 0}
-        >
-          <Zap className="h-4 w-4" />
-          {isEnriching
-            ? `Enriching ${progress.current}/${progress.total}...`
-            : hasSelection
-              ? `Enrich (${enrichableCount})`
-              : `Enrich All${enrichableCount > 0 ? ` (${enrichableCount})` : ''}`
-          }
-        </Button>
+      {/* Row 2: Actions + Search */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="flex items-center gap-4 flex-wrap">
+          {showAddButton && (
+            <Button onClick={onAddClick} className="gap-2">
+              <PlusCircle className="h-4 w-4" />
+              Add Prospect
+            </Button>
+          )}
+          {userId && <TerritoryManager userId={userId} />}
+          <div className="relative">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search prospects..."
+              value={searchQuery}
+              onChange={(e) => onSearchChange?.(e.target.value)}
+              className="pl-8 w-[220px]"
+            />
+          </div>
+        </div>
+        <div className="flex items-center gap-2 flex-wrap">
+          <BulkUploadProspects onSuccess={onBulkUploadSuccess} />
 
-        {hasSelection && (
-          <Button variant="destructive" onClick={handleDeleteSelected} className="gap-2">
-            <Trash2 className="h-4 w-4" />
-            Delete ({selectedProspects.length})
+          <Button
+            variant="outline"
+            onClick={handleBulkEnrich}
+            className="gap-2"
+            disabled={isEnriching || enrichableCount === 0}
+          >
+            <Zap className="h-4 w-4" />
+            {isEnriching
+              ? `Enriching ${progress.current}/${progress.total}...`
+              : hasSelection
+                ? `Enrich (${enrichableCount})`
+                : `Enrich All${enrichableCount > 0 ? ` (${enrichableCount})` : ''}`
+            }
           </Button>
-        )}
 
-        <Button variant="outline" onClick={handleMapView} className="gap-2">
-          <MapPin className="h-4 w-4" />
-          {hasSelection ? `Map (${mappableCount})` : `Map These (${mappableCount})`}
-        </Button>
+          {hasSelection && (
+            <Button variant="destructive" onClick={handleDeleteSelected} className="gap-2">
+              <Trash2 className="h-4 w-4" />
+              Delete ({selectedProspects.length})
+            </Button>
+          )}
 
-        <Button variant="outline" onClick={handleExport} className="gap-2">
-          <Download className="h-4 w-4" />
-          {hasSelection ? `Export (${selectedProspects.length})` : 'Export All'}
-        </Button>
+          <Button variant="outline" onClick={handleMapView} className="gap-2">
+            <MapPin className="h-4 w-4" />
+            {hasSelection ? `Map (${mappableCount})` : `Map These (${mappableCount})`}
+          </Button>
+
+          <Button variant="outline" onClick={handleExport} className="gap-2">
+            <Download className="h-4 w-4" />
+            {hasSelection ? `Export (${selectedProspects.length})` : 'Export All'}
+          </Button>
+        </div>
       </div>
     </div>
   );
