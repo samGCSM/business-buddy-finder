@@ -37,7 +37,7 @@ const ProspectTableHeader = ({ onSort, sortConfig, allSelected, someSelected, on
             onCheckedChange={onToggleAll}
           />
         </TableHead>
-        <TableHead className="w-[200px] min-w-[200px] sticky left-0 bg-white z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
+        <TableHead className="w-[200px] min-w-[200px]">
           {renderSortButton("Business Name", "business_name")}
         </TableHead>
         <TableHead className="w-[60px]">Notes</TableHead>
@@ -55,7 +55,7 @@ const ProspectTableHeader = ({ onSort, sortConfig, allSelected, someSelected, on
         <TableHead>{renderSortButton("Owner Phone", "owner_phone")}</TableHead>
         <TableHead>{renderSortButton("Owner Email", "owner_email")}</TableHead>
         <TableHead>{renderSortButton("Last Contact", "last_contact")}</TableHead>
-        <TableHead className="sticky right-0 bg-white z-20 shadow-[-2px_0_5px_-2px_rgba(0,0,0,0.1)]">Actions</TableHead>
+        <TableHead>Actions</TableHead>
       </TableRow>
     </TableHeader>
   );
