@@ -39,7 +39,8 @@ const BusinessResultsTable = ({
         'Website': business.website,
         'Rating': business.rating,
         'Review Count': business.reviewCount,
-        'Address': business.address
+        'Address': business.address,
+        'Distance (mi)': business.distance ?? '',
       }));
 
       const ws = XLSX.utils.json_to_sheet(exportData);

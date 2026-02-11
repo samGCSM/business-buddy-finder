@@ -7,4 +7,5 @@ export interface Business {
   reviewCount: number;
   rating: number;
   address: string;
+  distance?: number;
 }

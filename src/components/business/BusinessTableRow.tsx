@@ -18,6 +18,9 @@ const BusinessTableRow = ({ business, onDelete }: BusinessTableRowProps) => {
         <div className="text-sm text-gray-500">{business.website}</div>
       </td>
       <td className="px-6 py-4">
+        <div className="text-sm text-gray-900">{business.email}</div>
+      </td>
+      <td className="px-6 py-4">
         <div className="text-sm text-gray-900">{business.phone}</div>
       </td>
       <td className="px-6 py-4">
@@ -25,6 +28,11 @@ const BusinessTableRow = ({ business, onDelete }: BusinessTableRowProps) => {
       </td>
       <td className="px-6 py-4">
         <div className="text-sm text-gray-500">{business.reviewCount} reviews</div>
+      </td>
+      <td className="px-6 py-4">
+        <div className="text-sm text-gray-500">
+          {business.distance != null ? `${business.distance} mi` : '—'}
+        </div>
       </td>
       <td className="px-6 py-4">
         <Button

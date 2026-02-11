@@ -8,20 +8,30 @@ import type { SavedSearch } from "@/services/savedSearchService";
 import BusinessSearchForm from "./BusinessSearchForm";
 import BusinessResultsTable from "./BusinessResultsTable";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Loader2 } from "lucide-react";
 
 interface BusinessSearchProps {
   onShowSavedSearches: () => void;
   initialSearch?: SavedSearch | null;
 }
 
+const extractDomain = (url: string): string | null => {
+  try {
+    const hostname = new URL(url).hostname;
+    return hostname.replace(/^www\./, '');
+  } catch {
+    return null;
+  }
+};
+
 const BusinessSearch = ({ onShowSavedSearches, initialSearch }: BusinessSearchProps) => {
   const [results, setResults] = useState<Business[]>([]);
   const [allResults, setAllResults] = useState<Business[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isEnrichingEmails, setIsEnrichingEmails] = useState(false);
   const [currentLocation, setCurrentLocation] = useState("");
   const [currentKeyword, setCurrentKeyword] = useState("");
-  const [currentRadius, setCurrentRadius] = useState(10); // Default radius of 10 miles
+  const [currentRadius, setCurrentRadius] = useState(10);
 
   useEffect(() => {
     if (initialSearch) {
@@ -30,7 +40,7 @@ const BusinessSearch = ({ onShowSavedSearches, initialSearch }: BusinessSearchPr
       setAllResults(initialSearch.results);
       setCurrentLocation(initialSearch.location);
       setCurrentKeyword(initialSearch.keyword);
-      setCurrentRadius(initialSearch.radius || 10); // Use default of 10 if radius is undefined
+      setCurrentRadius(initialSearch.radius || 10);
     }
   }, [initialSearch]);
 
@@ -50,7 +60,6 @@ const BusinessSearch = ({ onShowSavedSearches, initialSearch }: BusinessSearchPr
       }
 
       const currentSearches = (userData?.totalSearches || 0) + 1;
-      console.log('New search count:', currentSearches);
 
       const { error: updateError } = await supabase
         .from('users')
@@ -65,6 +74,37 @@ const BusinessSearch = ({ onShowSavedSearches, initialSearch }: BusinessSearchPr
     }
   };
 
+  const enrichEmails = async (businesses: Business[]): Promise<void> => {
+    setIsEnrichingEmails(true);
+    const CONCURRENCY = 3;
+    const queue = businesses
+      .map((b, i) => ({ index: i, domain: b.website !== 'N/A' ? extractDomain(b.website) : null }))
+      .filter(item => item.domain !== null);
+
+    const process = async (item: { index: number; domain: string | null }) => {
+      if (!item.domain) return;
+      try {
+        const { data, error } = await supabase.functions.invoke('enrich-prospect-email', {
+          body: { domain: item.domain },
+        });
+        if (error) return;
+        const email = data?.data?.emails?.[0]?.value;
+        if (email) {
+          setResults(prev => prev.map((b, i) => i === item.index ? { ...b, email } : b));
+          setAllResults(prev => prev.map((b, i) => i === item.index ? { ...b, email } : b));
+        }
+      } catch {
+        // silently skip failures
+      }
+    };
+
+    // Process in batches
+    for (let i = 0; i < queue.length; i += CONCURRENCY) {
+      await Promise.all(queue.slice(i, i + CONCURRENCY).map(process));
+    }
+    setIsEnrichingEmails(false);
+  };
+
   const handleSearch = async (location: string, keyword: string, radius: number) => {
     setIsLoading(true);
     setCurrentLocation(location);
@@ -72,13 +112,10 @@ const BusinessSearch = ({ onShowSavedSearches, initialSearch }: BusinessSearchPr
     setCurrentRadius(radius);
     
     try {
-      console.log('Searching businesses:', { location, keyword, radius });
       const businesses = await searchBusinesses(location, keyword, radius);
-      console.log('Search results:', businesses);
-      setAllResults(businesses); // Store all results
-      setResults(businesses.slice(0, 20)); // Display first 20
+      setAllResults(businesses);
+      setResults(businesses.slice(0, 20));
 
-      // Get the current user from localStorage
       const currentUserStr = localStorage.getItem('currentUser');
       if (currentUserStr) {
         const currentUser = JSON.parse(currentUserStr);
@@ -86,6 +123,9 @@ const BusinessSearch = ({ onShowSavedSearches, initialSearch }: BusinessSearchPr
           await updateSearchCount(currentUser.id);
         }
       }
+
+      // Start email enrichment in background
+      enrichEmails(businesses);
     } catch (error) {
       console.error('Search error:', error);
       toast({
@@ -99,42 +139,19 @@ const BusinessSearch = ({ onShowSavedSearches, initialSearch }: BusinessSearchPr
   };
 
   const handleLoadMore = () => {
-    console.log('Load more clicked');
-    
     if (results.length >= allResults.length) {
-      console.log('No more results to load');
-      toast({
-        title: "Info",
-        description: "No more results to load",
-      });
+      toast({ title: "Info", description: "No more results to load" });
       return;
     }
     
-    const currentLength = results.length;
-    console.log('Current results length:', currentLength);
-    console.log('All results length:', allResults.length);
-    
-    const nextBatch = allResults.slice(currentLength, currentLength + 20);
-    console.log('Next batch length:', nextBatch.length);
-    
+    const nextBatch = allResults.slice(results.length, results.length + 20);
     if (nextBatch.length > 0) {
-      // Create a completely new array for React to detect the change
-      const newResults = [...results, ...nextBatch];
-      console.log('Setting updated results with length:', newResults.length);
-      
-      // Force a complete re-render by creating a new state
-      setResults(newResults);
-      
-      // Add a confirmation toast
-      toast({
-        title: "Success",
-        description: `Loaded ${nextBatch.length} more results`,
-      });
+      setResults(prev => [...prev, ...nextBatch]);
+      toast({ title: "Success", description: `Loaded ${nextBatch.length} more results` });
     }
   };
 
   const handleResultsChange = (updatedResults: Business[]) => {
-    console.log('Results changed by child component, new length:', updatedResults.length);
     setResults(updatedResults);
   };
 
@@ -156,6 +173,13 @@ const BusinessSearch = ({ onShowSavedSearches, initialSearch }: BusinessSearchPr
         initialKeyword={currentKeyword}
         initialRadius={currentRadius}
       />
+
+      {isEnrichingEmails && (
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          Enriching emails...
+        </div>
+      )}
       
       {results.length > 0 && (
         <div className="space-y-4">
