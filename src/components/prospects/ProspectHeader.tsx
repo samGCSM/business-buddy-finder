@@ -67,7 +67,7 @@ const ProspectHeader = ({
   };
 
   const mappableCount = actionProspects.filter(p => p.business_address).length;
-  const enrichableCount = actionProspects.filter(p => !p.email && (p.website || p.business_name)).length;
+  const enrichableCount = actionProspects.filter(p => (!p.email || p.email.toLowerCase() === 'n/a') && ((p.website && p.website.toLowerCase() !== 'n/a') || p.business_name)).length;
 
   return (
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">

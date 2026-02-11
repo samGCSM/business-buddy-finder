@@ -18,7 +18,7 @@ export const useBulkEmailEnrichment = () => {
 
   const enrichProspects = useCallback(async (prospects: Prospect[], onComplete: () => void) => {
     const enrichable = prospects.filter(
-      (p) => !p.email && (p.website || p.business_name)
+      (p) => (!p.email || p.email.toLowerCase() === 'n/a') && ((p.website && p.website.toLowerCase() !== 'n/a') || p.business_name)
     );
 
     if (enrichable.length === 0) {
