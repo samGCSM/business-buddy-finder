@@ -1,38 +1,61 @@
 
 
-## Fix: Enrich Emails Count Not Reflecting Selection or "N/A" Emails
+## Add Prospect Search + Tighten Table Columns
 
-### Root Cause
+### 1. Prospect Search Input
 
-Prospects in the database have `email: "N/A"` instead of `null` or empty string. The enrichable filter uses `!p.email` which only catches falsy values (`null`, `""`, `undefined`). The string `"N/A"` is truthy, so those prospects are excluded from the enrichable count -- giving a small "random" number that doesn't change with selection because the same few null-email prospects are counted either way.
+Add a search input next to the territory filter dropdown in `ProspectContent.tsx`. It will filter the prospect list by matching the search term against `business_name`, `email`, `owner_name`, `phone_number`, and `business_address` (case-insensitive).
 
-### Fix
+**File: `src/components/prospects/ProspectContent.tsx`**
+- Add a `searchQuery` state variable
+- Import `Input` from `@/components/ui/input` and `Search` icon from `lucide-react`
+- Place a search input with a search icon next to the territory dropdown
+- Apply search filtering after territory filtering so both filters work together
 
-Update the enrichable filter in two places to treat `"N/A"` (case-insensitive) as "no email":
+### 2. Tighten Table Column Widths and Padding
 
-**File 1: `src/components/prospects/ProspectHeader.tsx` (line 70)**
+Reduce padding and constrain widths on several columns to make the table more compact.
 
-Change:
-```
-const enrichableCount = actionProspects.filter(p => !p.email && (p.website || p.business_name)).length;
-```
-To:
-```
-const enrichableCount = actionProspects.filter(p => (!p.email || p.email.toLowerCase() === 'n/a') && (p.website && p.website.toLowerCase() !== 'n/a' || p.business_name)).length;
-```
+**File: `src/components/ui/table.tsx`**
+- Reduce default `TableCell` padding from `p-4` to `px-2 py-2` and add `text-sm`
+- Reduce `TableHead` padding from `px-4` to `px-2`
 
-**File 2: `src/hooks/useBulkEmailEnrichment.ts` (line 24)**
+**File: `src/components/prospects/ProspectTableHeader.tsx`**
+- Add max-width constraints to specific columns:
+  - Notes: `w-[60px]`
+  - Email: `max-w-[150px]`
+  - Location Type: `max-w-[100px]`
+  - Rating: `w-[80px]`
+  - Reviews: `w-[80px]`
+- Shrink the sort button padding slightly
 
-Change:
-```
-const enrichable = prospects.filter((p) => !p.email && (p.website || p.business_name));
-```
-To:
-```
-const enrichable = prospects.filter((p) => (!p.email || p.email.toLowerCase() === 'n/a') && (p.website && p.website.toLowerCase() !== 'n/a' || p.business_name));
-```
+**File: `src/components/prospects/table/BasicInfoCell.tsx`**
+- Add `truncate` and `max-w` classes so long text is truncated with ellipsis instead of expanding the column
 
-This ensures:
-- Prospects with `"N/A"` email are treated as needing enrichment
-- Prospects with `"N/A"` website are not sent to Hunter.io (only business_name would be used)
-- The count updates correctly when selecting/deselecting prospects
+**File: `src/components/prospects/table/ProspectNotesCell.tsx`**
+- Constrain the notes cell width
+
+---
+
+### Technical Details
+
+**Files modified:**
+- `src/components/prospects/ProspectContent.tsx` -- add search state, input UI, and filtering logic
+- `src/components/ui/table.tsx` -- reduce default cell/head padding
+- `src/components/prospects/ProspectTableHeader.tsx` -- add width constraints to specific columns
+- `src/components/prospects/table/BasicInfoCell.tsx` -- add truncation
+- `src/components/prospects/table/ProspectNotesCell.tsx` -- constrain width
+
+**Search behavior:**
+- Case-insensitive partial match
+- Searches across: business_name, email, owner_name, phone_number, business_address
+- Combines with existing territory filter (both filters apply)
+- Clears when user empties the input
+
+**Column width targets:**
+- Notes: ~60px (icon only)
+- Email: max 150px with truncation
+- Location Type: max 100px
+- Rating: ~80px
+- Reviews: ~80px
+- All cells: reduced horizontal padding from 16px to 8px
