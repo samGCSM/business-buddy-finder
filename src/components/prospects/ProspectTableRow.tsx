@@ -1,5 +1,6 @@
 
 import { TableRow, TableCell } from "@/components/ui/table";
+import { Checkbox } from "@/components/ui/checkbox";
 import type { Prospect } from "@/types/prospects";
 import { useState, useEffect } from "react";
 import { useTerritories } from "@/hooks/useTerritories";
@@ -23,9 +24,11 @@ interface ProspectTableRowProps {
   onEdit: (prospect: Prospect) => void;
   onDelete: (id: string) => void;
   onUpdate: () => void;
+  isSelected: boolean;
+  onToggleSelect: (id: string) => void;
 }
 
-const ProspectTableRow = ({ prospect, onEdit, onDelete, onUpdate }: ProspectTableRowProps) => {
+const ProspectTableRow = ({ prospect, onEdit, onDelete, onUpdate, isSelected, onToggleSelect }: ProspectTableRowProps) => {
   const [userId, setUserId] = useState<number | null>(null);
   const { territories, fetchTerritories } = useTerritories();
   const [userRole, setUserRole] = useState<string | null>(null);
@@ -49,6 +52,12 @@ const ProspectTableRow = ({ prospect, onEdit, onDelete, onUpdate }: ProspectTabl
 
   return (
     <TableRow key={prospect.id}>
+      <TableCell className="w-[40px] min-w-[40px]">
+        <Checkbox
+          checked={isSelected}
+          onCheckedChange={() => onToggleSelect(prospect.id)}
+        />
+      </TableCell>
       <BusinessNameCell prospect={prospect} onEdit={onEdit} />
       <ProspectNotesCell
         prospectId={prospect.id}
