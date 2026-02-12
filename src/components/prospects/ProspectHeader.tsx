@@ -13,6 +13,10 @@ import { useNavigate } from "react-router-dom";
 import { useBulkEmailEnrichment } from "@/hooks/useBulkEmailEnrichment";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface ProspectHeaderProps {
   onAddClick: () => void;
@@ -66,9 +70,6 @@ const ProspectHeader = ({
 
   const handleDeleteSelected = async () => {
     if (!hasSelection) return;
-    const confirmed = window.confirm(`Delete ${selectedProspects.length} selected prospect(s)?`);
-    if (!confirmed) return;
-
     try {
       const ids = selectedProspects.map(p => p.id);
       const { error } = await supabase
@@ -160,14 +161,6 @@ const ProspectHeader = ({
             </span>
           </Button>
 
-          {hasSelection && (
-            <Button variant="destructive" onClick={handleDeleteSelected} className="gap-2 text-xs sm:text-sm">
-              <Trash2 className="h-4 w-4" />
-              <span className="hidden sm:inline">Delete ({selectedProspects.length})</span>
-              <span className="sm:hidden">{selectedProspects.length}</span>
-            </Button>
-          )}
-
           <Button variant="outline" onClick={handleMapView} className="gap-2 text-xs sm:text-sm">
             <MapPin className="h-4 w-4" />
             <span className="hidden sm:inline">{hasSelection ? `Map (${mappableCount})` : `Map These (${mappableCount})`}</span>
@@ -179,6 +172,32 @@ const ProspectHeader = ({
             <span className="hidden sm:inline">{hasSelection ? `Export (${selectedProspects.length})` : 'Export All'}</span>
             <span className="sm:hidden">Export</span>
           </Button>
+
+          {hasSelection && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" className="gap-2 text-xs sm:text-sm">
+                  <Trash2 className="h-4 w-4" />
+                  <span className="hidden sm:inline">Delete ({selectedProspects.length})</span>
+                  <span className="sm:hidden">{selectedProspects.length}</span>
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete Prospects</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Are you sure you want to delete {selectedProspects.length} selected prospect(s)? This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDeleteSelected} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
         </div>
       </div>
     </div>
