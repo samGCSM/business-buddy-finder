@@ -1,71 +1,64 @@
 
 
-## Add Driving Directions & Route Optimization to Prospect Map
+## Fix Route Planner: API Error, Position, and Pick-on-Map
 
-### Overview
-Add a route planning panel to the prospect map that lets you enter a starting point (or use your current GPS location), then calculates the optimal driving route through your displayed prospects using the Mapbox Optimization API.
+### 1. Fix the "Could not calculate route" Error
 
-### How It Works
-1. A collapsible "Route Planner" panel appears above or beside the map
-2. You either type a starting address or click "Use My Location" (browser GPS)
-3. Click "Plan Route" -- the system sends all prospect coordinates plus your start point to the Mapbox Optimization API
-4. The optimized route is drawn on the map as a colored line, with numbered stop markers
-5. A sidebar/panel shows the ordered stop list with estimated drive times between each
+**Root cause:** The Mapbox Optimization API does not support `roundtrip=false` with `destination=any`. The API response literally says `"code":"NotImplemented"`. 
 
-### Mapbox API Details
-- **Optimization API** (`/optimized-trips/v1/`) handles up to 12 waypoints per request and returns the fastest round-trip or one-way route
-- If more than 12 prospects are shown, we batch or let the user select which ones to include in the route
-- The API is included with the Mapbox token -- no extra cost beyond normal usage
+**Fix:** Change the API call to use `roundtrip=true` (which is fully supported for optimization/trip-planning). This gives you the best route through all prospects and back. Alternatively, we can use the standard Mapbox Directions API (`/directions/v5/`) which supports one-way routes -- but for visiting multiple prospects, the roundtrip optimization is actually the better fit.
 
-### New Files
+**File:** `src/components/map/hooks/useRouteOptimization.ts` (line 93)
+- Change: `?source=first&roundtrip=false&destination=any` 
+- To: `?roundtrip=true`
+- Also update the error check to handle `NoRoute` responses more gracefully
 
-**`src/components/map/components/RoutePlanner.tsx`**
-- UI panel with:
-  - Address input for starting point
-  - "Use My Location" button (calls `navigator.geolocation`)
-  - "Plan Route" / "Clear Route" buttons
-  - Ordered stop list with estimated times (shown after route is calculated)
-- Passes start coordinates + prospect coordinates to the route hook
+### 2. Move Route Planner Below the Search/Filter Area
 
-**`src/components/map/hooks/useRouteOptimization.ts`**
-- Takes the Mapbox token, map instance, start coordinates, and prospect coordinates
-- Calls Mapbox Optimization API: `https://api.mapbox.com/optimized-trips/v1/mapbox/driving/{coordinates}?access_token={token}`
-- Parses the response to get the ordered waypoints and route geometry
-- Draws the route line on the map using `map.addSource` / `map.addLayer` (GeoJSON line)
-- Adds numbered markers for each stop in order
-- Returns: ordered stops with durations, total time, loading state, clear function
+Currently the RoutePlanner is positioned `absolute top-3 left-3` inside the map container, overlapping the search bar. 
 
-### Modified Files
+**Fix:** Move RoutePlanner out of MapView and into ProspectMap.tsx, placing it in the page layout between the filter controls and the map -- as a normal (non-absolute) element.
 
-**`src/components/map/MapView.tsx`**
-- Import and render `RoutePlanner` component
-- Pass `map`, `mapboxToken`, and `prospects` to it
+**Files:**
+- `src/components/map/MapView.tsx` -- Remove `<RoutePlanner>` from here
+- `src/components/map/components/RoutePlanner.tsx` -- Remove the `absolute top-3 left-3 z-30` positioning, make it a normal block element
+- `src/pages/ProspectMap.tsx` -- Add `<RoutePlanner>` between MapFilterControls and the map container, passing `map`, `mapboxToken`, and `prospects`
+- `src/components/map/MapView.tsx` -- Expose `map` and `mapboxToken` so ProspectMap can pass them to RoutePlanner (either lift state up or expose via a ref/callback)
 
-**`src/pages/ProspectMap.tsx`**
-- No changes needed -- MapView handles everything internally
+### 3. Add "Pick Location on Map" Feature
 
-### Limitations & Edge Cases
-- Mapbox Optimization API supports up to 12 coordinates per request; if more than 12 prospects are visible, we show a message asking the user to filter down or we take the nearest 11 (plus start)
-- GPS permission may be denied -- fall back to address entry with a toast message
-- Route is cleared and recalculated when filters/territory change
+Add a button in the RoutePlanner that puts the map into a "pick mode." When active, clicking anywhere on the map sets that point as the starting location.
+
+**Changes:**
+- `src/components/map/components/RoutePlanner.tsx` -- Add a "Pick on Map" button next to the location input. When clicked, it sets a `pickingOnMap` state to true and shows a visual hint ("Click the map to set start point")
+- `src/components/map/hooks/useRouteOptimization.ts` -- Add a `map.on('click')` listener when pick mode is active. On click, capture the coordinates, reverse-geocode them to show an address label, and exit pick mode. Change the cursor to crosshair during pick mode.
 
 ### Technical Details
 
-**Optimization API call format:**
+**API URL fix (useRouteOptimization.ts line 93):**
 ```
-GET https://api.mapbox.com/optimized-trips/v1/mapbox/driving/{lng1},{lat1};{lng2},{lat2};...?
-  source=first&
-  destination=last&
-  roundtrip=false&
-  geometries=geojson&
-  access_token={token}
+// Before:
+?source=first&roundtrip=false&destination=any&geometries=geojson
+
+// After:
+?roundtrip=true&geometries=geojson
 ```
 
-**Route drawing on map:**
-- Source: `route-line` (GeoJSON LineString from API response)
-- Layer: `route-line-layer` (line with blue color, width 4, opacity 0.75)
-- Numbered stop markers: custom HTML markers with circled numbers
+**RoutePlanner layout change:**
+- Remove `absolute top-3 left-3 z-30 w-80 max-w-[calc(100vw-2rem)]` wrapper
+- Replace with a normal `div` with `mb-4` margin
 
-**Stop list panel shows:**
-- Stop number, prospect name, estimated arrival/drive time from previous stop
-- Total estimated drive time at the bottom
+**ProspectMap.tsx restructure:**
+- MapView will need to expose `map` and `mapboxToken` -- simplest approach is to lift the `useMapbox` hook up into ProspectMap and pass `map`/`mapboxToken` down to both MapView and RoutePlanner
+
+**Pick-on-map flow:**
+- New state `isPickingLocation` in RoutePlanner
+- When active: set `map.getCanvas().style.cursor = 'crosshair'`, add a one-time `map.once('click', handler)`
+- On click: get `e.lngLat`, reverse-geocode via `https://api.mapbox.com/geocoding/v5/mapbox.places/{lng},{lat}.json`, set address to result, exit pick mode
+- Button shows a map-pin-plus icon with tooltip "Pick on map"
+
+### Files Modified
+- `src/components/map/hooks/useRouteOptimization.ts` -- Fix API URL
+- `src/components/map/components/RoutePlanner.tsx` -- Remove absolute positioning, add pick-on-map button and logic
+- `src/components/map/MapView.tsx` -- Remove RoutePlanner, expose map/token
+- `src/pages/ProspectMap.tsx` -- Add RoutePlanner in page layout, lift useMapbox hook up
