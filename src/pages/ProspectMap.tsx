@@ -1,6 +1,8 @@
 
 import Header from "@/components/layout/Header";
 import MapView from "@/components/map/MapView";
+import RoutePlanner from "@/components/map/components/RoutePlanner";
+import { useMapbox } from "@/components/map/hooks/useMapbox";
 import { useProspectMapData } from "./map/hooks/useProspectMapData";
 import MapFilterControls from "./map/components/MapFilterControls";
 import MapHeader from "./map/components/MapHeader";
@@ -19,6 +21,8 @@ const ProspectMap = () => {
     handleLogout,
     navigate
   } = useProspectMapData();
+
+  const { map, setMap, loading, mapboxToken, isSatelliteView, setIsSatelliteView } = useMapbox();
   
   if (isLoading) {
     return <div className="flex justify-center items-center min-h-screen">Loading...</div>;
@@ -44,10 +48,20 @@ const ProspectMap = () => {
             />
           </div>
         </div>
+
+        <RoutePlanner map={map} mapboxToken={mapboxToken} prospects={filteredProspects} />
         
         {filteredProspects.length > 0 ? (
           <div className="bg-white p-4 rounded-lg shadow">
-            <MapView prospects={filteredProspects} />
+            <MapView
+              prospects={filteredProspects}
+              map={map}
+              setMap={setMap}
+              mapboxToken={mapboxToken}
+              loading={loading}
+              isSatelliteView={isSatelliteView}
+              setIsSatelliteView={setIsSatelliteView}
+            />
           </div>
         ) : (
           <EmptyMapState onReturnClick={() => navigate('/prospects')} />
