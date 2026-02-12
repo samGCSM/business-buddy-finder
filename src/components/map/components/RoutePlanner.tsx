@@ -120,8 +120,7 @@ const RoutePlanner = ({ map, mapboxToken, prospects }: RoutePlannerProps) => {
   };
 
   return (
-    <div className="mb-4">
-      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+    <Collapsible open={isOpen} onOpenChange={setIsOpen} className="relative">
         <CollapsibleTrigger asChild>
           <Button variant="outline" size="sm" className="bg-white shadow-md gap-2">
             <Navigation className="h-4 w-4" />
@@ -228,7 +227,6 @@ const RoutePlanner = ({ map, mapboxToken, prospects }: RoutePlannerProps) => {
           )}
         </CollapsibleContent>
       </Collapsible>
-    </div>
   );
 };
 
