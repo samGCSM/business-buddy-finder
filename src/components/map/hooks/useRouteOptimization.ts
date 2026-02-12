@@ -90,7 +90,7 @@ export const useRouteOptimization = ({ map, mapboxToken, prospects }: UseRouteOp
       const allCoords = [startCoords, ...selectedProspects.map(p => p.coords)];
       const coordsString = allCoords.map(c => `${c[0]},${c[1]}`).join(';');
 
-      const url = `https://api.mapbox.com/optimized-trips/v1/mapbox/driving/${coordsString}?source=first&roundtrip=false&destination=any&geometries=geojson&access_token=${mapboxToken}`;
+      const url = `https://api.mapbox.com/optimized-trips/v1/mapbox/driving/${coordsString}?roundtrip=true&geometries=geojson&access_token=${mapboxToken}`;
 
       const response = await fetch(url);
       const data = await response.json();

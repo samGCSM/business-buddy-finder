@@ -3,20 +3,22 @@ import { useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Prospect } from '@/types/prospects';
-import { useMapbox } from './hooks/useMapbox';
 import { useProspectMarkers } from './hooks/useProspectMarkers';
 import MapInitializer from './components/MapInitializer';
 import MapLoader from './components/MapLoader';
 import MarkersLoadingOverlay from './components/MarkersLoadingOverlay';
-import RoutePlanner from './components/RoutePlanner';
 
 interface MapViewProps {
   prospects: Prospect[];
+  map: mapboxgl.Map | null;
+  setMap: (map: mapboxgl.Map) => void;
+  mapboxToken: string | null;
+  loading: boolean;
+  isSatelliteView: boolean;
+  setIsSatelliteView: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-const MapView = ({ prospects }: MapViewProps) => {
-  const { loading, mapboxToken, setMap, map, isSatelliteView, setIsSatelliteView } = useMapbox();
-  
+const MapView = ({ prospects, map, setMap, mapboxToken, loading, isSatelliteView, setIsSatelliteView }: MapViewProps) => {
   // Use the prospect markers hook
   const { isPlacingMarkers } = useProspectMarkers(map, prospects, mapboxToken);
 
@@ -33,7 +35,6 @@ const MapView = ({ prospects }: MapViewProps) => {
           setIsSatelliteView={setIsSatelliteView} 
         />
       )}
-      <RoutePlanner map={map} mapboxToken={mapboxToken} prospects={prospects} />
       {isPlacingMarkers && <MarkersLoadingOverlay />}
       {!mapboxToken && (
         <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
