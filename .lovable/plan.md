@@ -1,21 +1,55 @@
 
 
-## Move Delete Button & Add Confirmation Dialog
+## Fix: Bulk Search "Failed to fetch results" Error
 
-### Changes
+### Root Cause
 
-**File: `src/components/prospects/ProspectHeader.tsx`**
+The console logs show the exact problem:
 
-1. **Move the Delete button** -- Currently it sits between the Enrich button and the Map button (lines 163-169). Move it after the Export button (after line 181) so the order becomes: `Enrich | Map | Export | Delete`.
+> "As of March 1st, 2025, google.maps.places.PlacesService is not available to new customers."
 
-2. **Add confirmation dialog** -- Replace the `window.confirm()` call in `handleDeleteSelected` (line 79) with a proper `AlertDialog` from the existing UI components. The dialog will show:
-   - Title: "Delete Prospects"
-   - Description: "Are you sure you want to delete {count} selected prospect(s)? This action cannot be undone."
-   - Cancel and Delete buttons
+The legacy `PlacesService` (`textSearch`) is being rejected by Google's API. The code uses `google.maps.places.PlacesService` which Google deprecated for new usage as of March 1, 2025. The API is returning a non-OK status, hitting the `reject(new Error('Places search failed'))` path.
 
-3. **Implementation approach**:
-   - Import `AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger` from `@/components/ui/alert-dialog`
-   - Wrap the Delete button in an `AlertDialogTrigger` so clicking it opens the confirmation dialog instead of immediately deleting
-   - Move the actual deletion logic into the `AlertDialogAction` onClick handler
-   - Remove the `window.confirm()` call
+### Fix
+
+Migrate from the legacy `PlacesService.textSearch()` to the new `google.maps.places.Place.searchByText()` API (Places API New).
+
+**File: `src/utils/googleApi.ts`**
+
+1. **Update the Google Maps script loading** to include `&libraries=places` (already present) but also ensure we're loading the newer API version
+2. **Replace `PlacesService.textSearch()`** with the new `Place.searchByText()` API:
+   - Remove the `new Map()` + `PlacesService` pattern
+   - Use `google.maps.places.Place.searchByText({ textQuery, locationBias, fields, maxResultCount })` instead
+   - The new API returns Place objects directly with fields like `displayName`, `formattedAddress`, `nationalPhoneNumber`, `websiteURI`, `rating`, `userRatingCount`
+3. **Update field mapping** to match new API response format:
+   - `place.displayName` instead of `place.name`
+   - `place.nationalPhoneNumber` instead of `formatted_phone_number`
+   - `place.websiteURI` instead of `website`
+   - `place.userRatingCount` instead of `user_ratings_total`
+   - `place.formattedAddress` instead of `formatted_address`
+4. **Remove the `getDetails` call** -- the new `searchByText` returns all requested fields in a single call, eliminating the need for per-result detail fetches (this also makes it faster and cheaper)
+5. **Handle pagination** -- the new API uses `maxResultCount` (up to 20 per call). To get more results, we can make multiple searches or accept 20 results max per query. The new API does not support pagination tokens like the old one, so we'll set `maxResultCount: 20` and accept that limit (Google's new Places API caps at 20 results per search).
+
+### Technical Details
+
+The new API call looks like:
+```javascript
+const { places } = await google.maps.places.Place.searchByText({
+  textQuery: `${keyword} in ${location}`,
+  fields: ['displayName', 'formattedAddress', 'nationalPhoneNumber', 'websiteURI', 'rating', 'userRatingCount', 'location', 'id'],
+  locationBias: new google.maps.Circle({ center: geocodeResult, radius: radiusInMeters }),
+  maxResultCount: 20,
+});
+```
+
+Each place object has `.location.lat()` and `.location.lng()` for distance calculation.
+
+### Impact
+- Fixes the search completely -- it will work again
+- Simpler code -- no more separate `getDetails` calls per result
+- Faster -- single API call returns all data
+- Max 20 results per search (new API limitation) instead of previous 40
+
+### File Modified
+- `src/utils/googleApi.ts`
 
