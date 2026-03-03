@@ -391,6 +391,19 @@ export type Database = {
     }
     Functions: {
       current_user_id: { Args: never; Returns: number }
+      get_dashboard_metrics: {
+        Args: {
+          p_supervisor_id?: number
+          p_user_id: number
+          p_user_type: string
+        }
+        Returns: {
+          emails_sent: number
+          face_to_face: number
+          new_prospects: number
+          total_prospects: number
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
