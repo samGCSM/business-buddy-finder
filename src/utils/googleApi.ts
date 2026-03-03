@@ -1,24 +1,13 @@
 
-import axios from 'axios';
-
 declare global {
   interface Window {
     google: any;
   }
 }
 
-interface PlaceDetails {
-  name: string;
-  formatted_phone_number: string;
-  website: string;
-  rating: number;
-  user_ratings_total: number;
-  formatted_address: string;
-}
-
 const haversineDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
   const toRad = (v: number) => (v * Math.PI) / 180;
-  const R = 3958.8; // Earth radius in miles
+  const R = 3958.8;
   const dLat = toRad(lat2 - lat1);
   const dLon = toRad(lon2 - lon1);
   const a =
@@ -29,9 +18,9 @@ const haversineDistance = (lat1: number, lon1: number, lat2: number, lon2: numbe
 
 const loadGoogleMapsScript = () => {
   const API_KEY = import.meta.env.VITE_GOOGLE_PLACES_API_KEY;
-  
+
   return new Promise<void>((resolve, reject) => {
-    if (window.google) {
+    if (window.google?.maps?.places?.Place) {
       resolve();
       return;
     }
@@ -48,14 +37,14 @@ const loadGoogleMapsScript = () => {
 
 export const searchBusinesses = async (location: string, keyword: string, radiusMiles: number = 10) => {
   console.log('Fetching businesses for:', { location, keyword, radiusMiles });
-  
+
   const radiusInMeters = radiusMiles * 1609.34;
-  
+
   try {
     await loadGoogleMapsScript();
-    
+
     const geocoder = new window.google.maps.Geocoder();
-    
+
     const geocodeResult = await new Promise<any>((resolve, reject) => {
       geocoder.geocode({ address: location }, (results: any, status: any) => {
         if (status === 'OK') {
@@ -69,73 +58,40 @@ export const searchBusinesses = async (location: string, keyword: string, radius
     const centerLat = geocodeResult.lat();
     const centerLng = geocodeResult.lng();
 
-    const map = new window.google.maps.Map(document.createElement('div'));
-    const service = new window.google.maps.places.PlacesService(map);
+    const { places } = await window.google.maps.places.Place.searchByText({
+      textQuery: `${keyword} in ${location}`,
+      fields: ['displayName', 'formattedAddress', 'nationalPhoneNumber', 'websiteURI', 'rating', 'userRatingCount', 'location', 'id'],
+      locationBias: new window.google.maps.Circle({ center: geocodeResult, radius: radiusInMeters }),
+      maxResultCount: 20,
+    });
 
-    let allResults: any[] = [];
-    const searchAndGetNextPage = (pageToken?: string): Promise<any[]> => {
-      return new Promise((resolve, reject) => {
-        service.textSearch({
-          query: keyword,
-          location: geocodeResult,
-          radius: radiusInMeters,
-          pageToken: pageToken
-        }, (results: any, status: any, pagination: any) => {
-          if (status === 'OK') {
-            allResults = [...allResults, ...results];
-            
-            if (pagination.hasNextPage && allResults.length < 40) {
-              setTimeout(() => {
-                pagination.nextPage();
-              }, 2000);
-            } else {
-              resolve(allResults);
-            }
-          } else {
-            reject(new Error('Places search failed'));
-          }
-        });
-      });
-    };
+    console.log('Results fetched:', places?.length ?? 0);
 
-    const searchResults = await searchAndGetNextPage();
-    console.log('Total results fetched:', searchResults.length);
+    if (!places || places.length === 0) {
+      return [];
+    }
 
-    const businesses = await Promise.all(
-      searchResults.slice(0, 40).map(async (place) => {
-        const details = await new Promise<PlaceDetails>((resolve, reject) => {
-          service.getDetails({
-            placeId: place.place_id,
-            fields: ['name', 'formatted_phone_number', 'website', 'rating', 'user_ratings_total', 'formatted_address'],
-          }, (result: PlaceDetails, status: any) => {
-            if (status === 'OK') {
-              resolve(result);
-            } else {
-              reject(new Error('Failed to get place details'));
-            }
-          });
-        });
+    const businesses = places.map((place: any) => {
+      const placeLat = place.location?.lat();
+      const placeLng = place.location?.lng();
+      const distance = placeLat != null && placeLng != null
+        ? haversineDistance(centerLat, centerLng, placeLat, placeLng)
+        : 0;
 
-        const placeLat = place.geometry.location.lat();
-        const placeLng = place.geometry.location.lng();
-        const distance = haversineDistance(centerLat, centerLng, placeLat, placeLng);
+      return {
+        id: place.id || '',
+        name: place.displayName || 'N/A',
+        phone: place.nationalPhoneNumber || 'N/A',
+        email: 'N/A',
+        website: place.websiteURI || 'N/A',
+        reviewCount: place.userRatingCount || 0,
+        rating: place.rating || 0,
+        address: place.formattedAddress || 'N/A',
+        distance: Math.round(distance * 10) / 10,
+      };
+    });
 
-        return {
-          id: place.place_id,
-          name: details.name || place.name,
-          phone: details.formatted_phone_number || 'N/A',
-          email: 'N/A',
-          website: details.website || 'N/A',
-          reviewCount: details.user_ratings_total || 0,
-          rating: details.rating || 0,
-          address: details.formatted_address || place.formatted_address,
-          distance: Math.round(distance * 10) / 10,
-        };
-      })
-    );
-
-    // Filter by radius
-    const filtered = businesses.filter(b => (b.distance ?? 0) <= radiusMiles);
+    const filtered = businesses.filter((b: any) => (b.distance ?? 0) <= radiusMiles);
     console.log(`Filtered from ${businesses.length} to ${filtered.length} within ${radiusMiles} miles`);
     return filtered;
   } catch (error) {
