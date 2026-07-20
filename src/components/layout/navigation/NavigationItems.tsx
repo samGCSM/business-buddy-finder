@@ -27,7 +27,7 @@ const NavigationItems = ({ isAdmin, onLogout }: NavigationItemsProps) => {
         className="w-full justify-start"
       >
         <Search className="h-4 w-4 mr-2" />
-        Bulk Search
+        Search
       </Button>
       <Button 
         variant="outline" 
@@ -35,7 +35,7 @@ const NavigationItems = ({ isAdmin, onLogout }: NavigationItemsProps) => {
         className="w-full justify-start"
       >
         <Plus className="h-4 w-4 mr-2" />
-        Prospect Now
+        Prospect
       </Button>
       <Button
         variant="outline"
@@ -43,7 +43,7 @@ const NavigationItems = ({ isAdmin, onLogout }: NavigationItemsProps) => {
         className="w-full justify-start"
       >
         <Phone className="h-4 w-4 mr-2" />
-        Calls
+        Calls Report
       </Button>
 
       {isAdmin && (

@@ -19,7 +19,7 @@ const DesktopNavigation = ({ isAdmin, onLogout }: DesktopNavigationProps) => {
       </Button>
       <Button variant="outline" onClick={() => navigate('/bulk-search')}>
         <Search className="h-4 w-4 mr-2" />
-        Bulk Search
+        Search
       </Button>
       <Button 
         variant="outline" 
@@ -27,7 +27,7 @@ const DesktopNavigation = ({ isAdmin, onLogout }: DesktopNavigationProps) => {
         className="flex items-center gap-2"
       >
         <Plus className="h-4 w-4" />
-        Prospect Now
+        Prospect
       </Button>
       <Button 
         variant="outline" 
@@ -35,7 +35,7 @@ const DesktopNavigation = ({ isAdmin, onLogout }: DesktopNavigationProps) => {
         className="flex items-center gap-2"
       >
         <Phone className="h-4 w-4" />
-        Calls
+        Calls Report
       </Button>
       {isAdmin && (
         <Button 
