@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
-import { Home, Search, Plus, Users } from "lucide-react";
+import { Home, Search, Plus, Users, Phone } from "lucide-react";
+
 import { useNavigate } from "react-router-dom";
 
 interface NavigationItemsProps {
@@ -36,6 +37,15 @@ const NavigationItems = ({ isAdmin, onLogout }: NavigationItemsProps) => {
         <Plus className="h-4 w-4 mr-2" />
         Prospect Now
       </Button>
+      <Button
+        variant="outline"
+        onClick={() => navigate('/calls')}
+        className="w-full justify-start"
+      >
+        <Phone className="h-4 w-4 mr-2" />
+        Calls
+      </Button>
+
       {isAdmin && (
         <Button 
           variant="outline" 

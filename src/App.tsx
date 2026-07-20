@@ -12,6 +12,10 @@ import Profile from "./pages/Profile";
 import Prospects from "./pages/Prospects";
 import ProspectMap from "./pages/ProspectMap";
 import Notifications from "./pages/Notifications";
+import CallsThisWeek from "./pages/calls/CallsThisWeek";
+import AccountsAdmin from "./pages/calls/AccountsAdmin";
+import ImportAccounts from "./pages/calls/ImportAccounts";
+
 
 const queryClient = new QueryClient();
 
@@ -30,6 +34,10 @@ const App = () => (
           <Route path="/prospects" element={<Prospects />} />
           <Route path="/prospects/map" element={<ProspectMap />} />
           <Route path="/notifications" element={<Notifications />} />
+          <Route path="/calls" element={<CallsThisWeek />} />
+          <Route path="/calls/accounts" element={<AccountsAdmin />} />
+          <Route path="/calls/import" element={<ImportAccounts />} />
+
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
