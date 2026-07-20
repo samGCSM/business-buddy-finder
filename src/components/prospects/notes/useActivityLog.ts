@@ -61,7 +61,7 @@ export const useActivityLog = (prospectId: string, onUpdate: () => void) => {
         return;
       }
 
-      const fileUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${data.path}`;
+      const fileUrl = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/${data.path}`;
 
       const currentUser = await getCurrentUser();
       if (!currentUser) {
