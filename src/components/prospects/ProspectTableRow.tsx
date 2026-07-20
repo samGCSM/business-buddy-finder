@@ -26,9 +26,10 @@ interface ProspectTableRowProps {
   onUpdate: () => void;
   isSelected: boolean;
   onToggleSelect: (id: string) => void;
+  onAddToCalls?: (prospect: Prospect) => void;
 }
 
-const ProspectTableRow = ({ prospect, onEdit, onDelete, onUpdate, isSelected, onToggleSelect }: ProspectTableRowProps) => {
+const ProspectTableRow = ({ prospect, onEdit, onDelete, onUpdate, isSelected, onToggleSelect, onAddToCalls }: ProspectTableRowProps) => {
   const [userId, setUserId] = useState<number | null>(null);
   const { territories, fetchTerritories } = useTerritories();
   const [userRole, setUserRole] = useState<string | null>(null);
@@ -104,6 +105,7 @@ const ProspectTableRow = ({ prospect, onEdit, onDelete, onUpdate, isSelected, on
           prospect={prospect}
           onEdit={onEdit}
           onDelete={onDelete}
+          onAddToCalls={onAddToCalls}
         />
       </TableCell>
     </TableRow>

@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import BulkUploadProspects from "./BulkUploadProspects";
-import { PlusCircle, Download, MapPin, Trash2, Zap, Search } from "lucide-react";
+import { PlusCircle, Download, MapPin, Trash2, Zap, Search, Phone } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { generateSpreadsheet } from "@/utils/exportData";
@@ -13,6 +13,8 @@ import { useNavigate } from "react-router-dom";
 import { useBulkEmailEnrichment } from "@/hooks/useBulkEmailEnrichment";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { addProspectsToCalls } from "@/services/callsFromProspects";
+import { getCurrentUser } from "@/services/userService";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
@@ -87,6 +89,25 @@ const ProspectHeader = ({
 
   const handleBulkEnrich = () => {
     enrichProspects(actionProspects, onBulkUploadSuccess);
+  };
+
+  const handleBulkAddToCalls = async () => {
+    if (!hasSelection) return;
+    const user = await getCurrentUser();
+    if (!user?.id) {
+      toast({ title: "Error", description: "Please log in", variant: "destructive" });
+      return;
+    }
+    const res = await addProspectsToCalls(selectedProspects, user.id);
+    const parts: string[] = [];
+    if (res.added) parts.push(`${res.added} added`);
+    if (res.duplicates) parts.push(`${res.duplicates} already on list`);
+    if (res.failed) parts.push(`${res.failed} failed`);
+    toast({
+      title: res.added > 0 ? "Added to Calls Report" : "No changes",
+      description: parts.join(", ") || "Nothing to add",
+      variant: res.failed > 0 && res.added === 0 ? "destructive" : "default",
+    });
   };
 
   const mappableCount = actionProspects.filter(p => p.business_address).length;
@@ -172,6 +193,20 @@ const ProspectHeader = ({
             <span className="hidden sm:inline">{hasSelection ? `Export (${selectedProspects.length})` : 'Export All'}</span>
             <span className="sm:hidden">Export</span>
           </Button>
+
+          {hasSelection && (
+            <Button
+              variant="outline"
+              onClick={handleBulkAddToCalls}
+              className="gap-2 text-xs sm:text-sm bg-blue-500 text-white hover:bg-blue-600 border-blue-500"
+            >
+              <Phone className="h-4 w-4" />
+              <span className="hidden sm:inline">Add to Calls ({selectedProspects.length})</span>
+              <span className="sm:hidden">Calls</span>
+            </Button>
+          )}
+
+
 
           {hasSelection && (
             <AlertDialog>
