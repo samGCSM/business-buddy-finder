@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
-import { Home, Search, Plus, Users } from "lucide-react";
+import { Home, Search, Plus, Users, Phone } from "lucide-react";
+
 import { useNavigate } from "react-router-dom";
 
 interface NavigationItemsProps {
