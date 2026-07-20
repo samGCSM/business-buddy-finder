@@ -195,6 +195,20 @@ const ProspectHeader = ({
           </Button>
 
           {hasSelection && (
+            <Button
+              variant="outline"
+              onClick={handleBulkAddToCalls}
+              className="gap-2 text-xs sm:text-sm bg-blue-500 text-white hover:bg-blue-600 border-blue-500"
+            >
+              <Phone className="h-4 w-4" />
+              <span className="hidden sm:inline">Add to Calls ({selectedProspects.length})</span>
+              <span className="sm:hidden">Calls</span>
+            </Button>
+          )}
+
+
+
+          {hasSelection && (
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button variant="destructive" className="gap-2 text-xs sm:text-sm">
