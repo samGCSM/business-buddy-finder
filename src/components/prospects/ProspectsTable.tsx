@@ -6,6 +6,8 @@ import ProspectTableRow from "./ProspectTableRow";
 import type { Prospect } from "@/types/prospects";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { addProspectsToCalls } from "@/services/callsFromProspects";
+import { getCurrentUser } from "@/services/userService";
 
 interface ProspectsTableProps {
   prospects: Prospect[];
@@ -94,6 +96,22 @@ const ProspectsTable = ({ prospects, onUpdate, onSelectionChange }: ProspectsTab
     }
   };
 
+  const handleAddToCalls = async (prospect: Prospect) => {
+    const user = await getCurrentUser();
+    if (!user?.id) {
+      toast({ title: "Error", description: "Please log in", variant: "destructive" });
+      return;
+    }
+    const res = await addProspectsToCalls([prospect], user.id);
+    if (res.added > 0) {
+      toast({ title: "Added to Calls Report", description: `${prospect.business_name} is on this week's list.` });
+    } else if (res.duplicates > 0) {
+      toast({ title: "Already on list", description: `${prospect.business_name} is already on this week's Calls Report.` });
+    } else {
+      toast({ title: "Error", description: "Failed to add to Calls Report", variant: "destructive" });
+    }
+  };
+
   const allSelected = sortedProspects.length > 0 && selectedIds.size === sortedProspects.length;
   const someSelected = selectedIds.size > 0 && !allSelected;
 
@@ -125,6 +143,7 @@ const ProspectsTable = ({ prospects, onUpdate, onSelectionChange }: ProspectsTab
                 onUpdate={onUpdate}
                 isSelected={selectedIds.has(prospect.id)}
                 onToggleSelect={handleToggleSelect}
+                onAddToCalls={handleAddToCalls}
               />
             ))}
           </TableBody>
