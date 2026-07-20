@@ -12,7 +12,7 @@ export const useInsightGeneration = (
   const [retryTimeout, setRetryTimeout] = useState<number | null>(null);
 
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    let interval: ReturnType<typeof setInterval>;
     
     if (retryTimeout !== null && retryTimeout > 0) {
       interval = setInterval(() => {
