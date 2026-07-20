@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Home, Search, Plus, Users } from "lucide-react";
+import { Home, Search, Plus, Users, Phone } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 
 interface DesktopNavigationProps {
@@ -28,6 +28,14 @@ const DesktopNavigation = ({ isAdmin, onLogout }: DesktopNavigationProps) => {
       >
         <Plus className="h-4 w-4" />
         Prospect Now
+      </Button>
+      <Button 
+        variant="outline" 
+        onClick={() => navigate('/calls')}
+        className="flex items-center gap-2"
+      >
+        <Phone className="h-4 w-4" />
+        Calls
       </Button>
       {isAdmin && (
         <Button 
