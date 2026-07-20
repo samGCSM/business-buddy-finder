@@ -37,6 +37,15 @@ const NavigationItems = ({ isAdmin, onLogout }: NavigationItemsProps) => {
         <Plus className="h-4 w-4 mr-2" />
         Prospect Now
       </Button>
+      <Button
+        variant="outline"
+        onClick={() => navigate('/calls')}
+        className="w-full justify-start"
+      >
+        <Phone className="h-4 w-4 mr-2" />
+        Calls
+      </Button>
+
       {isAdmin && (
         <Button 
           variant="outline" 
