@@ -69,10 +69,13 @@ export const useUserActions = (users: User[], setUsers: (users: User[]) => void)
 
   const handleUpdateUser = async (id: number, updates: Partial<User>) => {
     try {
+      const { stats: _stats, ...dbUpdates } = updates as any;
       const { error } = await supabase
         .from('users')
-        .update(updates)
+        .update(dbUpdates)
         .eq('id', id);
+
+
 
       if (error) throw error;
 
